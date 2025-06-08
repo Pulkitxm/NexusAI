@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@/components/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -25,11 +25,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useKeys } from "@/providers/key-provider";
-import { SettingsModal } from "@/components/settings-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { signOut, useSession } from "next-auth/react";
+import { useSettingsModal } from "@/providers/settings-modal-provider";
 
 interface Chat {
   id: string;
@@ -43,9 +43,9 @@ export function AppSidebar() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
   const router = useRouter();
   const { data } = useSession();
+  const { openModal } = useSettingsModal();
 
   const user = data?.user;
 
@@ -53,9 +53,9 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (user) {
-      const savedChats = localStorage.getItem(`nexus-chats-${user.id}`);
+      const savedChats = localStorage.getItem(`nexus-chats-${user?.id}`);
       if (savedChats) {
-        const parsedChats = JSON.parse(savedChats).map((chat: any) => ({
+        const parsedChats = JSON.parse(savedChats).map((chat: Chat) => ({
           ...chat,
           timestamp: new Date(chat.timestamp),
         }));
@@ -80,7 +80,7 @@ export function AppSidebar() {
 
   const createNewChat = () => {
     if (!hasAnyKeys) {
-      setShowSettings(true);
+      openModal();
       return;
     }
     const newChatId = `chat-${Date.now()}`;
@@ -92,17 +92,13 @@ export function AppSidebar() {
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
     setChats(updatedChats);
     if (user) {
-      localStorage.setItem(`nexus-chats-${user.id}`, JSON.stringify(updatedChats));
+      localStorage.setItem(`nexus-chats-${user?.id}`, JSON.stringify(updatedChats));
     }
   };
 
   const openChat = (chatId: string) => {
     router.push(`/chat/${chatId}`);
   };
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <>
@@ -206,7 +202,7 @@ export function AppSidebar() {
         <SidebarFooter className="p-4 border-t border-border">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => setShowSettings(true)} className="hover:bg-accent">
+              <SidebarMenuButton onClick={openModal} className="hover:bg-accent">
                 <Settings className="w-4 h-4" />
                 <span>Settings & API Keys</span>
               </SidebarMenuButton>
@@ -216,12 +212,12 @@ export function AppSidebar() {
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton className="hover:bg-accent">
                     <Avatar className="w-6 h-6">
-                      <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                      <AvatarImage src={user?.avatar || "/placeholder.svg"} />
                       <AvatarFallback>
                         <User className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="truncate">{user.name}</span>
+                    <span className="truncate">{user?.name}</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -235,8 +231,6 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
-
-      <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
     </>
   );
 }

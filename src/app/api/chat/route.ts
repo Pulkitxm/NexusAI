@@ -1,14 +1,13 @@
 import { openai } from "@ai-sdk/openai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { google } from "@ai-sdk/google"
-import { createGroq } from "@ai-sdk/groq"
 import { deepseek } from "@ai-sdk/deepseek"
 import { streamText } from "ai"
 
 export const maxDuration = 30
 
-const getModel = (modelId: string, keys: Record<string, string>) => {
-  // OpenAI Models
+const getModel = (modelId: string) => {
+  
   if (modelId.startsWith("gpt-") || modelId.startsWith("o")) {
     const model = openai("gpt-3.5-turbo-instruct")
     switch (modelId) {
@@ -29,43 +28,37 @@ const getModel = (modelId: string, keys: Record<string, string>) => {
     }
   }
 
-  // Google Models
+  
   if (modelId.startsWith("gemini-")) {
     const model = google("gemini-1.5-pro")
     return model
   }
 
-  // Anthropic Models
+  
   if (modelId.startsWith("claude-")) {
     const model = anthropic("claude-3-5-sonnet-20241022")
     return model
   }
 
-  // DeepSeek Models
+  
   if (modelId.startsWith("deepseek-")) {
     const model = deepseek("deepseek-chat")
     return model
   }
 
-  // Groq/Meta Models
-  if (modelId.startsWith("llama-") || modelId.startsWith("grok-")) {
-    const model = createGroq("llama-3.1-70b-versatile")
-    return model
-  }
-
-  // Qwen Models (via OpenRouter)
+  
   if (modelId.startsWith("qwen-")) {
     const model = openai("qwen/qwen-2.5-72b-instruct")
     return model
   }
 
-  // Default fallback
+  
   return openai("gpt-3.5-turbo-instruct")
 }
 
 export async function POST(req: Request) {
   try {
-    const { messages, model: modelId, chatId, keys } = await req.json()
+    const { messages, model: modelId, keys } = await req.json()
 
     if (!keys || Object.keys(keys).length === 0) {
       return new Response(JSON.stringify({ error: "No API keys provided" }), {
@@ -74,7 +67,7 @@ export async function POST(req: Request) {
       })
     }
 
-    const model = getModel(modelId, keys)
+    const model = getModel(modelId)
 
     const systemMessage = {
       role: "system" as const,

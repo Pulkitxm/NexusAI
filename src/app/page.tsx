@@ -2,11 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useKeys } from "@/providers/key-provider"
-import { useState } from "react"
-import { SettingsModal } from "@/components/settings-modal"
+import { useSettingsModal } from "@/providers/settings-modal-provider"
 import {
   RiChatSmile3Line,
   RiKeyLine,
@@ -14,7 +12,7 @@ import {
 
 export default function HomePage() {
   const { hasAnyKeys } = useKeys()
-  const [showSettings, setShowSettings] = useState(false)
+  const { openModal } = useSettingsModal()
 
   return (
     <>
@@ -41,7 +39,7 @@ export default function HomePage() {
               </Link>
             ) : (
               <Button
-                onClick={() => setShowSettings(true)}
+                onClick={openModal}
                 size="lg"
                 className="text-lg px-8 py-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all"
               >
@@ -68,8 +66,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-
-      <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
     </>
   )
 }

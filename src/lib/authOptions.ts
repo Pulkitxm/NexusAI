@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "@/lib/env";
 
-import { prisma } from "@/prisma";
+import { prisma } from "@/lib/db";
 
 declare module "next-auth" {
   interface Session {
@@ -33,6 +33,7 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
 
       const email = user?.email || profile?.email;
       const name = user?.name || profile?.name;
+      const avatar = (user?.image || profile?.image || "") as string;
 
       if (!email || typeof email !== "string") {
         console.error("Invalid email");
@@ -51,6 +52,7 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
         data: {
           name: name ?? email.split("@")[0],
           email,
+          avatar
         },
       });
 

@@ -1,20 +1,19 @@
 "use client"
 
 import { useChat } from "ai/react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, ChangeEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Send, Copy, Check, MoreVertical, Settings } from "lucide-react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/sidebar"
 import { useParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { useKeys } from "@/providers/key-provider"
 import { AI_MODELS, getAvailableModels } from "@/lib/models"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { SettingsModal } from "@/components/settings-modal"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   RiRobotLine,
@@ -27,6 +26,15 @@ import {
   RiAlertFill,
   RiGlobalLine,
 } from "react-icons/ri"
+import { useSettingsModal } from "@/providers/settings-modal-provider"
+
+interface Chat {
+  id: string;
+  title: string;
+  model: string;
+  lastMessage: string;
+  timestamp: Date;
+}
 
 export default function ChatPage() {
   const params = useParams()
@@ -44,20 +52,18 @@ export default function ChatPage() {
   const { keys, hasAnyKeys } = useKeys()
   const [selectedModel, setSelectedModel] = useState("")
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
-  const [showSettings, setShowSettings] = useState(false)
+  const { openModal } = useSettingsModal()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
   const availableModels = getAvailableModels(keys)
 
-  // Set default model when available models change
   useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
       setSelectedModel(availableModels[0].id)
     }
   }, [availableModels, selectedModel])
 
-  // Redirect if no API keys
   useEffect(() => {
     if (!hasAnyKeys) {
       router.push("/")
@@ -94,8 +100,8 @@ export default function ChatPage() {
   const saveChatToStorage = (lastMessage: string) => {
     if (!user) return
 
-    const chats = JSON.parse(localStorage.getItem(`nexus-chats-${user.id}`) || "[]")
-    const existingChatIndex = chats.findIndex((chat: any) => chat.id === chatId)
+    const chats = JSON.parse(localStorage.getItem(`nexus-chats-${user.id}`) || "[]") as Chat[]
+    const existingChatIndex = chats.findIndex((chat) => chat.id === chatId)
 
     const chatTitle =
       messages.length > 0
@@ -109,7 +115,7 @@ export default function ChatPage() {
       title: chatTitle,
       model: selectedModelInfo?.name || selectedModel,
       lastMessage: lastMessage.slice(0, 100) + (lastMessage.length > 100 ? "..." : ""),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(),
     }
 
     if (existingChatIndex >= 0) {
@@ -131,6 +137,7 @@ export default function ChatPage() {
       })
       setTimeout(() => setCopiedMessageId(null), 2000)
     } catch (err) {
+      console.error(err)
       toast({
         title: "Failed to copy",
         description: "Could not copy message to clipboard",
@@ -155,14 +162,13 @@ export default function ChatPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No API Keys Found</h2>
           <p className="text-gray-600 mb-6">Add your API keys to start chatting with AI models.</p>
           <Button
-            onClick={() => setShowSettings(true)}
+            onClick={openModal}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
           >
             <RiKeyLine className="mr-2" />
             Add API Keys
           </Button>
         </div>
-        <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
       </div>
     )
   }
@@ -247,7 +253,7 @@ export default function ChatPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setShowSettings(true)}>
+                  <DropdownMenuItem onClick={openModal}>
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
@@ -274,7 +280,7 @@ export default function ChatPage() {
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
                     const event = { target: { value: "Write a creative story about space exploration" } }
-                    handleInputChange(event as any)
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
                   }}
                 >
                   <div>
@@ -287,7 +293,7 @@ export default function ChatPage() {
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
                     const event = { target: { value: "Explain quantum computing in simple terms" } }
-                    handleInputChange(event as any)
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
                   }}
                 >
                   <div>
@@ -300,7 +306,7 @@ export default function ChatPage() {
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
                     const event = { target: { value: "Help me write a Python function to sort a list" } }
-                    handleInputChange(event as any)
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
                   }}
                 >
                   <div>
@@ -313,7 +319,7 @@ export default function ChatPage() {
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
                     const event = { target: { value: "Analyze this data and provide insights" } }
-                    handleInputChange(event as any)
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
                   }}
                 >
                   <div>
@@ -466,8 +472,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-
-      <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
     </>
   )
 }

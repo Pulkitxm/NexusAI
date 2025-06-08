@@ -1,3 +1,4 @@
+import { ApiKeys } from "@/types/keys"
 import type { AIModel } from "@/types/models"
 import {
   RiRobotLine,
@@ -30,7 +31,7 @@ import {
 } from "react-icons/ri"
 
 export const AI_MODELS: AIModel[] = [
-  // Gemini Models
+  
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
@@ -82,7 +83,7 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "google",
   },
 
-  // GPT Models
+  
   {
     id: "gpt-imagegen",
     name: "GPT ImageGen",
@@ -154,7 +155,7 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "openai",
   },
 
-  // Claude Models
+  
   {
     id: "claude-4-sonnet",
     name: "Claude 4 Sonnet",
@@ -206,7 +207,7 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
   },
 
-  // Other Models
+  
   {
     id: "o4-mini",
     name: "o4 mini",
@@ -378,7 +379,7 @@ export const getModelsByProvider = (provider: string) => {
   return AI_MODELS.filter((model) => model.provider === provider)
 }
 
-export const getAvailableModels = (keys: Key) => {
+export const getAvailableModels = (keys: ApiKeys) => {
   return AI_MODELS.filter((model) => {
     const requiredKey = keys[model.requiresKey]
     return requiredKey && requiredKey.trim() !== ""
