@@ -10,106 +10,57 @@ export const maxDuration = 30
 const getModel = (modelId: string, keys: Record<string, string>) => {
   // OpenAI Models
   if (modelId.startsWith("gpt-") || modelId.startsWith("o")) {
-    const openaiClient = openai({ apiKey: keys.openai })
+    const model = openai("gpt-3.5-turbo-instruct")
     switch (modelId) {
       case "gpt-4.1":
-        return openaiClient("gpt-4-turbo")
       case "gpt-4.1-mini":
-        return openaiClient("gpt-4-turbo")
-      case "gpt-4.1-nano":
-        return openaiClient("gpt-3.5-turbo")
-      case "gpt-4o-mini":
-        return openaiClient("gpt-4o-mini")
-      case "gpt-4o":
-        return openaiClient("gpt-4o")
       case "gpt-4.5":
-        return openaiClient("gpt-4-turbo")
+        return model
+      case "gpt-4.1-nano":
+        return model
+      case "gpt-4o-mini":
       case "o4-mini":
-        return openaiClient("gpt-4o-mini")
       case "o3-mini":
-        return openaiClient("gpt-4o-mini")
+        return model
+      case "gpt-4o":
       case "o3":
-        return openaiClient("gpt-4o")
       default:
-        return openaiClient("gpt-4o")
+        return model
     }
   }
 
   // Google Models
   if (modelId.startsWith("gemini-")) {
-    const googleClient = google({ apiKey: keys.google })
-    switch (modelId) {
-      case "gemini-2.5-flash":
-        return googleClient("gemini-1.5-flash")
-      case "gemini-2.5-pro":
-        return googleClient("gemini-1.5-pro")
-      case "gemini-2.0-flash":
-        return googleClient("gemini-1.5-flash")
-      case "gemini-2.0-flash-lite":
-        return googleClient("gemini-1.5-flash")
-      case "gemini-2.5-flash-thinking":
-        return googleClient("gemini-1.5-pro")
-      default:
-        return googleClient("gemini-1.5-pro")
-    }
+    const model = google("gemini-1.5-pro")
+    return model
   }
 
   // Anthropic Models
   if (modelId.startsWith("claude-")) {
-    const anthropicClient = anthropic({ apiKey: keys.anthropic })
-    switch (modelId) {
-      case "claude-4-sonnet":
-        return anthropicClient("claude-3-5-sonnet-20241022")
-      case "claude-3.5-sonnet":
-        return anthropicClient("claude-3-5-sonnet-20241022")
-      case "claude-3.7-sonnet":
-        return anthropicClient("claude-3-5-sonnet-20241022")
-      case "claude-3.7-sonnet-reasoning":
-        return anthropicClient("claude-3-5-sonnet-20241022")
-      case "claude-4-opus":
-        return anthropicClient("claude-3-opus-20240229")
-      default:
-        return anthropicClient("claude-3-5-sonnet-20241022")
-    }
+    const model = anthropic("claude-3-5-sonnet-20241022")
+    return model
   }
 
   // DeepSeek Models
   if (modelId.startsWith("deepseek-")) {
-    const deepseekClient = deepseek({ apiKey: keys.deepseek })
-    return deepseekClient("deepseek-chat")
+    const model = deepseek("deepseek-chat")
+    return model
   }
 
   // Groq/Meta Models
   if (modelId.startsWith("llama-") || modelId.startsWith("grok-")) {
-    const groqClient = createGroq({ apiKey: keys.groq })
-    switch (modelId) {
-      case "llama-3.3-70b":
-        return groqClient("llama-3.1-70b-versatile")
-      case "llama-4-scout":
-        return groqClient("llama-3.1-70b-versatile")
-      case "llama-4-maverick":
-        return groqClient("llama-3.1-70b-versatile")
-      case "grok-3":
-        return groqClient("llama-3.1-70b-versatile")
-      case "grok-3-mini":
-        return groqClient("llama-3.1-8b-instant")
-      default:
-        return groqClient("llama-3.1-70b-versatile")
-    }
+    const model = createGroq("llama-3.1-70b-versatile")
+    return model
   }
 
   // Qwen Models (via OpenRouter)
   if (modelId.startsWith("qwen-")) {
-    const openaiClient = openai({
-      apiKey: keys.openrouter,
-      baseURL: "https://openrouter.ai/api/v1",
-    })
-    return openaiClient("qwen/qwen-2.5-72b-instruct")
+    const model = openai("qwen/qwen-2.5-72b-instruct")
+    return model
   }
 
   // Default fallback
-  const openaiClient = openai({ apiKey: keys.openai })
-  return openaiClient("gpt-4o")
+  return openai("gpt-3.5-turbo-instruct")
 }
 
 export async function POST(req: Request) {

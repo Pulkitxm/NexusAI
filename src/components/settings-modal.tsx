@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useKeys } from "@/components/key-provider"
+import { useKeys } from "@/providers/key-provider"
 import { Eye, EyeOff, ExternalLink, Key, Shield, Settings, Zap } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import {

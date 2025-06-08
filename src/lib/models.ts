@@ -378,7 +378,7 @@ export const getModelsByProvider = (provider: string) => {
   return AI_MODELS.filter((model) => model.provider === provider)
 }
 
-export const getAvailableModels = (keys: Record<string, string>) => {
+export const getAvailableModels = (keys: Key) => {
   return AI_MODELS.filter((model) => {
     const requiredKey = keys[model.requiresKey]
     return requiredKey && requiredKey.trim() !== ""

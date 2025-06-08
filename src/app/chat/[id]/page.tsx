@@ -11,8 +11,7 @@ import { Send, Copy, Check, MoreVertical, Settings } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useParams, useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
-import { useKeys } from "@/components/key-provider"
+import { useKeys } from "@/providers/key-provider"
 import { AI_MODELS, getAvailableModels } from "@/lib/models"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { SettingsModal } from "@/components/settings-modal"
@@ -33,7 +32,15 @@ export default function ChatPage() {
   const params = useParams()
   const router = useRouter()
   const chatId = params.id as string
-  const { user } = useAuth()
+
+  const { user } = {
+    user: {
+      id: "1",
+      name: "John Doe",
+      email: "john.doe@example.com",
+      avatar: "https://github.com/shadcn.png",
+    },
+  }
   const { keys, hasAnyKeys } = useKeys()
   const [selectedModel, setSelectedModel] = useState("")
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
