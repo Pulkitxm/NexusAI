@@ -1,20 +1,31 @@
-"use client"
+"use client";
 
-import { useChat } from "ai/react"
-import { useState, useEffect, useRef, ChangeEvent } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Send, Copy, Check, MoreVertical, Settings } from "lucide-react"
-import { SidebarTrigger } from "@/components/sidebar"
-import { useParams, useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
-import { useKeys } from "@/providers/key-provider"
-import { AI_MODELS, getAvailableModels } from "@/lib/models"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useChat } from "ai/react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Send, Copy, Check, MoreVertical, Settings } from "lucide-react";
+import { SidebarTrigger } from "@/components/sidebar";
+import { useParams, useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { useKeys } from "@/providers/key-provider";
+import { AI_MODELS, getAvailableModels } from "@/lib/models";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   RiRobotLine,
   RiUserLine,
@@ -25,8 +36,8 @@ import {
   RiLoader4Line,
   RiAlertFill,
   RiGlobalLine,
-} from "react-icons/ri"
-import { useSettingsModal } from "@/providers/settings-modal-provider"
+} from "react-icons/ri";
+import { useSettingsModal } from "@/providers/settings-modal-provider";
 
 interface Chat {
   id: string;
@@ -37,9 +48,9 @@ interface Chat {
 }
 
 export default function ChatPage() {
-  const params = useParams()
-  const router = useRouter()
-  const chatId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const chatId = params.id as string;
 
   const { user } = {
     user: {
@@ -48,108 +59,115 @@ export default function ChatPage() {
       email: "john.doe@example.com",
       avatar: "https://github.com/shadcn.png",
     },
-  }
-  const { keys, hasAnyKeys } = useKeys()
-  const [selectedModel, setSelectedModel] = useState("")
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
-  const { openModal } = useSettingsModal()
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { toast } = useToast()
+  };
+  const { keys, hasAnyKeys } = useKeys();
+  const [selectedModel, setSelectedModel] = useState("");
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const { openModal } = useSettingsModal();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  const availableModels = getAvailableModels(keys)
+  const availableModels = getAvailableModels(keys);
 
   useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
-      setSelectedModel(availableModels[0].id)
+      setSelectedModel(availableModels[0].id);
     }
-  }, [availableModels, selectedModel])
+  }, [availableModels, selectedModel]);
 
   useEffect(() => {
     if (!hasAnyKeys) {
-      router.push("/")
+      router.push("/");
     }
-  }, [hasAnyKeys, router])
+  }, [hasAnyKeys, router]);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: "/api/chat",
-    body: {
-      model: selectedModel,
-      chatId: chatId,
-      keys: keys,
-    },
-    onFinish: (message) => {
-      saveChatToStorage(message.content)
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      })
-    },
-  })
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
+    useChat({
+      api: "/api/chat",
+      body: {
+        model: selectedModel,
+        chatId: chatId,
+        keys: keys,
+      },
+      onFinish: (message) => {
+        saveChatToStorage(message.content);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send message",
+          variant: "destructive",
+        });
+      },
+    });
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   const saveChatToStorage = (lastMessage: string) => {
-    if (!user) return
+    if (!user) return;
 
-    const chats = JSON.parse(localStorage.getItem(`nexus-chats-${user.id}`) || "[]") as Chat[]
-    const existingChatIndex = chats.findIndex((chat) => chat.id === chatId)
+    const chats = JSON.parse(
+      localStorage.getItem(`nexus-chats-${user.id}`) || "[]",
+    ) as Chat[];
+    const existingChatIndex = chats.findIndex((chat) => chat.id === chatId);
 
     const chatTitle =
       messages.length > 0
-        ? messages[0].content.slice(0, 50) + (messages[0].content.length > 50 ? "..." : "")
-        : "New Chat"
+        ? messages[0].content.slice(0, 50) +
+          (messages[0].content.length > 50 ? "..." : "")
+        : "New Chat";
 
-    const selectedModelInfo = AI_MODELS.find((m) => m.id === selectedModel)
+    const selectedModelInfo = AI_MODELS.find((m) => m.id === selectedModel);
 
     const chatData = {
       id: chatId,
       title: chatTitle,
       model: selectedModelInfo?.name || selectedModel,
-      lastMessage: lastMessage.slice(0, 100) + (lastMessage.length > 100 ? "..." : ""),
+      lastMessage:
+        lastMessage.slice(0, 100) + (lastMessage.length > 100 ? "..." : ""),
       timestamp: new Date(),
-    }
+    };
 
     if (existingChatIndex >= 0) {
-      chats[existingChatIndex] = chatData
+      chats[existingChatIndex] = chatData;
     } else {
-      chats.unshift(chatData)
+      chats.unshift(chatData);
     }
 
-    localStorage.setItem(`nexus-chats-${user.id}`, JSON.stringify(chats))
-  }
+    localStorage.setItem(`nexus-chats-${user.id}`, JSON.stringify(chats));
+  };
 
   const copyToClipboard = async (text: string, messageId: string) => {
     try {
-      await navigator.clipboard.writeText(text)
-      setCopiedMessageId(messageId)
+      await navigator.clipboard.writeText(text);
+      setCopiedMessageId(messageId);
       toast({
         title: "Copied!",
         description: "Message copied to clipboard",
-      })
-      setTimeout(() => setCopiedMessageId(null), 2000)
+      });
+      setTimeout(() => setCopiedMessageId(null), 2000);
     } catch (err) {
-      console.error(err)
+      console.error(err);
       toast({
         title: "Failed to copy",
         description: "Could not copy message to clipboard",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const selectedModelInfo = AI_MODELS.find((model) => model.id === selectedModel)
+  const selectedModelInfo = AI_MODELS.find(
+    (model) => model.id === selectedModel,
+  );
 
   if (!hasAnyKeys) {
-    return null
+    return null;
   }
 
   if (availableModels.length === 0) {
@@ -159,8 +177,12 @@ export default function ChatPage() {
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <RiKeyLine className="text-amber-600 text-xl" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No API Keys Found</h2>
-          <p className="text-gray-600 mb-6">Add your API keys to start chatting with AI models.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            No API Keys Found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Add your API keys to start chatting with AI models.
+          </p>
           <Button
             onClick={openModal}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
@@ -170,7 +192,7 @@ export default function ChatPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -186,22 +208,34 @@ export default function ChatPage() {
                   <RiGlobalLine className="text-white text-sm" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-gray-900">Nexus AI</h1>
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Nexus AI
+                  </h1>
                   {selectedModelInfo && (
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge className={`${selectedModelInfo.color} text-white text-xs`}>
+                      <Badge
+                        className={`${selectedModelInfo.color} text-white text-xs`}
+                      >
                         <selectedModelInfo.icon className="mr-1 text-xs" />
                         {selectedModelInfo.name}
                       </Badge>
-                      <span className="text-xs text-gray-500">by {selectedModelInfo.provider}</span>
+                      <span className="text-xs text-gray-500">
+                        by {selectedModelInfo.provider}
+                      </span>
                       {selectedModelInfo.category === "reasoning" && (
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-purple-100 text-purple-700"
+                        >
                           <RiBrainLine className="mr-1" />
                           Reasoning
                         </Badge>
                       )}
                       {selectedModelInfo.category === "image" && (
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-green-100 text-green-700"
+                        >
                           <RiImageLine className="mr-1" />
                           Image Gen
                         </Badge>
@@ -221,7 +255,9 @@ export default function ChatPage() {
                   {availableModels.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center gap-3 py-1">
-                        <div className={`w-6 h-6 ${model.color} rounded flex items-center justify-center`}>
+                        <div
+                          className={`w-6 h-6 ${model.color} rounded flex items-center justify-center`}
+                        >
                           <model.icon className="text-white text-xs" />
                         </div>
                         <div className="flex-1">
@@ -231,12 +267,18 @@ export default function ChatPage() {
                           </div>
                         </div>
                         {model.category === "reasoning" && (
-                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-purple-100 text-purple-700"
+                          >
                             <RiBrainLine className="mr-1" />
                           </Badge>
                         )}
                         {model.category === "image" && (
-                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-green-100 text-green-700"
+                          >
                             <RiImageLine className="mr-1" />
                           </Badge>
                         )}
@@ -270,61 +312,88 @@ export default function ChatPage() {
               <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-6">
                 <RiChatSmile3Line className="text-3xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3">Start a conversation</h3>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+                Start a conversation
+              </h3>
               <p className="text-gray-600 mb-6">
-                Ask me anything! I can help with writing, analysis, coding, creative tasks, and more.
+                Ask me anything! I can help with writing, analysis, coding,
+                creative tasks, and more.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg">
                 <Button
                   variant="outline"
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
-                    const event = { target: { value: "Write a creative story about space exploration" } }
-                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
+                    const event = {
+                      target: {
+                        value: "Write a creative story about space exploration",
+                      },
+                    };
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>);
                   }}
                 >
                   <div>
                     <div className="font-medium text-sm">Creative Writing</div>
-                    <div className="text-xs text-gray-500">Write a story about space</div>
+                    <div className="text-xs text-gray-500">
+                      Write a story about space
+                    </div>
                   </div>
                 </Button>
                 <Button
                   variant="outline"
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
-                    const event = { target: { value: "Explain quantum computing in simple terms" } }
-                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
+                    const event = {
+                      target: {
+                        value: "Explain quantum computing in simple terms",
+                      },
+                    };
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>);
                   }}
                 >
                   <div>
                     <div className="font-medium text-sm">Explain Concepts</div>
-                    <div className="text-xs text-gray-500">Learn about quantum computing</div>
+                    <div className="text-xs text-gray-500">
+                      Learn about quantum computing
+                    </div>
                   </div>
                 </Button>
                 <Button
                   variant="outline"
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
-                    const event = { target: { value: "Help me write a Python function to sort a list" } }
-                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
+                    const event = {
+                      target: {
+                        value: "Help me write a Python function to sort a list",
+                      },
+                    };
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>);
                   }}
                 >
                   <div>
                     <div className="font-medium text-sm">Code Help</div>
-                    <div className="text-xs text-gray-500">Get programming assistance</div>
+                    <div className="text-xs text-gray-500">
+                      Get programming assistance
+                    </div>
                   </div>
                 </Button>
                 <Button
                   variant="outline"
                   className="text-left justify-start h-auto p-4 hover:bg-gray-50"
                   onClick={() => {
-                    const event = { target: { value: "Analyze this data and provide insights" } }
-                    handleInputChange(event as ChangeEvent<HTMLInputElement>)
+                    const event = {
+                      target: {
+                        value: "Analyze this data and provide insights",
+                      },
+                    };
+                    handleInputChange(event as ChangeEvent<HTMLInputElement>);
                   }}
                 >
                   <div>
                     <div className="font-medium text-sm">Data Analysis</div>
-                    <div className="text-xs text-gray-500">Get insights from data</div>
+                    <div className="text-xs text-gray-500">
+                      Get insights from data
+                    </div>
                   </div>
                 </Button>
               </div>
@@ -335,10 +404,16 @@ export default function ChatPage() {
                 key={message.id}
                 className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className={`flex gap-4 max-w-4xl ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                <div
+                  className={`flex gap-4 max-w-4xl ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                >
                   <Avatar className="w-8 h-8 mt-1">
                     <AvatarFallback
-                      className={message.role === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"}
+                      className={
+                        message.role === "user"
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200 text-gray-600"
+                      }
                     >
                       {message.role === "user" ? (
                         <RiUserLine className="text-sm" />
@@ -362,12 +437,15 @@ export default function ChatPage() {
                             switch (part.type) {
                               case "text":
                                 return (
-                                  <div key={`${message.id}-${i}`} className="whitespace-pre-wrap break-words">
+                                  <div
+                                    key={`${message.id}-${i}`}
+                                    className="whitespace-pre-wrap break-words"
+                                  >
                                     {part.text}
                                   </div>
-                                )
+                                );
                               default:
-                                return null
+                                return null;
                             }
                           })}
                         </div>
@@ -379,7 +457,9 @@ export default function ChatPage() {
                               ? "text-white/70 hover:text-white hover:bg-white/10"
                               : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                           }`}
-                          onClick={() => copyToClipboard(message.content, message.id)}
+                          onClick={() =>
+                            copyToClipboard(message.content, message.id)
+                          }
                         >
                           {copiedMessageId === message.id ? (
                             <Check className="w-4 h-4" />
@@ -416,7 +496,9 @@ export default function ChatPage() {
                         style={{ animationDelay: "0.2s" }}
                       />
                     </div>
-                    <span className="text-sm text-gray-500">AI is thinking...</span>
+                    <span className="text-sm text-gray-500">
+                      AI is thinking...
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -446,7 +528,10 @@ export default function ChatPage() {
 
         {/* Input */}
         <div className="border-t bg-white p-4 shadow-sm">
-          <form onSubmit={handleSubmit} className="flex gap-3 max-w-4xl mx-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="flex gap-3 max-w-4xl mx-auto"
+          >
             <div className="flex-1 relative">
               <Input
                 value={input}
@@ -464,14 +549,20 @@ export default function ChatPage() {
               disabled={isLoading || !input.trim() || !selectedModel}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0"
             >
-              {isLoading ? <RiLoader4Line className="animate-spin" /> : <Send className="w-4 h-4" />}
+              {isLoading ? (
+                <RiLoader4Line className="animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </form>
           <div className="text-center mt-2">
-            <p className="text-xs text-gray-500">Powered by your API keys • Messages are processed securely</p>
+            <p className="text-xs text-gray-500">
+              Powered by your API keys • Messages are processed securely
+            </p>
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }

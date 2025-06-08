@@ -1,5 +1,5 @@
-import { ApiKeys } from "@/types/keys"
-import type { AIModel } from "@/types/models"
+import { ApiKeys } from "@/types/keys";
+import type { AIModel } from "@/types/models";
 import {
   RiRobotLine,
   RiBrainLine,
@@ -28,10 +28,9 @@ import {
   RiGamepadLine,
   RiStarSLine,
   RiMiniProgramLine,
-} from "react-icons/ri"
+} from "react-icons/ri";
 
 export const AI_MODELS: AIModel[] = [
-  
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
@@ -83,7 +82,6 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "google",
   },
 
-  
   {
     id: "gpt-imagegen",
     name: "GPT ImageGen",
@@ -155,7 +153,6 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "openai",
   },
 
-  
   {
     id: "claude-4-sonnet",
     name: "Claude 4 Sonnet",
@@ -207,7 +204,6 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
   },
 
-  
   {
     id: "o4-mini",
     name: "o4 mini",
@@ -368,20 +364,20 @@ export const AI_MODELS: AIModel[] = [
     description: "Multilingual capabilities",
     requiresKey: "openrouter",
   },
-]
+];
 
 export const getModelsByCategory = (category?: string) => {
-  if (!category) return AI_MODELS
-  return AI_MODELS.filter((model) => model.category === category)
-}
+  if (!category) return AI_MODELS;
+  return AI_MODELS.filter((model) => model.category === category);
+};
 
 export const getModelsByProvider = (provider: string) => {
-  return AI_MODELS.filter((model) => model.provider === provider)
-}
+  return AI_MODELS.filter((model) => model.provider === provider);
+};
 
 export const getAvailableModels = (keys: ApiKeys) => {
   return AI_MODELS.filter((model) => {
-    const requiredKey = keys[model.requiresKey]
-    return requiredKey && requiredKey.trim() !== ""
-  })
-}
+    const requiredKey = keys[model.requiresKey];
+    return requiredKey && requiredKey.trim() !== "";
+  });
+};

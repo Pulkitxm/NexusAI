@@ -52,7 +52,7 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
         data: {
           name: name ?? email.split("@")[0],
           email,
-          avatar
+          avatar,
         },
       });
 

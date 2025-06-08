@@ -1,15 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useKeys } from "@/providers/key-provider"
-import { Eye, EyeOff, ExternalLink, Key, Shield, Settings, Zap } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useKeys } from "@/providers/key-provider";
+import {
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Key,
+  Shield,
+  Settings,
+  Zap,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   RiRobotLine,
   RiBrainLine,
@@ -22,26 +41,26 @@ import {
   RiLockLine,
   RiMoneyDollarCircleLine,
   RiRefreshLine,
-} from "react-icons/ri"
+} from "react-icons/ri";
 
 interface SettingsModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const { keys, updateKeys } = useKeys()
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
-  const [tempKeys, setTempKeys] = useState(keys)
+  const { keys, updateKeys } = useKeys();
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [tempKeys, setTempKeys] = useState(keys);
 
   const toggleKeyVisibility = (keyName: string) => {
-    setShowKeys((prev) => ({ ...prev, [keyName]: !prev[keyName] }))
-  }
+    setShowKeys((prev) => ({ ...prev, [keyName]: !prev[keyName] }));
+  };
 
   const handleSave = () => {
-    updateKeys(tempKeys)
-    onOpenChange(false)
-  }
+    updateKeys(tempKeys);
+    onOpenChange(false);
+  };
 
   const keyConfigs = [
     {
@@ -100,7 +119,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       color: "bg-indigo-500",
       link: "https://openrouter.ai/keys",
     },
-  ]
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,22 +150,35 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 ${config.color} rounded-lg flex items-center justify-center`}>
+                        <div
+                          className={`w-10 h-10 ${config.color} rounded-lg flex items-center justify-center`}
+                        >
                           <config.icon className="text-white text-lg" />
                         </div>
                         <div>
-                          <CardTitle className="text-lg">{config.name}</CardTitle>
-                          <CardDescription>{config.description}</CardDescription>
+                          <CardTitle className="text-lg">
+                            {config.name}
+                          </CardTitle>
+                          <CardDescription>
+                            {config.description}
+                          </CardDescription>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {tempKeys[config.key as keyof typeof tempKeys] && (
-                          <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-700"
+                          >
                             <Zap className="w-3 h-3 mr-1" />
                             Connected
                           </Badge>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => window.open(config.link, "_blank")}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(config.link, "_blank")}
+                        >
                           <ExternalLink className="w-4 h-4 mr-1" />
                           Get Key
                         </Button>
@@ -161,7 +193,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                           id={config.key}
                           type={showKeys[config.key] ? "text" : "password"}
                           placeholder={`Enter your ${config.name} API key`}
-                          value={tempKeys[config.key as keyof typeof tempKeys] || ""}
+                          value={
+                            tempKeys[config.key as keyof typeof tempKeys] || ""
+                          }
                           onChange={(e) =>
                             setTempKeys((prev) => ({
                               ...prev,
@@ -177,7 +211,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                           className="absolute right-0 top-0 h-full px-3"
                           onClick={() => toggleKeyVisibility(config.key)}
                         >
-                          {showKeys[config.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showKeys[config.key] ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -190,7 +228,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              <Button
+                onClick={handleSave}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+              >
                 Save Keys
               </Button>
             </div>
@@ -203,7 +244,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <RiShieldCheckLine className="w-5 h-5 text-green-600" />
                   Bring Your Own Key (BYOK)
                 </CardTitle>
-                <CardDescription>Your privacy and security are our top priorities</CardDescription>
+                <CardDescription>
+                  Your privacy and security are our top priorities
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
@@ -212,9 +255,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <RiLockLine className="text-green-600 text-sm" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">Your Keys, Your Control</h4>
+                      <h4 className="font-medium text-gray-900">
+                        Your Keys, Your Control
+                      </h4>
                       <p className="text-sm text-gray-600">
-                        API keys are stored locally in your browser and never sent to our servers.
+                        API keys are stored locally in your browser and never
+                        sent to our servers.
                       </p>
                     </div>
                   </div>
@@ -224,9 +270,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <RiShieldCheckLine className="text-blue-600 text-sm" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">Direct API Communication</h4>
+                      <h4 className="font-medium text-gray-900">
+                        Direct API Communication
+                      </h4>
                       <p className="text-sm text-gray-600">
-                        Your requests go directly to AI providers using your keys - we never see your data.
+                        Your requests go directly to AI providers using your
+                        keys - we never see your data.
                       </p>
                     </div>
                   </div>
@@ -236,9 +285,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <RiMoneyDollarCircleLine className="text-purple-600 text-sm" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">Pay Only for What You Use</h4>
+                      <h4 className="font-medium text-gray-900">
+                        Pay Only for What You Use
+                      </h4>
                       <p className="text-sm text-gray-600">
-                        No subscription fees - you pay providers directly based on your usage.
+                        No subscription fees - you pay providers directly based
+                        on your usage.
                       </p>
                     </div>
                   </div>
@@ -248,9 +300,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <RiRefreshLine className="text-orange-600 text-sm" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">Sync Across Devices</h4>
+                      <h4 className="font-medium text-gray-900">
+                        Sync Across Devices
+                      </h4>
                       <p className="text-sm text-gray-600">
-                        Sign in with Google to sync your chat history across all your devices.
+                        Sign in with Google to sync your chat history across all
+                        your devices.
                       </p>
                     </div>
                   </div>
@@ -261,5 +316,5 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

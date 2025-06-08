@@ -1,28 +1,29 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import Link from "next/link"
-import { useKeys } from "@/providers/key-provider"
-import { useSettingsModal } from "@/providers/settings-modal-provider"
-import {
-  RiChatSmile3Line,
-  RiKeyLine,
-} from "react-icons/ri"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+import { useKeys } from "@/providers/key-provider";
+import { useSettingsModal } from "@/providers/settings-modal-provider";
+import { RiChatSmile3Line, RiKeyLine } from "react-icons/ri";
 
 export default function HomePage() {
-  const { hasAnyKeys } = useKeys()
-  const { openModal } = useSettingsModal()
+  const { hasAnyKeys } = useKeys();
+  const { openModal } = useSettingsModal();
 
   return (
     <>
       <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome back!</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Welcome back!
+            </h1>
             <p className="text-xl text-gray-600">
               Ready to chat with AI?{" "}
-              {hasAnyKeys ? "Choose a model and start chatting." : "Add your API keys to get started."}
+              {hasAnyKeys
+                ? "Choose a model and start chatting."
+                : "Add your API keys to get started."}
             </p>
           </div>
 
@@ -57,7 +58,8 @@ export default function HomePage() {
                   <div className="text-left">
                     <h3 className="font-medium">API Keys Required</h3>
                     <p className="text-sm text-amber-700">
-                      Add your API keys to start chatting with AI models. Your keys are stored securely in your browser.
+                      Add your API keys to start chatting with AI models. Your
+                      keys are stored securely in your browser.
                     </p>
                   </div>
                 </div>
@@ -67,5 +69,5 @@ export default function HomePage() {
         </div>
       </div>
     </>
-  )
+  );
 }

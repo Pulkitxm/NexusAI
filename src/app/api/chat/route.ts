@@ -1,90 +1,84 @@
-import { openai } from "@ai-sdk/openai"
-import { anthropic } from "@ai-sdk/anthropic"
-import { google } from "@ai-sdk/google"
-import { deepseek } from "@ai-sdk/deepseek"
-import { streamText } from "ai"
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { deepseek } from "@ai-sdk/deepseek";
+import { streamText } from "ai";
 
-export const maxDuration = 30
+export const maxDuration = 30;
 
 const getModel = (modelId: string) => {
-  
   if (modelId.startsWith("gpt-") || modelId.startsWith("o")) {
-    const model = openai("gpt-3.5-turbo-instruct")
+    const model = openai("gpt-3.5-turbo-instruct");
     switch (modelId) {
       case "gpt-4.1":
       case "gpt-4.1-mini":
       case "gpt-4.5":
-        return model
+        return model;
       case "gpt-4.1-nano":
-        return model
+        return model;
       case "gpt-4o-mini":
       case "o4-mini":
       case "o3-mini":
-        return model
+        return model;
       case "gpt-4o":
       case "o3":
       default:
-        return model
+        return model;
     }
   }
 
-  
   if (modelId.startsWith("gemini-")) {
-    const model = google("gemini-1.5-pro")
-    return model
+    const model = google("gemini-1.5-pro");
+    return model;
   }
 
-  
   if (modelId.startsWith("claude-")) {
-    const model = anthropic("claude-3-5-sonnet-20241022")
-    return model
+    const model = anthropic("claude-3-5-sonnet-20241022");
+    return model;
   }
 
-  
   if (modelId.startsWith("deepseek-")) {
-    const model = deepseek("deepseek-chat")
-    return model
+    const model = deepseek("deepseek-chat");
+    return model;
   }
 
-  
   if (modelId.startsWith("qwen-")) {
-    const model = openai("qwen/qwen-2.5-72b-instruct")
-    return model
+    const model = openai("qwen/qwen-2.5-72b-instruct");
+    return model;
   }
 
-  
-  return openai("gpt-3.5-turbo-instruct")
-}
+  return openai("gpt-3.5-turbo-instruct");
+};
 
 export async function POST(req: Request) {
   try {
-    const { messages, model: modelId, keys } = await req.json()
+    const { messages, model: modelId, keys } = await req.json();
 
     if (!keys || Object.keys(keys).length === 0) {
       return new Response(JSON.stringify({ error: "No API keys provided" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
-      })
+      });
     }
 
-    const model = getModel(modelId)
+    const model = getModel(modelId);
 
     const systemMessage = {
       role: "system" as const,
       content:
         "You are a helpful AI assistant. Provide clear, accurate, and helpful responses. If you're unsure about something, say so rather than guessing. Format your responses nicely with proper spacing and structure when appropriate.",
-    }
+    };
 
     const result = streamText({
       model,
       messages: [systemMessage, ...messages],
       temperature: 0.7,
       maxTokens: 4000,
-    })
+    });
 
-    return result.toDataStreamResponse()
+    return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Chat API Error:", error)
+    console.error("Chat API Error:", error);
 
     return new Response(
       JSON.stringify({
@@ -95,6 +89,6 @@ export async function POST(req: Request) {
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
-    )
+    );
   }
 }
