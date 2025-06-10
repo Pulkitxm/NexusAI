@@ -16,6 +16,7 @@ interface ChatMessagesProps {
   onReloadMessage: (messageId: string, modelId?: string) => void;
   availableModels: AIModel[];
   selectedModel: string;
+  regeneratingMessageId: string | null;
 }
 
 export function ChatMessages({
@@ -29,6 +30,7 @@ export function ChatMessages({
   onReloadMessage,
   availableModels,
   selectedModel,
+  regeneratingMessageId,
 }: ChatMessagesProps) {
   return (
     <div role="log" aria-label="Chat conversation" className="space-y-1">
@@ -43,7 +45,10 @@ export function ChatMessages({
           ) : (
             <MessageBubble
               message={message}
-              isStreaming={isLoading && index === messages.length - 1}
+              isStreaming={
+                (isLoading && index === messages.length - 1) ||
+                regeneratingMessageId === message.id
+              }
               onStartEdit={
                 message.role === "user"
                   ? () => onStartEdit(message.id)

@@ -16,17 +16,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 
+interface ErrorDetails {
+  message: string;
+  code: string;
+  status: number;
+  details?: unknown;
+}
+
 export default function ChatUI() {
   const { selectedModel, setSelectedModel } = useModel();
   const { keys } = useKeys();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorDetails | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const availableModels = getAvailableModels(keys);
@@ -34,6 +42,16 @@ export default function ChatUI() {
     (m) => m.id === selectedModel,
   );
   const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
+
+  const onError = useCallback((error: Error) => {
+    console.error("Chat error:", error);
+    setError({
+      message: error.message,
+      code: "CHAT_ERROR",
+      status: 500,
+    });
+    setIsTyping(false);
+  }, []);
 
   const {
     messages,
@@ -51,11 +69,7 @@ export default function ChatUI() {
       apiKey: apiKey,
       webSearch: webSearchEnabled,
     },
-    onError: (error) => {
-      console.error("Chat error:", error);
-      setError(error.message);
-      setIsTyping(false);
-    },
+    onError,
     onFinish: () => {
       setError(null);
       setIsTyping(false);
@@ -75,20 +89,6 @@ export default function ChatUI() {
       }
     }
   }, [isAtBottom]);
-
-  const scrollToTop = useCallback(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
-      if (viewport) {
-        viewport.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, []);
 
   const handleScroll = useCallback(() => {
     if (scrollAreaRef.current) {
@@ -196,7 +196,11 @@ export default function ChatUI() {
         reload();
       } catch (error) {
         console.error("Error editing message:", error);
-        setError("Failed to edit message");
+        setError({
+          message: "Failed to edit message",
+          code: "EDIT_ERROR",
+          status: 500,
+        });
       }
     },
     [
@@ -210,30 +214,61 @@ export default function ChatUI() {
     ],
   );
 
+  // Helper function to format error messages
+  const formatErrorMessage = useCallback((error: ErrorDetails) => {
+    const messages: Record<string, string> = {
+      MISSING_FIELDS: "Please ensure all required fields are provided.",
+      MODEL_NOT_FOUND: "The selected AI model is not available.",
+      PROVIDER_NOT_SUPPORTED: "The selected AI provider is not supported.",
+      PROVIDER_INIT_ERROR: "Failed to initialize the AI service. Please check your API key.",
+      AI_RESPONSE_ERROR: "The AI model encountered an error. Please try again.",
+      STREAM_TRANSFORM_ERROR: "Error processing the AI response. Please try again.",
+      STREAM_ERROR: "Failed to establish connection with the AI service.",
+      GENERATION_ERROR: "Failed to generate response. Please try again.",
+      UNKNOWN_ERROR: "An unexpected error occurred. Please try again.",
+    };
+
+    return {
+      title: messages[error.code] || "Error",
+      description: error.message,
+      details: error.details,
+    };
+  }, []);
+
+  const handleError = useCallback((error: unknown) => {
+    let errorDetails: ErrorDetails;
+
+    if (error instanceof Error && error.cause && typeof error.cause === 'object' && 'code' in error.cause) {
+      errorDetails = error.cause as ErrorDetails;
+    } else {
+      errorDetails = {
+        message: error instanceof Error ? error.message : "An unexpected error occurred",
+        code: "UNKNOWN_ERROR",
+        status: 500
+      };
+    }
+
+    const formattedError = formatErrorMessage(errorDetails);
+    setError(errorDetails);
+
+    toast({
+      variant: "destructive",
+      title: formattedError.title,
+      description: formattedError.description,
+    });
+  }, [formatErrorMessage, toast]);
+
   const handleReloadMessage = useCallback(
     async (messageId: string, modelId?: string) => {
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) return;
 
-      const messagesUpToSelected = messages.slice(0, messageIndex + 1);
+      setRegeneratingMessageId(messageId);
+      setIsTyping(true);
+      setError(null);
 
-      const updatedMessages =
-        messages[messageIndex].role === "assistant"
-          ? messagesUpToSelected.slice(0, -1)
-          : messagesUpToSelected;
-
-      const targetModel = modelId || selectedModel;
-      if (modelId && modelId !== selectedModel) {
-        setSelectedModel(modelId);
-      }
-
-      setMessages(updatedMessages);
-
-      const targetModelDetails = availableModels.find(
-        (m) => m.id === targetModel,
-      );
-      const targetApiKey =
-        keys[targetModelDetails?.requiresKey as keyof typeof keys];
+      let currentMessageId = "";
+      let currentMessage = "";
 
       try {
         const response = await fetch("/api/chat", {
@@ -242,24 +277,29 @@ export default function ChatUI() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            messages: updatedMessages,
-            model: targetModel,
-            provider: targetModelDetails?.provider,
-            apiKey: targetApiKey,
+            messages: messages.slice(0, messageIndex + 1),
+            model: modelId || selectedModel,
+            provider: availableModels.find(
+              (m) => m.id === (modelId || selectedModel)
+            )?.provider,
+            apiKey: keys[availableModels.find(
+              (m) => m.id === (modelId || selectedModel)
+            )?.requiresKey as keyof typeof keys],
             webSearch: webSearchEnabled,
           }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to regenerate message");
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Failed to regenerate message', {
+            cause: errorData.error
+          });
         }
 
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No response body");
 
-        let newMessage = "";
         const decoder = new TextDecoder();
-        const newMessageId = Date.now().toString();
 
         while (true) {
           const { done, value } = await reader.read();
@@ -269,27 +309,57 @@ export default function ChatUI() {
           const lines = chunk.split("\n");
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") break;
+            if (!line) continue;
 
+            if (line.startsWith("f:")) {
               try {
-                const parsed = JSON.parse(data);
-                if (parsed.choices?.[0]?.delta?.content) {
-                  newMessage += parsed.choices[0].delta.content;
-
-                  setMessages([
-                    ...updatedMessages,
-                    {
-                      id: newMessageId,
-                      role: "assistant",
-                      content: newMessage,
-                    },
-                  ]);
-                }
+                const data = JSON.parse(line.slice(2));
+                currentMessageId = data.messageId;
               } catch (e) {
-                console.error("Error parsing chunk:", e);
+                console.error("Error parsing messageId:", e);
               }
+              continue;
+            }
+
+            if (line.startsWith("0:")) {
+              try {
+                const content = JSON.parse(line.slice(2));
+                currentMessage += content;
+                setMessages([
+                  ...messages.slice(0, messageIndex + 1),
+                  {
+                    id: currentMessageId || Date.now().toString(),
+                    role: "assistant",
+                    content: currentMessage,
+                  },
+                ]);
+              } catch (e) {
+                console.error("Error parsing content chunk:", e);
+                throw new Error("Failed to parse response chunk");
+              }
+              continue;
+            }
+
+            if (line.startsWith("error:")) {
+              try {
+                const errorData = JSON.parse(line.slice(6));
+                throw new Error(errorData.error.message, { cause: errorData.error });
+              } catch (e) {
+                if (e instanceof Error && e.cause) {
+                  throw e;
+                }
+                throw new Error("Failed to process error response", {
+                  cause: {
+                    message: "Invalid error format received from server",
+                    code: "PARSE_ERROR",
+                    status: 500
+                  }
+                });
+              }
+            }
+
+            if (line.startsWith("e:") || line.startsWith("d:")) {
+              break;
             }
           }
         }
@@ -297,25 +367,30 @@ export default function ChatUI() {
         toast({ description: "Message regenerated successfully" });
       } catch (error) {
         console.error("Error regenerating message:", error);
-        setError("Failed to regenerate message");
+        handleError(error);
+        
+        // Keep the failed message in the chat if we have partial content
+        if (currentMessage) {
+          setMessages([
+            ...messages.slice(0, messageIndex + 1),
+            {
+              id: currentMessageId || Date.now().toString(),
+              role: "assistant",
+              content: currentMessage,
+            },
+          ]);
+        }
+      } finally {
+        setRegeneratingMessageId(null);
+        setIsTyping(false);
       }
     },
-    [
-      messages,
-      setMessages,
-      selectedModel,
-      setSelectedModel,
-      availableModels,
-      keys,
-      webSearchEnabled,
-      toast,
-    ],
+    [messages, setMessages, selectedModel, setSelectedModel, availableModels, keys, webSearchEnabled, toast, handleError],
   );
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="relative flex-1">
-        <ScrollArea className="h-full px-2 sm:px-4" ref={scrollAreaRef}>
+    <div className="flex flex-col h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <ScrollArea className="h-full px-2 sm:px-4 overflow-y-auto" ref={scrollAreaRef}>
           <div className="max-w-3xl mx-auto py-4 sm:py-6">
             {error && (
               <Alert
@@ -323,7 +398,13 @@ export default function ChatUI() {
                 variant="destructive"
               >
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="flex flex-col gap-1">
+                  <span className="font-medium">{formatErrorMessage(error).title}</span>
+                  <span>{error.message}</span>
+                  {error.code && (
+                    <span className="text-xs opacity-75">Error code: {error.code}</span>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -341,27 +422,11 @@ export default function ChatUI() {
                 onReloadMessage={handleReloadMessage}
                 availableModels={availableModels}
                 selectedModel={selectedModel}
+                regeneratingMessageId={regeneratingMessageId}
               />
             )}
           </div>
         </ScrollArea>
-
-        {/* Scroll to top button */}
-        <Button
-          onClick={scrollToTop}
-          size="icon"
-          className={cn(
-            "fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 h-10 w-10 rounded-full shadow-lg transition-all duration-300 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800",
-            showScrollTop
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none",
-          )}
-          aria-label="Scroll to top"
-        >
-          <ArrowUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-        </Button>
-      </div>
-
       <ChatInput
         input={input}
         handleInputChange={handleInputChange}

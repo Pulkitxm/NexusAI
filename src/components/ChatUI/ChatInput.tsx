@@ -114,7 +114,6 @@ export function ChatInput({
               aria-label="Message input"
             />
 
-            {/* Web search toggle button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

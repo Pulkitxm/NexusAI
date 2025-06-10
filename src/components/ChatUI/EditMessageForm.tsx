@@ -97,7 +97,7 @@ export function EditMessageForm({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={!content.trim() || content === message.content}
+            disabled={!content.trim()}
             className="h-7 sm:h-8 px-2 sm:px-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-xs"
           >
             <Check className="h-3 w-3 mr-1" />

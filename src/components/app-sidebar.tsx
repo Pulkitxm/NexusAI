@@ -133,7 +133,6 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Hover trigger area - only show when sidebar is closed and not manually opened */}
       {!open && !isManuallyOpen && (
         <div
           className="fixed left-0 top-0 w-4 h-full z-40 bg-transparent"

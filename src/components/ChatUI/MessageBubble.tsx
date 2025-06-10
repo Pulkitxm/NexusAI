@@ -79,12 +79,20 @@ export const MessageBubble = React.memo(
           try {
             await onReload(modelId);
           } finally {
-            setIsRegenerating(false);
+            // Don't set isRegenerating to false here, as we want to keep the loading state
+            // until the stream starts or an error occurs
           }
         }
       },
       [onReload],
     );
+
+    // Update isRegenerating based on isStreaming prop
+    useEffect(() => {
+      if (!isStreaming) {
+        setIsRegenerating(false);
+      }
+    }, [isStreaming]);
 
     return (
       <div
@@ -113,7 +121,7 @@ export const MessageBubble = React.memo(
 
         <div
           className={cn(
-            "flex-1 min-w-0 max-w-full",
+            "group flex-1 min-w-0 max-w-full",
             isUser ? "items-end" : "items-start",
           )}
         >
@@ -171,10 +179,9 @@ export const MessageBubble = React.memo(
             </div>
           </div>
 
-          {/* Action buttons that appear when message is visible */}
           <div
             className={cn(
-              "flex items-center gap-1 mt-1 transition-all duration-200",
+              "flex items-center gap-1 mt-1 transition-opacity duration-500 invisible group-hover:visible opacity-0 group-hover:opacity-100",
               isUser ? "justify-end" : "justify-start",
               isVisible ? "opacity-100" : "opacity-0",
             )}
@@ -221,18 +228,18 @@ export const MessageBubble = React.memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    disabled={isRegenerating}
+                    disabled={isRegenerating || isStreaming}
                     className="h-7 px-2 sm:h-8 sm:px-3 bg-white/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md rounded-lg backdrop-blur-sm text-xs"
                     aria-label="Regenerate response"
                   >
                     <RefreshCw
                       className={cn(
                         "h-3 w-3 mr-1",
-                        isRegenerating && "animate-spin",
+                        (isRegenerating || isStreaming) && "animate-spin",
                       )}
                     />
                     <span className="hidden xs:inline text-xs">
-                      {isRegenerating ? "Regenerating..." : "Regenerate"}
+                      {isRegenerating || isStreaming ? "Regenerating..." : "Regenerate"}
                     </span>
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
                   </Button>
@@ -243,6 +250,7 @@ export const MessageBubble = React.memo(
                   <DropdownMenuItem
                     onClick={() => handleReload()}
                     className="flex items-center justify-between"
+                    disabled={isRegenerating || isStreaming}
                   >
                     <span>Current model</span>
                     <span className="text-xs text-muted-foreground">
@@ -255,7 +263,7 @@ export const MessageBubble = React.memo(
                     <DropdownMenuItem
                       key={model.id}
                       onClick={() => handleReload(model.id)}
-                      disabled={model.id === selectedModel}
+                      disabled={model.id === selectedModel || isRegenerating || isStreaming}
                       className="flex items-center gap-2"
                     >
                       <model.icon className="h-3 w-3" />
