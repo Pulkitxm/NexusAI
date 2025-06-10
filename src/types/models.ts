@@ -6,7 +6,14 @@ export interface AIModel {
   provider: string;
   category: "text" | "image" | "reasoning";
   icon: IconType;
-  color: string;
   description: string;
   requiresKey: keyof import("./keys").ApiKeys;
+}
+
+export interface Chat {
+  id: string;
+  title: string;
+  model: string;
+  lastMessage: string;
+  timestamp: Date;
 }
