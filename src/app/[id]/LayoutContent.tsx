@@ -14,8 +14,8 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
             <SidebarTrigger main />
           </div>
 
-          <div className="flex items-center gap-2">
-            <ModelSwitcher />
+          <div className="flex items-center gap-2 min-h-10">
+            {ModelSwitcher && <ModelSwitcher />}
           </div>
         </div>
       </header>

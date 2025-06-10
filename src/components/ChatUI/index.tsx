@@ -5,7 +5,7 @@ import { useChat } from "ai/react";
 import { useModel } from "@/providers/model-provider";
 import { useKeys } from "@/providers/key-provider";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, ArrowUp } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { getAvailableModels } from "@/lib/models";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChatMessages } from "./ChatMessages";
@@ -13,8 +13,6 @@ import { ChatInput } from "./ChatInput";
 import { EmptyState } from "./EmptyState";
 import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
 
 interface ErrorDetails {
   message: string;
@@ -24,14 +22,13 @@ interface ErrorDetails {
 }
 
 export default function ChatUI() {
-  const { selectedModel, setSelectedModel } = useModel();
+  const { selectedModel } = useModel();
   const { keys } = useKeys();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<ErrorDetails | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
@@ -101,8 +98,6 @@ export default function ChatUI() {
         const newIsAtBottom =
           scrollHeight - scrollTop - clientHeight < threshold;
         setIsAtBottom(newIsAtBottom);
-
-        setShowScrollTop(scrollTop > 200);
       }
     }
   }, []);
@@ -385,7 +380,7 @@ export default function ChatUI() {
         setIsTyping(false);
       }
     },
-    [messages, setMessages, selectedModel, setSelectedModel, availableModels, keys, webSearchEnabled, toast, handleError],
+    [messages, setMessages, selectedModel, availableModels, keys, webSearchEnabled, toast, handleError],
   );
 
   return (

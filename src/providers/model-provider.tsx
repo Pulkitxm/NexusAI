@@ -31,29 +31,18 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (availableModels.length === 0) return;
+
     const storedModel = localStorage.getItem("selectedModel");
-    if (
-      storedModel &&
-      availableModels.find((model) => model.id === storedModel)
-    ) {
+    const modelExists = availableModels.find(
+      (model) => model.id === storedModel
+    );
+
+    if (storedModel && modelExists) {
       changeModel(storedModel);
+    } else {
+      changeModel(availableModels[0].id);
     }
   }, [availableModels, changeModel]);
-
-  useEffect(() => {
-    if (availableModels.length > 0 && !selectedModel) {
-      changeModel(availableModels[0].id);
-    }
-  }, [availableModels, selectedModel, changeModel]);
-
-  useEffect(() => {
-    if (
-      availableModels.length > 0 &&
-      !availableModels.find((model) => model.id === selectedModel)
-    ) {
-      changeModel(availableModels[0].id);
-    }
-  }, [availableModels, selectedModel, changeModel]);
 
   const ModelSwitcherComponent = useCallback(
     () => (
@@ -68,7 +57,12 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ModelContext.Provider
-      value={{ selectedModel, changeModel, ModelSwitcher: ModelSwitcherComponent, setSelectedModel }}
+      value={{
+        selectedModel,
+        changeModel,
+        ModelSwitcher: ModelSwitcherComponent,
+        setSelectedModel,
+      }}
     >
       {children}
     </ModelContext.Provider>

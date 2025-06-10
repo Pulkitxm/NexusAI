@@ -3,16 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import {
-  Search,
-  Plus,
-  MessageSquare,
-  Settings,
-  Trash2,
-  Key,
-  User,
-  LogIn,
-} from "lucide-react";
+import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,25 +44,13 @@ export function AppSidebar() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
-  const [isHoverOpen, setIsHoverOpen] = useState(false);
-  const [isManuallyOpen, setIsManuallyOpen] = useState(false);
-  
+
   const router = useRouter();
   const { data: session, status } = useSession();
   const { openModal } = useSettingsModal();
-  const { open, setOpen } = useSidebar();
 
   const user = session?.user;
   const { hasAnyKeys } = useKeys();
-
-  // Track manual toggle state
-  useEffect(() => {
-    if (open && !isHoverOpen) {
-      setIsManuallyOpen(true);
-    } else if (!open && !isHoverOpen) {
-      setIsManuallyOpen(false);
-    }
-  }, [open, isHoverOpen]);
 
   useEffect(() => {
     if (user) {
@@ -95,7 +73,7 @@ export function AppSidebar() {
       const filtered = chats.filter(
         (chat) =>
           chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()),
+          chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredChats(filtered);
     }
@@ -106,10 +84,7 @@ export function AppSidebar() {
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
     setChats(updatedChats);
     if (user) {
-      localStorage.setItem(
-        `nexus-chats-${user?.id}`,
-        JSON.stringify(updatedChats),
-      );
+      localStorage.setItem(`nexus-chats-${user?.id}`, JSON.stringify(updatedChats));
     }
   };
 
@@ -117,33 +92,9 @@ export function AppSidebar() {
     router.push(`/chat/${chatId}`);
   };
 
-  const handleHoverEnter = () => {
-    if (!isManuallyOpen) {
-      setIsHoverOpen(true);
-      setOpen(true);
-    }
-  };
-
-  const handleHoverLeave = () => {
-    if (isHoverOpen && !isManuallyOpen) {
-      setIsHoverOpen(false);
-      setOpen(false);
-    }
-  };
-
   return (
     <>
-      {!open && !isManuallyOpen && (
-        <div
-          className="fixed left-0 top-0 w-4 h-full z-40 bg-transparent"
-          onMouseEnter={handleHoverEnter}
-        />
-      )}
-
-      <Sidebar
-        className="border-r border-border bg-background"
-        onMouseLeave={handleHoverLeave}
-      >
+      <Sidebar className="border-r border-border bg-background">
         <SidebarHeader className="p-4 border-b border-border bg-background">
           <div className="flex items-center justify-between mb-4">
             <Link href={"/"} className="flex items-center gap-2">
@@ -192,9 +143,7 @@ export function AppSidebar() {
               <div className="text-center text-muted-foreground py-8">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No conversations yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Start a new chat to begin
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>
               </div>
             ) : (
               filteredChats.map((chat) => (
@@ -205,9 +154,7 @@ export function AppSidebar() {
                   >
                     <div className="flex-1 text-left">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-sm truncate">
-                          {chat.title}
-                        </span>
+                        <span className="font-medium text-sm truncate">{chat.title}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -220,10 +167,7 @@ export function AppSidebar() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={(e) => deleteChat(chat.id, e)}
-                              className="text-destructive"
-                            >
+                            <DropdownMenuItem onClick={(e) => deleteChat(chat.id, e)} className="text-destructive">
                               <Trash2 className="w-4 h-4 mr-2" />
                               Delete Chat
                             </DropdownMenuItem>
@@ -231,16 +175,12 @@ export function AppSidebar() {
                         </DropdownMenu>
                       </div>
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
-                          {chat.lastMessage}
-                        </p>
+                        <p className="text-xs text-muted-foreground truncate flex-1 mr-2">{chat.lastMessage}</p>
                         <Badge variant="secondary" className="text-xs">
                           {chat.model}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {chat.timestamp.toLocaleDateString()}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{chat.timestamp.toLocaleDateString()}</p>
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -252,10 +192,7 @@ export function AppSidebar() {
         <SidebarFooter className="p-4 border-t border-border bg-background">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={openModal}
-                className="hover:bg-accent"
-              >
+              <SidebarMenuButton onClick={openModal} className="hover:bg-accent">
                 <Settings className="w-4 h-4" />
                 <span>Settings & API Keys</span>
               </SidebarMenuButton>
@@ -276,10 +213,7 @@ export function AppSidebar() {
                   <span className="truncate">{user?.name}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton
-                  className="hover:bg-accent"
-                  onClick={() => signIn("google")}
-                >
+                <SidebarMenuButton className="hover:bg-accent" onClick={() => signIn("google")}>
                   <LogIn className="w-4 h-4" />
                   <span>Login</span>
                 </SidebarMenuButton>

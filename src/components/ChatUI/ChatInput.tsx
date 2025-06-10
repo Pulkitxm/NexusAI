@@ -50,7 +50,7 @@ export function ChatInput({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
-        e.key === "/" &&
+        e.key === "/" && e.shiftKey &&
         !["INPUT", "TEXTAREA"].includes(
           document.activeElement?.tagName || "",
         ) &&

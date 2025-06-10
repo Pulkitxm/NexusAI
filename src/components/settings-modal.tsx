@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -23,13 +22,13 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  Key,
   Shield,
   Settings,
   Zap,
   Lock,
   DollarSign,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { keyConfigs } from "@/lib/models";
@@ -43,6 +42,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { keys, updateKeys } = useKeys();
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [tempKeys, setTempKeys] = useState(keys);
+  const [view, setView] = useState<"keys" | "about">("keys");
 
   useEffect(() => {
     setTempKeys(keys);
@@ -59,211 +59,215 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[75vw] max-w-3xl h-[90vh] sm:h-[85vh] overflow-hidden p-0 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 rounded-lg">
-        <DialogHeader className="px-4 pt-4 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-lg font-medium">
-            <Settings className="w-4 h-4" />
-            Settings
+      <DialogContent className="max-w-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
+            {view === "about" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 -ml-2"
+                onClick={() => setView("keys")}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <Settings className="w-5 h-5" />
+            {view === "keys" ? "Settings" : "About BYOK"}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="keys" className="w-full flex flex-col h-full">
-          <TabsList className="grid w-full grid-cols-2 mx-4 bg-gray-100 dark:bg-gray-800/60">
-            <TabsTrigger value="keys" className="text-sm">
-              <Key className="w-3.5 h-3.5 mr-1.5" />
-              API Keys
-            </TabsTrigger>
-            <TabsTrigger value="about" className="text-sm">
-              <Shield className="w-3.5 h-3.5 mr-1.5" />
-              About BYOK
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex-1 overflow-y-auto">
+          {view === "keys" ? (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 p-4 sm:p-6 space-y-4">
+                <div className="flex justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setView("about")}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    About BYOK
+                  </Button>
+                </div>
 
-          <div className="flex-1 overflow-hidden px-4 pt-3">
-            <TabsContent value="keys" className="h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto pr-1 space-y-3 max-h-[500px] lg:max-h-[600px]">
-                {keyConfigs.map((config) => (
-                  <Card
-                    key={config.key}
-                    className="border border-gray-200 dark:border-gray-800 shadow-sm"
-                  >
-                    <CardHeader className="p-3 pb-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-8 h-8 ${config.color} rounded-md flex items-center justify-center flex-shrink-0`}
-                          >
-                            <config.icon className="text-white text-lg" />
+                <div className="space-y-4">
+                  {keyConfigs.map((config) => (
+                    <Card key={config.key}>
+                      <CardHeader className="pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                              <config.icon className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base font-medium">
+                                {config.name}
+                              </CardTitle>
+                              <CardDescription className="text-sm mt-1">
+                                {config.description}
+                              </CardDescription>
+                            </div>
                           </div>
-                          <div>
-                            <CardTitle className="text-sm font-medium">
-                              {config.name}
-                            </CardTitle>
-                            <CardDescription className="text-xs">
-                              {config.description}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 ml-10 sm:ml-0">
-                          {tempKeys[config.key as keyof typeof tempKeys] && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs h-6 px-2"
-                            >
-                              <Zap className="w-3 h-3 mr-1" />
-                              Active
-                            </Badge>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-6 px-2 border-gray-200 dark:border-gray-700"
-                            onClick={() => window.open(config.link, "_blank")}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Get Key
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor={config.key}
-                          className="text-xs font-normal text-gray-600 dark:text-gray-400"
-                        >
-                          API Key
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id={config.key}
-                            type={showKeys[config.key] ? "text" : "password"}
-                            placeholder={`${config.name} API key`}
-                            value={
-                              tempKeys[config.key as keyof typeof tempKeys] ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              setTempKeys((prev) => ({
-                                ...prev,
-                                [config.key]: e.target.value,
-                              }))
-                            }
-                            className="pr-9 h-9 text-sm bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-2.5 rounded-l-none text-gray-500"
-                            onClick={() => toggleKeyVisibility(config.key)}
-                          >
-                            {showKeys[config.key] ? (
-                              <EyeOff className="w-3.5 h-3.5" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-2">
+                            {tempKeys[config.key as keyof typeof tempKeys] && (
+                              <Badge variant="secondary" className="gap-1">
+                                <Zap className="w-3 h-3" />
+                                Active
+                              </Badge>
                             )}
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => window.open(config.link, "_blank")}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              Get Key
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          <Label htmlFor={config.key} className="text-sm">
+                            API Key
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id={config.key}
+                              type={showKeys[config.key] ? "text" : "password"}
+                              placeholder={`Enter your ${config.name} API key`}
+                              value={
+                                tempKeys[config.key as keyof typeof tempKeys] || ""
+                              }
+                              onChange={(e) =>
+                                setTempKeys((prev) => ({
+                                  ...prev,
+                                  [config.key]: e.target.value,
+                                }))
+                              }
+                              className="pr-10"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                              onClick={() => toggleKeyVisibility(config.key)}
+                            >
+                              {showKeys[config.key] ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex justify-end gap-2 py-4 mt-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  className="h-9 text-sm border-gray-200 dark:border-gray-700"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="h-9 text-sm bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Save Keys
-                </Button>
+              <div className="mt-auto px-4 sm:px-6 py-4 border-t bg-background">
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave}>Save Keys</Button>
+                </div>
               </div>
-            </TabsContent>
-
-            <TabsContent value="about" className="h-full overflow-y-auto">
-              <Card className="border-gray-200 dark:border-gray-800 mb-4">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                    Bring Your Own Key
+            </div>
+          ) : (
+            <div className="p-4 sm:p-6 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Bring Your Own Key (BYOK)
                   </CardTitle>
-                  <CardDescription className="text-sm">
-                    Privacy and security by design
+                  <CardDescription>
+                    Complete privacy and control over your AI interactions
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex items-start gap-3 p-3 rounded-md bg-gray-50 dark:bg-gray-800/50">
-                      <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <Lock className="text-emerald-600 dark:text-emerald-400 w-4 h-4" />
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Lock className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-sm">
-                          Your Keys, Your Control
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Keys stored locally, never sent to our servers
+                      <div className="min-w-0">
+                        <h4 className="font-medium">Your Keys, Your Control</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          API keys are stored locally in your browser and never sent
+                          to our servers
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-md bg-gray-50 dark:bg-gray-800/50">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <Shield className="text-blue-600 dark:text-blue-400 w-4 h-4" />
+                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-sm">
-                          Direct Communication
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Requests go directly to AI providers - we never see
-                          your data
+                      <div className="min-w-0">
+                        <h4 className="font-medium">Direct Communication</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Your requests go directly to AI providers - we never see
+                          your data or conversations
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-md bg-gray-50 dark:bg-gray-800/50">
-                      <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <DollarSign className="text-violet-600 dark:text-violet-400 w-4 h-4" />
+                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                        <DollarSign className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-sm">
-                          Pay Only What You Use
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          No subscription fees - pay providers directly based on
-                          usage
+                      <div className="min-w-0">
+                        <h4 className="font-medium">Pay Only What You Use</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          No subscription fees - pay AI providers directly based on
+                          your actual usage
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-md bg-gray-50 dark:bg-gray-800/50">
-                      <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0">
-                        <RefreshCw className="text-amber-600 dark:text-amber-400 w-4 h-4" />
+                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
+                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                        <RefreshCw className="w-5 h-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-sm">
-                          Sync Across Devices
-                        </h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Sign in to sync your chat history across all devices
+                      <div className="min-w-0">
+                        <h4 className="font-medium">Sync Across Devices</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Sign in to sync your chat history and settings across all
+                          your devices
                         </p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </div>
-        </Tabs>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Getting Started</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>
+                      Click &quot;Get Key&quot; next to any AI provider to create an account
+                      and obtain your API key
+                    </li>
+                    <li>Paste your API key into the corresponding field above</li>
+                    <li>
+                      Click &quot;Save Keys&quot; to store them securely in your browser
+                    </li>
+                    <li>
+                      Start chatting with your preferred AI models immediately
+                    </li>
+                  </ol>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

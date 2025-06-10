@@ -68,7 +68,6 @@ const capabilityConfig: Record<string, CapabilityConfig> = {
   },
 };
 
-// Animated wrapper for smooth transitions
 const AnimatedWrapper = memo<{
   children: React.ReactNode;
   show: boolean;
@@ -90,7 +89,6 @@ const AnimatedWrapper = memo<{
 
 AnimatedWrapper.displayName = "AnimatedWrapper";
 
-// Memoized capability badges component
 const CapabilityBadges = memo<{
   capabilities: AIModel["capabilities"];
   size?: "sm" | "xs";
@@ -106,7 +104,6 @@ const CapabilityBadges = memo<{
         const CapIcon = config.icon;
         const sizeClasses = size === "sm" ? "h-4 w-4" : "h-3 w-3";
 
-        // Check if this capability matches the search
         const isHighlighted =
           searchQuery &&
           (config.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,7 +131,6 @@ const CapabilityBadges = memo<{
 
 CapabilityBadges.displayName = "CapabilityBadges";
 
-// Memoized model card component with animations
 const ModelCard = memo<{
   model: AIModel;
   isSelected: boolean;
@@ -144,7 +140,6 @@ const ModelCard = memo<{
 }>(({ model, isSelected, onClick, searchQuery = "", index }) => {
   const ModelIcon = model.icon;
 
-  // Check if model name matches search for highlighting
   const isNameHighlighted = searchQuery && model.name.toLowerCase().includes(searchQuery.toLowerCase());
 
   return (
@@ -205,7 +200,6 @@ const ModelCard = memo<{
 
 ModelCard.displayName = "ModelCard";
 
-// Memoized select item component
 const ModelSelectItem = memo<{
   model: AIModel;
   searchQuery?: string;
@@ -274,7 +268,6 @@ const ModelSelectItem = memo<{
 
 ModelSelectItem.displayName = "ModelSelectItem";
 
-// Animated provider section
 const ProviderSection = memo<{
   provider: string;
   models: AIModel[];
@@ -317,13 +310,11 @@ const ProviderSection = memo<{
 
 ProviderSection.displayName = "ProviderSection";
 
-// Main ModelSelector component
 export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, selectedModel, onModelChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [dropdownSearch, setDropdownSearch] = useState("");
 
-  // Memoized grouped models
   const groupedByProvider = useMemo(() => {
     return availableModels.reduce(
       (acc, model) => {
@@ -337,26 +328,22 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
     );
   }, [availableModels]);
 
-  // Enhanced filter function that includes capabilities
   const filterModels = useCallback((models: AIModel[], query: string) => {
     if (!query.trim()) return models;
     const lowerQuery = query.toLowerCase();
 
     return models.filter((model) => {
-      // Search in basic model info
       const basicMatch =
         model.name.toLowerCase().includes(lowerQuery) ||
         model.provider.toLowerCase().includes(lowerQuery) ||
         model.description.toLowerCase().includes(lowerQuery) ||
         model.category.toLowerCase().includes(lowerQuery);
 
-      // Search in capabilities
       const capabilityMatch = Object.entries(model.capabilities).some(([key, value]) => {
         if (!value) return false;
         const config = capabilityConfig[key];
         if (!config) return false;
 
-        // Check capability label and search terms
         return (
           config.label.toLowerCase().includes(lowerQuery) ||
           config.searchTerms.some((term) => term.toLowerCase().includes(lowerQuery))
@@ -367,13 +354,11 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
     });
   }, []);
 
-  // Memoized filtered models for modal
   const filteredModelsForModal = useMemo(
     () => filterModels(availableModels, searchQuery),
     [availableModels, searchQuery, filterModels]
   );
 
-  // Memoized filtered grouped models for dropdown
   const filteredGroupedByProvider = useMemo(() => {
     return Object.entries(groupedByProvider).reduce(
       (acc, [provider, models]) => {
@@ -387,13 +372,11 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
     );
   }, [groupedByProvider, dropdownSearch, filterModels]);
 
-  // Memoized selected model data
   const selectedModelData = useMemo(
     () => availableModels.find((m) => m.id === selectedModel),
     [availableModels, selectedModel]
   );
 
-  // Memoized grouped filtered models for modal
   const groupedFilteredForModal = useMemo(() => {
     return filteredModelsForModal.reduce(
       (acc, model) => {
@@ -407,7 +390,6 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
     );
   }, [filteredModelsForModal]);
 
-  // Callbacks
   const handleModelSelect = useCallback(
     (modelId: string) => {
       onModelChange(modelId);
@@ -535,8 +517,7 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
                   <Search className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400 mb-2">No models found matching your search.</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 px-4">
-                    Try searching by model name, provider, or capabilities like "vision", "reasoning", "image
-                    generation"
+                    Try searching by model name, provider, or capabilities like &quot;vision&quot;, &quot;reasoning&quot;, &quot;image generation&quot;
                   </p>
                 </div>
               </AnimatedWrapper>

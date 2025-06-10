@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Keyboard } from "lucide-react";
+import { keyboardShortcuts } from "@/lib/keyboard-shortcuts";
 
 interface KeyboardShortcutsDialogProps {
   open: boolean;
@@ -43,6 +44,13 @@ export function KeyboardShortcutsDialog({
   open,
   onOpenChange,
 }: KeyboardShortcutsDialogProps) {
+  const navigationShortcuts = keyboardShortcuts.filter(
+    (shortcut) => shortcut.category === "navigation"
+  );
+  const messagingShortcuts = keyboardShortcuts.filter(
+    (shortcut) => shortcut.category === "messaging"
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-auto">
@@ -63,18 +71,13 @@ export function KeyboardShortcutsDialog({
               Navigation
             </h3>
             <div className="space-y-1.5">
-              <KeyboardShortcutItem
-                keys={["/"]}
-                description="Focus message input"
-              />
-              <KeyboardShortcutItem
-                keys={["Cmd", "/"]}
-                description="Toggle shortcuts dialog"
-              />
-              <KeyboardShortcutItem
-                keys={["Esc"]}
-                description="Clear input or close dialog"
-              />
+              {navigationShortcuts.map((shortcut) => (
+                <KeyboardShortcutItem
+                  key={shortcut.keys.join("+")}
+                  keys={shortcut.keys}
+                  description={shortcut.description}
+                />
+              ))}
             </div>
           </div>
 
@@ -83,18 +86,13 @@ export function KeyboardShortcutsDialog({
               Messaging
             </h3>
             <div className="space-y-1.5">
-              <KeyboardShortcutItem
-                keys={["Enter"]}
-                description="Send message"
-              />
-              <KeyboardShortcutItem
-                keys={["Shift", "Enter"]}
-                description="Add new line"
-              />
-              <KeyboardShortcutItem
-                keys={["Cmd", "Enter"]}
-                description="Save edited message"
-              />
+              {messagingShortcuts.map((shortcut) => (
+                <KeyboardShortcutItem
+                  key={shortcut.keys.join("+")}
+                  keys={shortcut.keys}
+                  description={shortcut.description}
+                />
+              ))}
             </div>
           </div>
         </div>
