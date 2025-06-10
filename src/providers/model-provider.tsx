@@ -1,5 +1,4 @@
 "use client";
-
 import {
   createContext,
   useContext,
@@ -9,13 +8,7 @@ import {
 } from "react";
 import { useKeys } from "@/providers/key-provider";
 import { getAvailableModels } from "@/lib/models";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModelSelector } from "@/components/ModelSwitcher";
 
 interface ModelContextType {
   selectedModel: string;
@@ -38,7 +31,6 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (availableModels.length === 0) return;
-
     const storedModel = localStorage.getItem("selectedModel");
     if (
       storedModel &&
@@ -63,33 +55,20 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     }
   }, [availableModels, selectedModel, changeModel]);
 
-  function ModelSwitcher() {
-    return (
-      <Select value={selectedModel} onValueChange={changeModel}>
-        <SelectTrigger className="w-[180px] sm:w-[220px] text-sm h-9 border-gray-200 dark:border-gray-700">
-          <SelectValue placeholder="Select AI Model" />
-        </SelectTrigger>
-        <SelectContent className="max-h-[300px]">
-          {availableModels.map((model) => (
-            <SelectItem key={model.id} value={model.id}>
-              <div className="flex items-center gap-2 py-1">
-                <div
-                  className={`w-5 h-5 rounded flex items-center justify-center`}
-                >
-                  <model.icon className="text-xs" />
-                </div>
-                <div className="text-sm">{model.name}</div>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
+  const ModelSwitcherComponent = useCallback(
+    () => (
+      <ModelSelector
+        availableModels={availableModels}
+        selectedModel={selectedModel}
+        onModelChange={changeModel}
+      />
+    ),
+    [availableModels, selectedModel, changeModel]
+  );
 
   return (
     <ModelContext.Provider
-      value={{ selectedModel, changeModel, ModelSwitcher, setSelectedModel }}
+      value={{ selectedModel, changeModel, ModelSwitcher: ModelSwitcherComponent, setSelectedModel }}
     >
       {children}
     </ModelContext.Provider>

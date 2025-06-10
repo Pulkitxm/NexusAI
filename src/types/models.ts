@@ -8,6 +8,7 @@ export interface AIModel {
   icon: IconType;
   description: string;
   requiresKey: keyof import("./keys").ApiKeys;
+  capabilities: Capabilities;
 }
 
 export interface Chat {
@@ -16,4 +17,12 @@ export interface Chat {
   model: string;
   lastMessage: string;
   timestamp: Date;
+}
+
+export interface Capabilities {
+  reasoning?: boolean;
+  imageGeneration?: boolean;
+  imageUpload?: boolean;
+  pdfUpload?: boolean;
+  search?: boolean;
 }

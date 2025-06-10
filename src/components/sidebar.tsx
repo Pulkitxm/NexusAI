@@ -264,9 +264,9 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button> & { main?: boolean }
 >(({ main, className, onClick, ...props }, ref) => {
-  const { toggleSidebar, open } = useSidebar();
+  const { toggleSidebar, open, isMobile } = useSidebar();
 
-  if (main && open) return null;
+  if (main && open && !isMobile) return null;
 
   return (
     <motion.div
