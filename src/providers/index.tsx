@@ -7,6 +7,7 @@ import { KeyProvider } from "@/providers/key-provider";
 import { SessionProviderWrapper } from "@/providers/session";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { SettingsModalProvider } from "./settings-modal-provider";
+import { ModelProvider } from "./model-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <div className="flex min-h-screen w-full bg-background">
               <SettingsModalProvider>
                 <AppSidebar />
-                <main className="flex-1">{children}</main>
+                <ModelProvider>
+                  <main className="flex-1">{children}</main>
+                </ModelProvider>
               </SettingsModalProvider>
             </div>
             <Toaster />
