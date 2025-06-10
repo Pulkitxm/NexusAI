@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/sidebar";
-import { AI_MODELS, getAvailableModels } from "@/lib/models";
+import { AI_MODELS } from "@/lib/models";
 import { ModelProvider, useModel } from "@/providers/model-provider";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {

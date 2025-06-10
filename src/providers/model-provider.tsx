@@ -28,7 +28,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     if (availableModels.length > 0 && !availableModels.find((model) => model.id === selectedModel)) {
       setSelectedModel(availableModels[0].id);
     }
-  }, [availableModels]);
+  }, [availableModels, selectedModel, setSelectedModel]);
 
   function ModelSwitcher() {
     return (

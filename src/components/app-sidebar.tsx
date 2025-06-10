@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, LogOut, User, LogIn } from "lucide-react";
+import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,10 +25,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useKeys } from "@/providers/key-provider";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";

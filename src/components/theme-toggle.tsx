@@ -13,7 +13,7 @@ export function ThemeToggle() {
     if (theme === "system") {
       setTheme("dark");
     }
-  }, [theme]);
+  }, [theme, setTheme]);
 
   return (
     <button
