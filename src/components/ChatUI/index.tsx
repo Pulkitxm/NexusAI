@@ -1,106 +1,358 @@
-import React, { useState } from "react";
-import { useModel } from "@/providers/model-provider";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-import { Send } from "lucide-react";
+"use client"
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import { useState, useRef, useEffect, useCallback } from "react"
+import { useChat } from "ai/react"
+import { useModel } from "@/providers/model-provider"
+import { useKeys } from "@/providers/key-provider"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { AlertCircle, ArrowUp } from "lucide-react"
+import { getAvailableModels } from "@/lib/models"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ChatHeader } from "./ChatHeader"
+import { ChatMessages } from "./ChatMessages"
+import { ChatInput } from "./ChatInput"
+import { EmptyState } from "./EmptyState"
+import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog"
+import { useToast } from "@/hooks/use-toast"
+import { Button } from "../ui/button"
+import { cn } from "@/lib/utils"
 
 export default function ChatUI() {
-  const { selectedModel, ModelSwitcher } = useModel();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
+  const { selectedModel, setSelectedModel } = useModel()
+  const { keys } = useKeys()
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
+  const { toast } = useToast()
 
-  const handleSubmit = async () => {
-    if (!input.trim() || isStreaming) return;
+  const availableModels = getAvailableModels(keys)
+  const selectedModelDetails = availableModels.find((m) => m.id === selectedModel)
+  const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys]
 
-    // Add user message
-    const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsStreaming(true);
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages, reload } = useChat({
+    api: "/api/chat",
+    body: {
+      model: selectedModel,
+      provider: selectedModelDetails?.provider,
+      apiKey: apiKey,
+      webSearch: webSearchEnabled,
+    },
+    onError: (error) => {
+      console.error("Chat error:", error)
+      setError(error.message)
+      setIsTyping(false)
+    },
+    onFinish: () => {
+      setError(null)
+      setIsTyping(false)
+    },
+    onResponse: () => {
+      setIsTyping(true)
+    },
+  })
 
-    // Add assistant message that will be streamed
-    const assistantMessage: Message = { role: "assistant", content: "" };
-    setMessages((prev) => [...prev, assistantMessage]);
+  // Instant scroll to bottom without animation
+  const scrollToBottom = useCallback(() => {
+    if (scrollAreaRef.current && isAtBottom) {
+      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight
+      }
+    }
+  }, [isAtBottom])
 
-    // Simulated streaming for now
-    const response = "This is a simulated streaming response...";
-    for (let i = 0; i < response.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const lastMessage = newMessages[newMessages.length - 1];
-        lastMessage.content += response[i];
-        return newMessages;
-      });
+  // Scroll to top function
+  const scrollToTop = useCallback(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (viewport) {
+        viewport.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        })
+      }
+    }
+  }, [])
+
+  // Handle scroll detection with debounce
+  const handleScroll = useCallback(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (viewport) {
+        const { scrollTop, scrollHeight, clientHeight } = viewport
+        const threshold = 100 // pixels from bottom
+        const newIsAtBottom = scrollHeight - scrollTop - clientHeight < threshold
+        setIsAtBottom(newIsAtBottom)
+
+        // Show scroll to top button when scrolled down more than 200px
+        setShowScrollTop(scrollTop > 200)
+      }
+    }
+  }, [])
+
+  // Auto-scroll when new messages arrive or when typing
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, isTyping, scrollToBottom])
+
+  // Set up scroll listener
+  useEffect(() => {
+    const viewport = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+    if (viewport) {
+      viewport.addEventListener("scroll", handleScroll, { passive: true })
+      return () => viewport.removeEventListener("scroll", handleScroll)
+    }
+  }, [handleScroll])
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault()
+        setShowShortcuts((prev) => !prev)
+      }
+
+      if (
+        e.key === "/" &&
+        !editingMessageId &&
+        !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")
+      ) {
+        e.preventDefault()
+        // Focus will be handled by ChatInput component
+      }
+
+      if (e.key === "Escape") {
+        if (editingMessageId) {
+          setEditingMessageId(null)
+        }
+      }
     }
 
-    setIsStreaming(false);
-  };
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [editingMessageId])
+
+  const copyConversation = useCallback(() => {
+    const conversationText = messages
+      .map((m) => `${m.role === "user" ? "You" : "Assistant"}: ${m.content}`)
+      .join("\n\n")
+
+    navigator.clipboard
+      .writeText(conversationText)
+      .then(() => toast({ description: "Conversation copied to clipboard" }))
+      .catch(() =>
+        toast({
+          variant: "destructive",
+          description: "Failed to copy conversation",
+        }),
+      )
+  }, [messages, toast])
+
+  const handleEditMessage = useCallback(
+    async (messageId: string, newContent: string) => {
+      const messageIndex = messages.findIndex((m) => m.id === messageId)
+      if (messageIndex === -1) return
+
+      // Create new messages array with the edited message and all previous messages
+      const updatedMessages = messages.slice(0, messageIndex).concat([
+        {
+          ...messages[messageIndex],
+          content: newContent,
+        },
+      ])
+
+      // Set the updated messages to continue the conversation from this point
+      setMessages(updatedMessages)
+      setEditingMessageId(null)
+
+      // Trigger a new response from the AI with the updated conversation
+      try {
+        await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: updatedMessages,
+            model: selectedModel,
+            provider: selectedModelDetails?.provider,
+            apiKey: apiKey,
+            webSearch: webSearchEnabled,
+          }),
+        })
+
+        // Reload the chat to get the new response
+        reload()
+      } catch (error) {
+        console.error("Error editing message:", error)
+        setError("Failed to edit message")
+      }
+    },
+    [messages, setMessages, selectedModel, selectedModelDetails, apiKey, webSearchEnabled, reload],
+  )
+
+  const handleReloadMessage = useCallback(
+    async (messageId: string, modelId?: string) => {
+      const messageIndex = messages.findIndex((m) => m.id === messageId)
+      if (messageIndex === -1) return
+
+      // Get all messages up to the selected message
+      const messagesUpToSelected = messages.slice(0, messageIndex + 1)
+
+      // If the selected message is from the assistant, remove it to regenerate
+      const updatedMessages =
+        messages[messageIndex].role === "assistant" ? messagesUpToSelected.slice(0, -1) : messagesUpToSelected
+
+      // Update the model if a new one was selected
+      const targetModel = modelId || selectedModel
+      if (modelId && modelId !== selectedModel) {
+        setSelectedModel(modelId)
+      }
+
+      // Set the updated messages
+      setMessages(updatedMessages)
+
+      // Get the target model details
+      const targetModelDetails = availableModels.find((m) => m.id === targetModel)
+      const targetApiKey = keys[targetModelDetails?.requiresKey as keyof typeof keys]
+
+      // Trigger a new response from the AI
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: updatedMessages,
+            model: targetModel,
+            provider: targetModelDetails?.provider,
+            apiKey: targetApiKey,
+            webSearch: webSearchEnabled,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to regenerate message")
+        }
+
+        // Handle the streaming response
+        const reader = response.body?.getReader()
+        if (!reader) throw new Error("No response body")
+
+        let newMessage = ""
+        const decoder = new TextDecoder()
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value)
+          const lines = chunk.split("\n")
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6)
+              if (data === "[DONE]") break
+
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.choices?.[0]?.delta?.content) {
+                  newMessage += parsed.choices[0].delta.content
+                  // Update the messages with the new content
+                  setMessages([
+                    ...updatedMessages,
+                    {
+                      id: Date.now().toString(),
+                      role: "assistant",
+                      content: newMessage,
+                    },
+                  ])
+                }
+              } catch (e) {
+                // Ignore parsing errors
+              }
+            }
+          }
+        }
+
+        toast({ description: "Message regenerated successfully" })
+      } catch (error) {
+        console.error("Error regenerating message:", error)
+        setError("Failed to regenerate message")
+      }
+    },
+    [messages, setMessages, selectedModel, setSelectedModel, availableModels, keys, webSearchEnabled, toast],
+  )
 
   return (
-    <div className="flex flex-col h-screen max-h-screen">
-      {/* Header with model selector */}
-      <div className="border-b p-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Chat</h2>
-        <ModelSwitcher />
+    <div className="flex flex-col h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <ChatHeader onShowShortcuts={() => setShowShortcuts(true)} />
+
+      <div className="relative flex-1">
+        <ScrollArea className="h-full px-2 sm:px-4" ref={scrollAreaRef}>
+          <div className="max-w-3xl mx-auto py-4 sm:py-6">
+            {error && (
+              <Alert
+                className="mb-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+                variant="destructive"
+              >
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {messages.length === 0 ? (
+              <EmptyState selectedModelDetails={selectedModelDetails} />
+            ) : (
+              <ChatMessages
+                messages={messages}
+                isLoading={isLoading}
+                isTyping={isTyping}
+                editingMessageId={editingMessageId}
+                onEditMessage={handleEditMessage}
+                onStartEdit={setEditingMessageId}
+                onCancelEdit={() => setEditingMessageId(null)}
+                onReloadMessage={handleReloadMessage}
+                availableModels={availableModels}
+                selectedModel={selectedModel}
+              />
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Scroll to top button */}
+        <Button
+          onClick={scrollToTop}
+          size="icon"
+          className={cn(
+            "fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 h-10 w-10 rounded-full shadow-lg transition-all duration-300 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800",
+            showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+          )}
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+        </Button>
       </div>
 
-      {/* Messages area */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <Card
-              key={index}
-              className={`p-4 ${
-                message.role === "user"
-                  ? "bg-primary/10 ml-12"
-                  : "bg-muted mr-12"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="font-semibold">
-                  {message.role === "user" ? "You" : "Assistant"}:
-                </div>
-                <div className="whitespace-pre-wrap">{message.content}</div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </ScrollArea>
+      <ChatInput
+        input={input}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+        isLoading={isLoading}
+        selectedModelDetails={selectedModelDetails}
+        messages={messages}
+        copyConversation={copyConversation}
+        webSearchEnabled={webSearchEnabled}
+        onWebSearchToggle={setWebSearchEnabled}
+      />
 
-      {/* Input area */}
-      <div className="border-t p-4">
-        <div className="flex gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="resize-none"
-            rows={1}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-          />
-          <Button
-            onClick={handleSubmit}
-            disabled={!input.trim() || isStreaming}
-            className="shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
     </div>
-  );
+  )
 }

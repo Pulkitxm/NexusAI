@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface ModelContextType {
   selectedModel: string;
-  setSelectedModel: (model: string) => void;
+  changeModel: (model: string) => void;
   ModelSwitcher: () => React.ReactNode;
+  setSelectedModel: (model: string) => void;
 }
 
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
@@ -18,21 +19,35 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const [selectedModel, setSelectedModel] = useState("");
   const availableModels = getAvailableModels(keys);
 
+  function changeModel(model: string) {
+    setSelectedModel(model);
+    localStorage.setItem("selectedModel", model);
+  }
+
+  useEffect(() => {
+    if (availableModels.length === 0) return;
+
+    const storedModel = localStorage.getItem("selectedModel");
+    if (storedModel && availableModels.find((model) => model.id === storedModel)) {
+      changeModel(storedModel);
+    }
+  }, []);
+
   useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
-      setSelectedModel(availableModels[0].id);
+      changeModel(availableModels[0].id);
     }
   }, [availableModels, selectedModel]);
 
   useEffect(() => {
     if (availableModels.length > 0 && !availableModels.find((model) => model.id === selectedModel)) {
-      setSelectedModel(availableModels[0].id);
+      changeModel(availableModels[0].id);
     }
-  }, [availableModels, selectedModel, setSelectedModel]);
+  }, [availableModels, selectedModel, changeModel]);
 
   function ModelSwitcher() {
     return (
-      <Select value={selectedModel} onValueChange={setSelectedModel}>
+      <Select value={selectedModel} onValueChange={changeModel}>
         <SelectTrigger className="w-[180px] sm:w-[220px] text-sm h-9 border-gray-200 dark:border-gray-700">
           <SelectValue placeholder="Select AI Model" />
         </SelectTrigger>
@@ -53,7 +68,9 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ModelContext.Provider value={{ selectedModel, setSelectedModel, ModelSwitcher }}>{children}</ModelContext.Provider>
+    <ModelContext.Provider value={{ selectedModel, changeModel, ModelSwitcher, setSelectedModel }}>
+      {children}
+    </ModelContext.Provider>
   );
 }
 
