@@ -1,9 +1,21 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useKeys } from "@/providers/key-provider";
 import { getAvailableModels } from "@/lib/models";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ModelContextType {
   selectedModel: string;
@@ -19,28 +31,34 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const [selectedModel, setSelectedModel] = useState("");
   const availableModels = getAvailableModels(keys);
 
-  function changeModel(model: string) {
+  const changeModel = useCallback((model: string) => {
     setSelectedModel(model);
     localStorage.setItem("selectedModel", model);
-  }
+  }, []);
 
   useEffect(() => {
     if (availableModels.length === 0) return;
 
     const storedModel = localStorage.getItem("selectedModel");
-    if (storedModel && availableModels.find((model) => model.id === storedModel)) {
+    if (
+      storedModel &&
+      availableModels.find((model) => model.id === storedModel)
+    ) {
       changeModel(storedModel);
     }
-  }, []);
+  }, [availableModels, changeModel]);
 
   useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
       changeModel(availableModels[0].id);
     }
-  }, [availableModels, selectedModel]);
+  }, [availableModels, selectedModel, changeModel]);
 
   useEffect(() => {
-    if (availableModels.length > 0 && !availableModels.find((model) => model.id === selectedModel)) {
+    if (
+      availableModels.length > 0 &&
+      !availableModels.find((model) => model.id === selectedModel)
+    ) {
       changeModel(availableModels[0].id);
     }
   }, [availableModels, selectedModel, changeModel]);
@@ -55,7 +73,9 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
           {availableModels.map((model) => (
             <SelectItem key={model.id} value={model.id}>
               <div className="flex items-center gap-2 py-1">
-                <div className={`w-5 h-5 rounded flex items-center justify-center`}>
+                <div
+                  className={`w-5 h-5 rounded flex items-center justify-center`}
+                >
                   <model.icon className="text-xs" />
                 </div>
                 <div className="text-sm">{model.name}</div>
@@ -68,7 +88,9 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ModelContext.Provider value={{ selectedModel, changeModel, ModelSwitcher, setSelectedModel }}>
+    <ModelContext.Provider
+      value={{ selectedModel, changeModel, ModelSwitcher, setSelectedModel }}
+    >
       {children}
     </ModelContext.Provider>
   );

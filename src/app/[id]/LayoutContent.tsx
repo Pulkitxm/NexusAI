@@ -11,7 +11,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
       <header className="border-b bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm">
         <div className="flex items-center justify-between p-3">
           <div className="flex items-center gap-3">
-           <SidebarTrigger main />
+            <SidebarTrigger main />
           </div>
 
           <div className="flex items-center gap-2">

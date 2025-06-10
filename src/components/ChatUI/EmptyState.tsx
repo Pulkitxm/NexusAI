@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Bot, Command } from "lucide-react"
+import { Bot, Command } from "lucide-react";
 
 interface EmptyStateProps {
   selectedModelDetails?: {
-    name?: string
-    description?: string
-  }
+    name?: string;
+    description?: string;
+  };
 }
 
 export function EmptyState({ selectedModelDetails }: EmptyStateProps) {
@@ -20,7 +20,8 @@ export function EmptyState({ selectedModelDetails }: EmptyStateProps) {
           {selectedModelDetails?.name || "AI Assistant"}
         </h2>
         <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md">
-          {selectedModelDetails?.description || "Ask me anything and I'll do my best to help you."}
+          {selectedModelDetails?.description ||
+            "Ask me anything and I'll do my best to help you."}
         </p>
       </div>
       <div className="text-xs text-slate-500 dark:text-slate-500 mt-6 sm:mt-8 flex items-center gap-1">
@@ -32,5 +33,5 @@ export function EmptyState({ selectedModelDetails }: EmptyStateProps) {
         <span>to start typing</span>
       </div>
     </div>
-  )
+  );
 }

@@ -3,7 +3,17 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ComponentProps, createContext, CSSProperties, forwardRef, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  ComponentProps,
+  createContext,
+  CSSProperties,
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export const SIDEBAR_COOKIE_NAME = "sidebar:state";
 export const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

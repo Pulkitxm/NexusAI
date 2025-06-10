@@ -33,7 +33,7 @@ export const AI_MODELS: AIModel[] = [
     description: "Fast and efficient for everyday tasks",
     requiresKey: "google",
   },
-  
+
   // OpenAI Models
   {
     id: "gpt-4o",

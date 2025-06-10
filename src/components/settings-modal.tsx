@@ -83,8 +83,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             <TabsContent value="keys" className="h-full flex flex-col">
               <div className="flex-1 overflow-y-auto pr-1 space-y-3 max-h-[500px] lg:max-h-[600px]">
                 {keyConfigs.map((config) => (
-                  <Card 
-                    key={config.key} 
+                  <Card
+                    key={config.key}
                     className="border border-gray-200 dark:border-gray-800 shadow-sm"
                   >
                     <CardHeader className="p-3 pb-2">
@@ -128,7 +128,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     </CardHeader>
                     <CardContent className="px-3 pb-3 pt-0">
                       <div className="space-y-1">
-                        <Label htmlFor={config.key} className="text-xs font-normal text-gray-600 dark:text-gray-400">
+                        <Label
+                          htmlFor={config.key}
+                          className="text-xs font-normal text-gray-600 dark:text-gray-400"
+                        >
                           API Key
                         </Label>
                         <div className="relative">
@@ -137,7 +140,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                             type={showKeys[config.key] ? "text" : "password"}
                             placeholder={`${config.name} API key`}
                             value={
-                              tempKeys[config.key as keyof typeof tempKeys] || ""
+                              tempKeys[config.key as keyof typeof tempKeys] ||
+                              ""
                             }
                             onChange={(e) =>
                               setTempKeys((prev) => ({
@@ -168,8 +172,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
 
               <div className="flex justify-end gap-2 py-4 mt-auto">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => onOpenChange(false)}
                   className="h-9 text-sm border-gray-200 dark:border-gray-700"
                 >
@@ -220,7 +224,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                           Direct Communication
                         </h4>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Requests go directly to AI providers - we never see your data
+                          Requests go directly to AI providers - we never see
+                          your data
                         </p>
                       </div>
                     </div>
@@ -234,7 +239,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                           Pay Only What You Use
                         </h4>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          No subscription fees - pay providers directly based on usage
+                          No subscription fees - pay providers directly based on
+                          usage
                         </p>
                       </div>
                     </div>

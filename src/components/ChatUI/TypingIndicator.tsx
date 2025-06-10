@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Bot } from "lucide-react"
+import { Bot } from "lucide-react";
 
 export function TypingIndicator() {
   return (
@@ -11,13 +11,24 @@ export function TypingIndicator() {
       <div className="bg-white/80 dark:bg-slate-800/90 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl rounded-tl-md px-3 py-2 sm:px-5 sm:py-4 shadow-md shadow-slate-200/50 dark:shadow-slate-900/30 backdrop-blur-sm max-w-[90%] sm:max-w-[85%]">
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div
+              className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            />
+            <div
+              className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            />
+            <div
+              className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            />
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400">Assistant is thinking...</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Assistant is thinking...
+          </span>
         </div>
       </div>
     </div>
-  )
+  );
 }

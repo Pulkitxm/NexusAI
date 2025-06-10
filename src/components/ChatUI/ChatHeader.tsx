@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Keyboard } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Keyboard } from "lucide-react";
 
 interface ChatHeaderProps {
-  onShowShortcuts: () => void
+  onShowShortcuts: () => void;
 }
 
 export function ChatHeader({ onShowShortcuts }: ChatHeaderProps) {
@@ -21,5 +21,5 @@ export function ChatHeader({ onShowShortcuts }: ChatHeaderProps) {
         <span className="hidden sm:inline">Shortcuts</span>
       </Button>
     </div>
-  )
+  );
 }

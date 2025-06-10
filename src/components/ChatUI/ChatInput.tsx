@@ -8,7 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Globe, GlobeIcon as GlobeOff } from "lucide-react";
 import { VisuallyHidden } from "@/components/ui/vissually-hidden";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ChatInputProps {
   input: string;
@@ -42,21 +47,25 @@ export function ChatInput({
     }
   }, [input]);
 
-  // Focus textarea when "/" is pressed
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.key === "/" &&
-        !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "") &&
+        !["INPUT", "TEXTAREA"].includes(
+          document.activeElement?.tagName || "",
+        ) &&
         textareaRef.current
       ) {
         e.preventDefault();
         textareaRef.current.focus();
       }
 
-      if (e.key === "Escape" && document.activeElement === textareaRef.current && input) {
+      if (
+        e.key === "Escape" &&
+        document.activeElement === textareaRef.current &&
+        input
+      ) {
         e.preventDefault();
-        // Clear input will be handled by parent component
       }
     };
 
@@ -70,23 +79,27 @@ export function ChatInput({
       if (!input.trim() || isLoading) return;
       handleSubmit(e);
     },
-    [input, isLoading, handleSubmit]
+    [input, isLoading, handleSubmit],
   );
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        onSubmit(e as any);
+        onSubmit(e);
       }
     },
-    [onSubmit]
+    [onSubmit],
   );
 
   return (
     <div className="border-t border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky bottom-0">
       <div className="max-w-3xl mx-auto p-2 sm:p-3">
-        <form onSubmit={onSubmit} className="flex items-end gap-2" aria-label="Message input form">
+        <form
+          onSubmit={onSubmit}
+          className="flex items-end gap-2"
+          aria-label="Message input form"
+        >
           <div className="flex-1 relative">
             <Textarea
               ref={textareaRef}
@@ -114,15 +127,27 @@ export function ChatInput({
                       "absolute right-2 top-2 h-6 w-6 p-0 transition-all duration-200",
                       webSearchEnabled
                         ? "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30"
-                        : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+                        : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300",
                     )}
-                    aria-label={webSearchEnabled ? "Disable web search" : "Enable web search"}
+                    aria-label={
+                      webSearchEnabled
+                        ? "Disable web search"
+                        : "Enable web search"
+                    }
                   >
-                    {webSearchEnabled ? <Globe className="h-3 w-3" /> : <GlobeOff className="h-3 w-3" />}
+                    {webSearchEnabled ? (
+                      <Globe className="h-3 w-3" />
+                    ) : (
+                      <GlobeOff className="h-3 w-3" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{webSearchEnabled ? "Disable web search" : "Enable web search"}</p>
+                  <p>
+                    {webSearchEnabled
+                      ? "Disable web search"
+                      : "Enable web search"}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

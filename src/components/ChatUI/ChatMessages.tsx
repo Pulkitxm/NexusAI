@@ -44,8 +44,16 @@ export function ChatMessages({
             <MessageBubble
               message={message}
               isStreaming={isLoading && index === messages.length - 1}
-              onStartEdit={message.role === "user" ? () => onStartEdit(message.id) : undefined}
-              onReload={message.role === "assistant" ? (modelId) => onReloadMessage(message.id, modelId) : undefined}
+              onStartEdit={
+                message.role === "user"
+                  ? () => onStartEdit(message.id)
+                  : undefined
+              }
+              onReload={
+                message.role === "assistant"
+                  ? (modelId) => onReloadMessage(message.id, modelId)
+                  : undefined
+              }
               availableModels={availableModels}
               selectedModel={selectedModel}
             />

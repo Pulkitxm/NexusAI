@@ -3,7 +3,16 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MessageSquare,
+  Settings,
+  Trash2,
+  Key,
+  User,
+  LogIn,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -73,7 +82,7 @@ export function AppSidebar() {
       const filtered = chats.filter(
         (chat) =>
           chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+          chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredChats(filtered);
     }
@@ -84,7 +93,10 @@ export function AppSidebar() {
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
     setChats(updatedChats);
     if (user) {
-      localStorage.setItem(`nexus-chats-${user?.id}`, JSON.stringify(updatedChats));
+      localStorage.setItem(
+        `nexus-chats-${user?.id}`,
+        JSON.stringify(updatedChats),
+      );
     }
   };
 
@@ -142,7 +154,9 @@ export function AppSidebar() {
             <div className="text-center text-muted-foreground py-8">
               <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No conversations yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Start a new chat to begin
+              </p>
             </div>
           ) : (
             filteredChats.map((chat) => (
@@ -153,7 +167,9 @@ export function AppSidebar() {
                 >
                   <div className="flex-1 text-left">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm truncate">{chat.title}</span>
+                      <span className="font-medium text-sm truncate">
+                        {chat.title}
+                      </span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -166,7 +182,10 @@ export function AppSidebar() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem onClick={(e) => deleteChat(chat.id, e)} className="text-destructive">
+                          <DropdownMenuItem
+                            onClick={(e) => deleteChat(chat.id, e)}
+                            className="text-destructive"
+                          >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Delete Chat
                           </DropdownMenuItem>
@@ -174,12 +193,16 @@ export function AppSidebar() {
                       </DropdownMenu>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground truncate flex-1 mr-2">{chat.lastMessage}</p>
+                      <p className="text-xs text-muted-foreground truncate flex-1 mr-2">
+                        {chat.lastMessage}
+                      </p>
                       <Badge variant="secondary" className="text-xs">
                         {chat.model}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{chat.timestamp.toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {chat.timestamp.toLocaleDateString()}
+                    </p>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -212,7 +235,10 @@ export function AppSidebar() {
                 <span className="truncate">{user?.name}</span>
               </SidebarMenuButton>
             ) : (
-              <SidebarMenuButton className="hover:bg-accent" onClick={() => signIn("google")}>
+              <SidebarMenuButton
+                className="hover:bg-accent"
+                onClick={() => signIn("google")}
+              >
                 <LogIn className="w-4 h-4" />
                 <span>Login</span>
               </SidebarMenuButton>

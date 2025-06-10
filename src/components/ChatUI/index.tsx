@@ -1,40 +1,50 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import { useChat } from "ai/react"
-import { useModel } from "@/providers/model-provider"
-import { useKeys } from "@/providers/key-provider"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { AlertCircle, ArrowUp } from "lucide-react"
-import { getAvailableModels } from "@/lib/models"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ChatHeader } from "./ChatHeader"
-import { ChatMessages } from "./ChatMessages"
-import { ChatInput } from "./ChatInput"
-import { EmptyState } from "./EmptyState"
-import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog"
-import { useToast } from "@/hooks/use-toast"
-import { Button } from "../ui/button"
-import { cn } from "@/lib/utils"
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useChat } from "ai/react";
+import { useModel } from "@/providers/model-provider";
+import { useKeys } from "@/providers/key-provider";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertCircle, ArrowUp } from "lucide-react";
+import { getAvailableModels } from "@/lib/models";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChatHeader } from "./ChatHeader";
+import { ChatMessages } from "./ChatMessages";
+import { ChatInput } from "./ChatInput";
+import { EmptyState } from "./EmptyState";
+import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ChatUI() {
-  const { selectedModel, setSelectedModel } = useModel()
-  const { keys } = useKeys()
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [showShortcuts, setShowShortcuts] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
-  const [isAtBottom, setIsAtBottom] = useState(true)
-  const [showScrollTop, setShowScrollTop] = useState(false)
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
-  const { toast } = useToast()
+  const { selectedModel, setSelectedModel } = useModel();
+  const { keys } = useKeys();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const { toast } = useToast();
 
-  const availableModels = getAvailableModels(keys)
-  const selectedModelDetails = availableModels.find((m) => m.id === selectedModel)
-  const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys]
+  const availableModels = getAvailableModels(keys);
+  const selectedModelDetails = availableModels.find(
+    (m) => m.id === selectedModel,
+  );
+  const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages, reload } = useChat({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    setMessages,
+    reload,
+  } = useChat({
     api: "/api/chat",
     body: {
       model: selectedModel,
@@ -43,78 +53,80 @@ export default function ChatUI() {
       webSearch: webSearchEnabled,
     },
     onError: (error) => {
-      console.error("Chat error:", error)
-      setError(error.message)
-      setIsTyping(false)
+      console.error("Chat error:", error);
+      setError(error.message);
+      setIsTyping(false);
     },
     onFinish: () => {
-      setError(null)
-      setIsTyping(false)
+      setError(null);
+      setIsTyping(false);
     },
     onResponse: () => {
-      setIsTyping(true)
+      setIsTyping(true);
     },
-  })
+  });
 
-  // Instant scroll to bottom without animation
   const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current && isAtBottom) {
-      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      const viewport = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
+        viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [isAtBottom])
+  }, [isAtBottom]);
 
-  // Scroll to top function
   const scrollToTop = useCallback(() => {
     if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      const viewport = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (viewport) {
         viewport.scrollTo({
           top: 0,
           behavior: "smooth",
-        })
+        });
       }
     }
-  }, [])
+  }, []);
 
-  // Handle scroll detection with debounce
   const handleScroll = useCallback(() => {
     if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      const viewport = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (viewport) {
-        const { scrollTop, scrollHeight, clientHeight } = viewport
-        const threshold = 100 // pixels from bottom
-        const newIsAtBottom = scrollHeight - scrollTop - clientHeight < threshold
-        setIsAtBottom(newIsAtBottom)
+        const { scrollTop, scrollHeight, clientHeight } = viewport;
+        const threshold = 100;
+        const newIsAtBottom =
+          scrollHeight - scrollTop - clientHeight < threshold;
+        setIsAtBottom(newIsAtBottom);
 
-        // Show scroll to top button when scrolled down more than 200px
-        setShowScrollTop(scrollTop > 200)
+        setShowScrollTop(scrollTop > 200);
       }
     }
-  }, [])
+  }, []);
 
-  // Auto-scroll when new messages arrive or when typing
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, isTyping, scrollToBottom])
+    scrollToBottom();
+  }, [messages, isTyping, scrollToBottom]);
 
-  // Set up scroll listener
   useEffect(() => {
-    const viewport = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]")
+    const viewport = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
     if (viewport) {
-      viewport.addEventListener("scroll", handleScroll, { passive: true })
-      return () => viewport.removeEventListener("scroll", handleScroll)
+      viewport.addEventListener("scroll", handleScroll, { passive: true });
+      return () => viewport.removeEventListener("scroll", handleScroll);
     }
-  }, [handleScroll])
+  }, [handleScroll]);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "/") {
-        e.preventDefault()
-        setShowShortcuts((prev) => !prev)
+        e.preventDefault();
+        setShowShortcuts((prev) => !prev);
       }
 
       if (
@@ -122,25 +134,24 @@ export default function ChatUI() {
         !editingMessageId &&
         !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")
       ) {
-        e.preventDefault()
-        // Focus will be handled by ChatInput component
+        e.preventDefault();
       }
 
       if (e.key === "Escape") {
         if (editingMessageId) {
-          setEditingMessageId(null)
+          setEditingMessageId(null);
         }
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [editingMessageId])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingMessageId]);
 
   const copyConversation = useCallback(() => {
     const conversationText = messages
       .map((m) => `${m.role === "user" ? "You" : "Assistant"}: ${m.content}`)
-      .join("\n\n")
+      .join("\n\n");
 
     navigator.clipboard
       .writeText(conversationText)
@@ -150,27 +161,24 @@ export default function ChatUI() {
           variant: "destructive",
           description: "Failed to copy conversation",
         }),
-      )
-  }, [messages, toast])
+      );
+  }, [messages, toast]);
 
   const handleEditMessage = useCallback(
     async (messageId: string, newContent: string) => {
-      const messageIndex = messages.findIndex((m) => m.id === messageId)
-      if (messageIndex === -1) return
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
 
-      // Create new messages array with the edited message and all previous messages
       const updatedMessages = messages.slice(0, messageIndex).concat([
         {
           ...messages[messageIndex],
           content: newContent,
         },
-      ])
+      ]);
 
-      // Set the updated messages to continue the conversation from this point
-      setMessages(updatedMessages)
-      setEditingMessageId(null)
+      setMessages(updatedMessages);
+      setEditingMessageId(null);
 
-      // Trigger a new response from the AI with the updated conversation
       try {
         await fetch("/api/chat", {
           method: "POST",
@@ -184,44 +192,50 @@ export default function ChatUI() {
             apiKey: apiKey,
             webSearch: webSearchEnabled,
           }),
-        })
+        });
 
-        // Reload the chat to get the new response
-        reload()
+        reload();
       } catch (error) {
-        console.error("Error editing message:", error)
-        setError("Failed to edit message")
+        console.error("Error editing message:", error);
+        setError("Failed to edit message");
       }
     },
-    [messages, setMessages, selectedModel, selectedModelDetails, apiKey, webSearchEnabled, reload],
-  )
+    [
+      messages,
+      setMessages,
+      selectedModel,
+      selectedModelDetails,
+      apiKey,
+      webSearchEnabled,
+      reload,
+    ],
+  );
 
   const handleReloadMessage = useCallback(
     async (messageId: string, modelId?: string) => {
-      const messageIndex = messages.findIndex((m) => m.id === messageId)
-      if (messageIndex === -1) return
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
 
-      // Get all messages up to the selected message
-      const messagesUpToSelected = messages.slice(0, messageIndex + 1)
+      const messagesUpToSelected = messages.slice(0, messageIndex + 1);
 
-      // If the selected message is from the assistant, remove it to regenerate
       const updatedMessages =
-        messages[messageIndex].role === "assistant" ? messagesUpToSelected.slice(0, -1) : messagesUpToSelected
+        messages[messageIndex].role === "assistant"
+          ? messagesUpToSelected.slice(0, -1)
+          : messagesUpToSelected;
 
-      // Update the model if a new one was selected
-      const targetModel = modelId || selectedModel
+      const targetModel = modelId || selectedModel;
       if (modelId && modelId !== selectedModel) {
-        setSelectedModel(modelId)
+        setSelectedModel(modelId);
       }
 
-      // Set the updated messages
-      setMessages(updatedMessages)
+      setMessages(updatedMessages);
 
-      // Get the target model details
-      const targetModelDetails = availableModels.find((m) => m.id === targetModel)
-      const targetApiKey = keys[targetModelDetails?.requiresKey as keyof typeof keys]
+      const targetModelDetails = availableModels.find(
+        (m) => m.id === targetModel,
+      );
+      const targetApiKey =
+        keys[targetModelDetails?.requiresKey as keyof typeof keys];
 
-      // Trigger a new response from the AI
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -235,36 +249,35 @@ export default function ChatUI() {
             apiKey: targetApiKey,
             webSearch: webSearchEnabled,
           }),
-        })
+        });
 
         if (!response.ok) {
-          throw new Error("Failed to regenerate message")
+          throw new Error("Failed to regenerate message");
         }
 
-        // Handle the streaming response
-        const reader = response.body?.getReader()
-        if (!reader) throw new Error("No response body")
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No response body");
 
-        let newMessage = ""
-        const decoder = new TextDecoder()
+        let newMessage = "";
+        const decoder = new TextDecoder();
 
         while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+          const { done, value } = await reader.read();
+          if (done) break;
 
-          const chunk = decoder.decode(value)
-          const lines = chunk.split("\n")
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
 
           for (const line of lines) {
             if (line.startsWith("data: ")) {
-              const data = line.slice(6)
-              if (data === "[DONE]") break
+              const data = line.slice(6);
+              if (data === "[DONE]") break;
 
               try {
-                const parsed = JSON.parse(data)
+                const parsed = JSON.parse(data);
                 if (parsed.choices?.[0]?.delta?.content) {
-                  newMessage += parsed.choices[0].delta.content
-                  // Update the messages with the new content
+                  newMessage += parsed.choices[0].delta.content;
+
                   setMessages([
                     ...updatedMessages,
                     {
@@ -272,23 +285,32 @@ export default function ChatUI() {
                       role: "assistant",
                       content: newMessage,
                     },
-                  ])
+                  ]);
                 }
               } catch (e) {
-                // Ignore parsing errors
+                console.error("Error parsing chunk:", e);
               }
             }
           }
         }
 
-        toast({ description: "Message regenerated successfully" })
+        toast({ description: "Message regenerated successfully" });
       } catch (error) {
-        console.error("Error regenerating message:", error)
-        setError("Failed to regenerate message")
+        console.error("Error regenerating message:", error);
+        setError("Failed to regenerate message");
       }
     },
-    [messages, setMessages, selectedModel, setSelectedModel, availableModels, keys, webSearchEnabled, toast],
-  )
+    [
+      messages,
+      setMessages,
+      selectedModel,
+      setSelectedModel,
+      availableModels,
+      keys,
+      webSearchEnabled,
+      toast,
+    ],
+  );
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -332,7 +354,9 @@ export default function ChatUI() {
           size="icon"
           className={cn(
             "fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 h-10 w-10 rounded-full shadow-lg transition-all duration-300 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800",
-            showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+            showScrollTop
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-2 pointer-events-none",
           )}
           aria-label="Scroll to top"
         >
@@ -352,7 +376,10 @@ export default function ChatUI() {
         onWebSearchToggle={setWebSearchEnabled}
       />
 
-      <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
+      <KeyboardShortcutsDialog
+        open={showShortcuts}
+        onOpenChange={setShowShortcuts}
+      />
     </div>
-  )
+  );
 }
