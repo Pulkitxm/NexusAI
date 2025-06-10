@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertCircle, ArrowUp } from "lucide-react";
 import { getAvailableModels } from "@/lib/models";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { EmptyState } from "./EmptyState";
@@ -260,6 +259,7 @@ export default function ChatUI() {
 
         let newMessage = "";
         const decoder = new TextDecoder();
+        const newMessageId = Date.now().toString();
 
         while (true) {
           const { done, value } = await reader.read();
@@ -281,7 +281,7 @@ export default function ChatUI() {
                   setMessages([
                     ...updatedMessages,
                     {
-                      id: Date.now().toString(),
+                      id: newMessageId,
                       role: "assistant",
                       content: newMessage,
                     },
@@ -314,8 +314,6 @@ export default function ChatUI() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <ChatHeader onShowShortcuts={() => setShowShortcuts(true)} />
-
       <div className="relative flex-1">
         <ScrollArea className="h-full px-2 sm:px-4" ref={scrollAreaRef}>
           <div className="max-w-3xl mx-auto py-4 sm:py-6">
