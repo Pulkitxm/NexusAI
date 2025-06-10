@@ -34,7 +34,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
 
     const storedModel = localStorage.getItem("selectedModel");
     const modelExists = availableModels.find(
-      (model) => model.id === storedModel
+      (model) => model.id === storedModel,
     );
 
     if (storedModel && modelExists) {
@@ -52,7 +52,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
         onModelChange={changeModel}
       />
     ),
-    [availableModels, selectedModel, changeModel]
+    [availableModels, selectedModel, changeModel],
   );
 
   return (

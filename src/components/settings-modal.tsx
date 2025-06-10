@@ -82,7 +82,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             <div className="flex flex-col h-full">
               <div className="flex-1 p-4 sm:p-6 space-y-4">
                 <div className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setView("about")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setView("about")}
+                  >
                     <Shield className="w-4 h-4 mr-2" />
                     About BYOK
                   </Button>
@@ -136,7 +140,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               type={showKeys[config.key] ? "text" : "password"}
                               placeholder={`Enter your ${config.name} API key`}
                               value={
-                                tempKeys[config.key as keyof typeof tempKeys] || ""
+                                tempKeys[config.key as keyof typeof tempKeys] ||
+                                ""
                               }
                               onChange={(e) =>
                                 setTempKeys((prev) => ({
@@ -197,8 +202,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <div className="min-w-0">
                         <h4 className="font-medium">Your Keys, Your Control</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                          API keys are stored locally in your browser and never sent
-                          to our servers
+                          API keys are stored locally in your browser and never
+                          sent to our servers
                         </p>
                       </div>
                     </div>
@@ -210,8 +215,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <div className="min-w-0">
                         <h4 className="font-medium">Direct Communication</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Your requests go directly to AI providers - we never see
-                          your data or conversations
+                          Your requests go directly to AI providers - we never
+                          see your data or conversations
                         </p>
                       </div>
                     </div>
@@ -223,8 +228,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <div className="min-w-0">
                         <h4 className="font-medium">Pay Only What You Use</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                          No subscription fees - pay AI providers directly based on
-                          your actual usage
+                          No subscription fees - pay AI providers directly based
+                          on your actual usage
                         </p>
                       </div>
                     </div>
@@ -236,8 +241,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <div className="min-w-0">
                         <h4 className="font-medium">Sync Across Devices</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Sign in to sync your chat history and settings across all
-                          your devices
+                          Sign in to sync your chat history and settings across
+                          all your devices
                         </p>
                       </div>
                     </div>
@@ -252,12 +257,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <CardContent>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                     <li>
-                      Click &quot;Get Key&quot; next to any AI provider to create an account
-                      and obtain your API key
+                      Click &quot;Get Key&quot; next to any AI provider to
+                      create an account and obtain your API key
                     </li>
-                    <li>Paste your API key into the corresponding field above</li>
                     <li>
-                      Click &quot;Save Keys&quot; to store them securely in your browser
+                      Paste your API key into the corresponding field above
+                    </li>
+                    <li>
+                      Click &quot;Save Keys&quot; to store them securely in your
+                      browser
                     </li>
                     <li>
                       Start chatting with your preferred AI models immediately

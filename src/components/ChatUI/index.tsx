@@ -31,7 +31,9 @@ export default function ChatUI() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [regeneratingMessageId, setRegeneratingMessageId] = useState<string | null>(null);
+  const [regeneratingMessageId, setRegeneratingMessageId] = useState<
+    string | null
+  >(null);
   const { toast } = useToast();
 
   const availableModels = getAvailableModels(keys);
@@ -209,15 +211,16 @@ export default function ChatUI() {
     ],
   );
 
-  // Helper function to format error messages
   const formatErrorMessage = useCallback((error: ErrorDetails) => {
     const messages: Record<string, string> = {
       MISSING_FIELDS: "Please ensure all required fields are provided.",
       MODEL_NOT_FOUND: "The selected AI model is not available.",
       PROVIDER_NOT_SUPPORTED: "The selected AI provider is not supported.",
-      PROVIDER_INIT_ERROR: "Failed to initialize the AI service. Please check your API key.",
+      PROVIDER_INIT_ERROR:
+        "Failed to initialize the AI service. Please check your API key.",
       AI_RESPONSE_ERROR: "The AI model encountered an error. Please try again.",
-      STREAM_TRANSFORM_ERROR: "Error processing the AI response. Please try again.",
+      STREAM_TRANSFORM_ERROR:
+        "Error processing the AI response. Please try again.",
       STREAM_ERROR: "Failed to establish connection with the AI service.",
       GENERATION_ERROR: "Failed to generate response. Please try again.",
       UNKNOWN_ERROR: "An unexpected error occurred. Please try again.",
@@ -230,28 +233,39 @@ export default function ChatUI() {
     };
   }, []);
 
-  const handleError = useCallback((error: unknown) => {
-    let errorDetails: ErrorDetails;
+  const handleError = useCallback(
+    (error: unknown) => {
+      let errorDetails: ErrorDetails;
 
-    if (error instanceof Error && error.cause && typeof error.cause === 'object' && 'code' in error.cause) {
-      errorDetails = error.cause as ErrorDetails;
-    } else {
-      errorDetails = {
-        message: error instanceof Error ? error.message : "An unexpected error occurred",
-        code: "UNKNOWN_ERROR",
-        status: 500
-      };
-    }
+      if (
+        error instanceof Error &&
+        error.cause &&
+        typeof error.cause === "object" &&
+        "code" in error.cause
+      ) {
+        errorDetails = error.cause as ErrorDetails;
+      } else {
+        errorDetails = {
+          message:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred",
+          code: "UNKNOWN_ERROR",
+          status: 500,
+        };
+      }
 
-    const formattedError = formatErrorMessage(errorDetails);
-    setError(errorDetails);
+      const formattedError = formatErrorMessage(errorDetails);
+      setError(errorDetails);
 
-    toast({
-      variant: "destructive",
-      title: formattedError.title,
-      description: formattedError.description,
-    });
-  }, [formatErrorMessage, toast]);
+      toast({
+        variant: "destructive",
+        title: formattedError.title,
+        description: formattedError.description,
+      });
+    },
+    [formatErrorMessage, toast],
+  );
 
   const handleReloadMessage = useCallback(
     async (messageId: string, modelId?: string) => {
@@ -275,20 +289,25 @@ export default function ChatUI() {
             messages: messages.slice(0, messageIndex + 1),
             model: modelId || selectedModel,
             provider: availableModels.find(
-              (m) => m.id === (modelId || selectedModel)
+              (m) => m.id === (modelId || selectedModel),
             )?.provider,
-            apiKey: keys[availableModels.find(
-              (m) => m.id === (modelId || selectedModel)
-            )?.requiresKey as keyof typeof keys],
+            apiKey:
+              keys[
+                availableModels.find((m) => m.id === (modelId || selectedModel))
+                  ?.requiresKey as keyof typeof keys
+              ],
             webSearch: webSearchEnabled,
           }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error?.message || 'Failed to regenerate message', {
-            cause: errorData.error
-          });
+          throw new Error(
+            errorData.error?.message || "Failed to regenerate message",
+            {
+              cause: errorData.error,
+            },
+          );
         }
 
         const reader = response.body?.getReader();
@@ -338,7 +357,9 @@ export default function ChatUI() {
             if (line.startsWith("error:")) {
               try {
                 const errorData = JSON.parse(line.slice(6));
-                throw new Error(errorData.error.message, { cause: errorData.error });
+                throw new Error(errorData.error.message, {
+                  cause: errorData.error,
+                });
               } catch (e) {
                 if (e instanceof Error && e.cause) {
                   throw e;
@@ -347,8 +368,8 @@ export default function ChatUI() {
                   cause: {
                     message: "Invalid error format received from server",
                     code: "PARSE_ERROR",
-                    status: 500
-                  }
+                    status: 500,
+                  },
                 });
               }
             }
@@ -363,8 +384,7 @@ export default function ChatUI() {
       } catch (error) {
         console.error("Error regenerating message:", error);
         handleError(error);
-        
-        // Keep the failed message in the chat if we have partial content
+
         if (currentMessage) {
           setMessages([
             ...messages.slice(0, messageIndex + 1),
@@ -380,48 +400,64 @@ export default function ChatUI() {
         setIsTyping(false);
       }
     },
-    [messages, setMessages, selectedModel, availableModels, keys, webSearchEnabled, toast, handleError],
+    [
+      messages,
+      setMessages,
+      selectedModel,
+      availableModels,
+      keys,
+      webSearchEnabled,
+      toast,
+      handleError,
+    ],
   );
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <ScrollArea className="h-full px-2 sm:px-4 overflow-y-auto" ref={scrollAreaRef}>
-          <div className="max-w-3xl mx-auto py-4 sm:py-6">
-            {error && (
-              <Alert
-                className="mb-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
-                variant="destructive"
-              >
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="flex flex-col gap-1">
-                  <span className="font-medium">{formatErrorMessage(error).title}</span>
-                  <span>{error.message}</span>
-                  {error.code && (
-                    <span className="text-xs opacity-75">Error code: {error.code}</span>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+      <ScrollArea
+        className="h-full px-2 sm:px-4 overflow-y-auto"
+        ref={scrollAreaRef}
+      >
+        <div className="max-w-3xl mx-auto py-4 sm:py-6">
+          {error && (
+            <Alert
+              className="mb-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+              variant="destructive"
+            >
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex flex-col gap-1">
+                <span className="font-medium">
+                  {formatErrorMessage(error).title}
+                </span>
+                <span>{error.message}</span>
+                {error.code && (
+                  <span className="text-xs opacity-75">
+                    Error code: {error.code}
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
-            {messages.length === 0 ? (
-              <EmptyState selectedModelDetails={selectedModelDetails} />
-            ) : (
-              <ChatMessages
-                messages={messages}
-                isLoading={isLoading}
-                isTyping={isTyping}
-                editingMessageId={editingMessageId}
-                onEditMessage={handleEditMessage}
-                onStartEdit={setEditingMessageId}
-                onCancelEdit={() => setEditingMessageId(null)}
-                onReloadMessage={handleReloadMessage}
-                availableModels={availableModels}
-                selectedModel={selectedModel}
-                regeneratingMessageId={regeneratingMessageId}
-              />
-            )}
-          </div>
-        </ScrollArea>
+          {messages.length === 0 ? (
+            <EmptyState selectedModelDetails={selectedModelDetails} />
+          ) : (
+            <ChatMessages
+              messages={messages}
+              isLoading={isLoading}
+              isTyping={isTyping}
+              editingMessageId={editingMessageId}
+              onEditMessage={handleEditMessage}
+              onStartEdit={setEditingMessageId}
+              onCancelEdit={() => setEditingMessageId(null)}
+              onReloadMessage={handleReloadMessage}
+              availableModels={availableModels}
+              selectedModel={selectedModel}
+              regeneratingMessageId={regeneratingMessageId}
+            />
+          )}
+        </div>
+      </ScrollArea>
       <ChatInput
         input={input}
         handleInputChange={handleInputChange}

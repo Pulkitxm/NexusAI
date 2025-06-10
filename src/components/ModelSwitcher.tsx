@@ -1,8 +1,20 @@
 "use client";
 import React, { memo, useMemo, useState, useCallback } from "react";
 import type { IconType } from "react-icons";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,25 +52,58 @@ const capabilityConfig: Record<string, CapabilityConfig> = {
     icon: Brain,
     label: "Reasoning",
     color: "text-violet-600 dark:text-violet-400",
-    searchTerms: ["reasoning", "logic", "thinking", "analysis", "smart", "intelligent"],
+    searchTerms: [
+      "reasoning",
+      "logic",
+      "thinking",
+      "analysis",
+      "smart",
+      "intelligent",
+    ],
   },
   imageGeneration: {
     icon: ImageIcon,
     label: "Image Gen",
     color: "text-pink-600 dark:text-pink-400",
-    searchTerms: ["image", "generation", "create", "draw", "art", "visual", "picture", "generate"],
+    searchTerms: [
+      "image",
+      "generation",
+      "create",
+      "draw",
+      "art",
+      "visual",
+      "picture",
+      "generate",
+    ],
   },
   imageUpload: {
     icon: Eye,
     label: "Vision",
     color: "text-blue-600 dark:text-blue-400",
-    searchTerms: ["vision", "see", "image", "photo", "visual", "upload", "analyze", "recognize"],
+    searchTerms: [
+      "vision",
+      "see",
+      "image",
+      "photo",
+      "visual",
+      "upload",
+      "analyze",
+      "recognize",
+    ],
   },
   search: {
     icon: SearchIcon,
     label: "Search",
     color: "text-emerald-600 dark:text-emerald-400",
-    searchTerms: ["search", "web", "internet", "browse", "find", "lookup", "query"],
+    searchTerms: [
+      "search",
+      "web",
+      "internet",
+      "browse",
+      "find",
+      "lookup",
+      "query",
+    ],
   },
   pdfUpload: {
     icon: FileText,
@@ -76,7 +121,9 @@ const AnimatedWrapper = memo<{
   return (
     <div
       className={`transition-all duration-500 ease-in-out ${
-        show ? "opacity-100 translate-y-0 " : "opacity-0 -translate-y-4 pointer-events-none"
+        show
+          ? "opacity-100 translate-y-0 "
+          : "opacity-0 -translate-y-4 pointer-events-none"
       }`}
       style={{
         transitionDelay: show ? `${delay}ms` : "0ms",
@@ -107,7 +154,9 @@ const CapabilityBadges = memo<{
         const isHighlighted =
           searchQuery &&
           (config.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            config.searchTerms.some((term) => term.toLowerCase().includes(searchQuery.toLowerCase())));
+            config.searchTerms.some((term) =>
+              term.toLowerCase().includes(searchQuery.toLowerCase()),
+            ));
 
         return (
           <div
@@ -118,8 +167,12 @@ const CapabilityBadges = memo<{
                 : "bg-gray-100 dark:bg-gray-800"
             } ${size === "sm" ? "text-sm" : "text-xs"} font-medium`}
           >
-            <CapIcon className={`${sizeClasses} ${config.color} ${isHighlighted ? "animate-pulse" : ""}`} />
-            <span className="text-gray-700 dark:text-gray-300">{config.label}</span>
+            <CapIcon
+              className={`${sizeClasses} ${config.color} ${isHighlighted ? "animate-pulse" : ""}`}
+            />
+            <span className="text-gray-700 dark:text-gray-300">
+              {config.label}
+            </span>
           </div>
         );
       })
@@ -140,7 +193,8 @@ const ModelCard = memo<{
 }>(({ model, isSelected, onClick, searchQuery = "", index }) => {
   const ModelIcon = model.icon;
 
-  const isNameHighlighted = searchQuery && model.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const isNameHighlighted =
+    searchQuery && model.name.toLowerCase().includes(searchQuery.toLowerCase());
 
   return (
     <AnimatedWrapper show={true} delay={index * 50}>
@@ -190,7 +244,10 @@ const ModelCard = memo<{
               {model.description}
             </p>
 
-            <CapabilityBadges capabilities={model.capabilities} searchQuery={searchQuery} />
+            <CapabilityBadges
+              capabilities={model.capabilities}
+              searchQuery={searchQuery}
+            />
           </div>
         </div>
       </div>
@@ -217,7 +274,9 @@ const ModelSelectItem = memo<{
         const isHighlighted =
           searchQuery &&
           (config.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            config.searchTerms.some((term) => term.toLowerCase().includes(searchQuery.toLowerCase())));
+            config.searchTerms.some((term) =>
+              term.toLowerCase().includes(searchQuery.toLowerCase()),
+            ));
 
         return (
           <CapIcon
@@ -230,7 +289,8 @@ const ModelSelectItem = memo<{
       .filter(Boolean);
   }, [model.capabilities, searchQuery]);
 
-  const isNameHighlighted = searchQuery && model.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const isNameHighlighted =
+    searchQuery && model.name.toLowerCase().includes(searchQuery.toLowerCase());
 
   return (
     <SelectItem
@@ -246,7 +306,9 @@ const ModelSelectItem = memo<{
           <div className="flex items-center gap-2 mb-1">
             <span
               className={`text-sm font-medium truncate transition-all duration-300 ${
-                isNameHighlighted ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-gray-100"
+                isNameHighlighted
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-900 dark:text-gray-100"
               }`}
             >
               {model.name}
@@ -284,7 +346,9 @@ const ProviderSection = memo<{
             <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-300" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{provider}</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {provider}
+            </h3>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               {models.length} model{models.length !== 1 ? "s" : ""} available
             </p>
@@ -310,238 +374,262 @@ const ProviderSection = memo<{
 
 ProviderSection.displayName = "ProviderSection";
 
-export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, selectedModel, onModelChange }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [dropdownSearch, setDropdownSearch] = useState("");
+export const ModelSelector = memo<ModelSelectorProps>(
+  ({ availableModels, selectedModel, onModelChange }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [dropdownSearch, setDropdownSearch] = useState("");
 
-  const groupedByProvider = useMemo(() => {
-    return availableModels.reduce(
-      (acc, model) => {
-        if (!acc[model.provider]) {
-          acc[model.provider] = [];
-        }
-        acc[model.provider].push(model);
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
-    );
-  }, [availableModels]);
+    const groupedByProvider = useMemo(() => {
+      return availableModels.reduce(
+        (acc, model) => {
+          if (!acc[model.provider]) {
+            acc[model.provider] = [];
+          }
+          acc[model.provider].push(model);
+          return acc;
+        },
+        {} as Record<string, AIModel[]>,
+      );
+    }, [availableModels]);
 
-  const filterModels = useCallback((models: AIModel[], query: string) => {
-    if (!query.trim()) return models;
-    const lowerQuery = query.toLowerCase();
+    const filterModels = useCallback((models: AIModel[], query: string) => {
+      if (!query.trim()) return models;
+      const lowerQuery = query.toLowerCase();
 
-    return models.filter((model) => {
-      const basicMatch =
-        model.name.toLowerCase().includes(lowerQuery) ||
-        model.provider.toLowerCase().includes(lowerQuery) ||
-        model.description.toLowerCase().includes(lowerQuery) ||
-        model.category.toLowerCase().includes(lowerQuery);
+      return models.filter((model) => {
+        const basicMatch =
+          model.name.toLowerCase().includes(lowerQuery) ||
+          model.provider.toLowerCase().includes(lowerQuery) ||
+          model.description.toLowerCase().includes(lowerQuery) ||
+          model.category.toLowerCase().includes(lowerQuery);
 
-      const capabilityMatch = Object.entries(model.capabilities).some(([key, value]) => {
-        if (!value) return false;
-        const config = capabilityConfig[key];
-        if (!config) return false;
+        const capabilityMatch = Object.entries(model.capabilities).some(
+          ([key, value]) => {
+            if (!value) return false;
+            const config = capabilityConfig[key];
+            if (!config) return false;
 
-        return (
-          config.label.toLowerCase().includes(lowerQuery) ||
-          config.searchTerms.some((term) => term.toLowerCase().includes(lowerQuery))
+            return (
+              config.label.toLowerCase().includes(lowerQuery) ||
+              config.searchTerms.some((term) =>
+                term.toLowerCase().includes(lowerQuery),
+              )
+            );
+          },
         );
+
+        return basicMatch || capabilityMatch;
       });
+    }, []);
 
-      return basicMatch || capabilityMatch;
-    });
-  }, []);
-
-  const filteredModelsForModal = useMemo(
-    () => filterModels(availableModels, searchQuery),
-    [availableModels, searchQuery, filterModels]
-  );
-
-  const filteredGroupedByProvider = useMemo(() => {
-    return Object.entries(groupedByProvider).reduce(
-      (acc, [provider, models]) => {
-        const filtered = filterModels(models, dropdownSearch);
-        if (filtered.length > 0) {
-          acc[provider] = filtered;
-        }
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
+    const filteredModelsForModal = useMemo(
+      () => filterModels(availableModels, searchQuery),
+      [availableModels, searchQuery, filterModels],
     );
-  }, [groupedByProvider, dropdownSearch, filterModels]);
 
-  const selectedModelData = useMemo(
-    () => availableModels.find((m) => m.id === selectedModel),
-    [availableModels, selectedModel]
-  );
+    const filteredGroupedByProvider = useMemo(() => {
+      return Object.entries(groupedByProvider).reduce(
+        (acc, [provider, models]) => {
+          const filtered = filterModels(models, dropdownSearch);
+          if (filtered.length > 0) {
+            acc[provider] = filtered;
+          }
+          return acc;
+        },
+        {} as Record<string, AIModel[]>,
+      );
+    }, [groupedByProvider, dropdownSearch, filterModels]);
 
-  const groupedFilteredForModal = useMemo(() => {
-    return filteredModelsForModal.reduce(
-      (acc, model) => {
-        if (!acc[model.provider]) {
-          acc[model.provider] = [];
-        }
-        acc[model.provider].push(model);
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
+    const selectedModelData = useMemo(
+      () => availableModels.find((m) => m.id === selectedModel),
+      [availableModels, selectedModel],
     );
-  }, [filteredModelsForModal]);
 
-  const handleModelSelect = useCallback(
-    (modelId: string) => {
-      onModelChange(modelId);
-      setIsModalOpen(false);
-    },
-    [onModelChange]
-  );
+    const groupedFilteredForModal = useMemo(() => {
+      return filteredModelsForModal.reduce(
+        (acc, model) => {
+          if (!acc[model.provider]) {
+            acc[model.provider] = [];
+          }
+          acc[model.provider].push(model);
+          return acc;
+        },
+        {} as Record<string, AIModel[]>,
+      );
+    }, [filteredModelsForModal]);
 
-  const clearSearchQuery = useCallback(() => setSearchQuery(""), []);
-  const clearDropdownSearch = useCallback(() => setDropdownSearch(""), []);
+    const handleModelSelect = useCallback(
+      (modelId: string) => {
+        onModelChange(modelId);
+        setIsModalOpen(false);
+      },
+      [onModelChange],
+    );
 
-  const SelectedIcon = selectedModelData?.icon;
+    const clearSearchQuery = useCallback(() => setSearchQuery(""), []);
+    const clearDropdownSearch = useCallback(() => setDropdownSearch(""), []);
 
-  return (
-    <div className="flex items-center gap-2">
-      <Select value={selectedModel} onValueChange={onModelChange}>
-        <SelectTrigger className="w-[180px] sm:w-[220px] lg:w-[260px] h-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm">
-          <SelectValue placeholder="Select AI Model">
-            {selectedModelData && (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-sm">
-                  {SelectedIcon && <SelectedIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                </div>
-                <span className="truncate font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
-                  {selectedModelData.name}
-                </span>
-              </div>
-            )}
-          </SelectValue>
-        </SelectTrigger>
+    const SelectedIcon = selectedModelData?.icon;
 
-        <SelectContent className="w-[300px] sm:w-[340px] max-h-[500px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
-          <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search models, capabilities..."
-                value={dropdownSearch}
-                onChange={(e) => setDropdownSearch(e.target.value)}
-                className="pl-10 pr-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-              />
-              {dropdownSearch && (
-                <button
-                  onClick={clearDropdownSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="max-h-[400px] overflow-y-auto">
-            {Object.keys(filteredGroupedByProvider).length === 0 ? (
-              <AnimatedWrapper show={true}>
-                <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                  <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  No models found
-                </div>
-              </AnimatedWrapper>
-            ) : (
-              Object.entries(filteredGroupedByProvider).map(([provider, models]) => (
-                <div key={provider}>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
-                    <Zap className="h-3 w-3" />
-                    <span>{provider}</span>
+    return (
+      <div className="flex items-center gap-2">
+        <Select value={selectedModel} onValueChange={onModelChange}>
+          <SelectTrigger className="w-[180px] sm:w-[220px] lg:w-[260px] h-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm">
+            <SelectValue placeholder="Select AI Model">
+              {selectedModelData && (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-sm">
+                    {SelectedIcon && (
+                      <SelectedIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    )}
                   </div>
-
-                  {models.map((model) => (
-                    <ModelSelectItem key={model.id} model={model} searchQuery={dropdownSearch} />
-                  ))}
+                  <span className="truncate font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                    {selectedModelData.name}
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
-        </SelectContent>
-      </Select>
+              )}
+            </SelectValue>
+          </SelectTrigger>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-10 px-2 sm:px-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200"
-          >
-            <Settings2 className="h-4 w-4 sm:mr-2" />
-            <span className="text-sm font-medium hidden sm:inline">All Models</span>
-          </Button>
-        </DialogTrigger>
-
-        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-          <DialogHeader className="border-b border-gray-100 dark:border-gray-800 pb-4 sm:pb-6 flex-shrink-0">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <DialogTitle className="flex items-center gap-3 text-lg sm:text-xl font-semibold">
-                <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg">
-                  <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-                <span className="text-gray-900 dark:text-gray-100">AI Models</span>
-              </DialogTitle>
-
-              <div className="relative w-full sm:w-80">
+          <SelectContent className="w-[300px] sm:w-[340px] max-h-[500px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div className="p-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search models, capabilities..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 h-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
+                  value={dropdownSearch}
+                  onChange={(e) => setDropdownSearch(e.target.value)}
+                  className="pl-10 pr-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
-                {searchQuery && (
+                {dropdownSearch && (
                   <button
-                    onClick={clearSearchQuery}
+                    onClick={clearDropdownSearch}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </button>
                 )}
               </div>
             </div>
-          </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto py-4 sm:py-6 min-h-0">
-            {Object.keys(groupedFilteredForModal).length === 0 ? (
-              <AnimatedWrapper show={true}>
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 mb-2">No models found matching your search.</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 px-4">
-                    Try searching by model name, provider, or capabilities like &quot;vision&quot;, &quot;reasoning&quot;, &quot;image generation&quot;
-                  </p>
-                </div>
-              </AnimatedWrapper>
-            ) : (
-              <div className="space-y-6 sm:space-y-8 px-1">
-                {Object.entries(groupedFilteredForModal).map(([provider, models], index) => (
-                  <ProviderSection
-                    key={provider}
-                    provider={provider}
-                    models={models}
-                    selectedModel={selectedModel}
-                    onModelSelect={handleModelSelect}
-                    searchQuery={searchQuery}
-                    index={index}
+            <div className="max-h-[400px] overflow-y-auto">
+              {Object.keys(filteredGroupedByProvider).length === 0 ? (
+                <AnimatedWrapper show={true}>
+                  <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    No models found
+                  </div>
+                </AnimatedWrapper>
+              ) : (
+                Object.entries(filteredGroupedByProvider).map(
+                  ([provider, models]) => (
+                    <div key={provider}>
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800">
+                        <Zap className="h-3 w-3" />
+                        <span>{provider}</span>
+                      </div>
+
+                      {models.map((model) => (
+                        <ModelSelectItem
+                          key={model.id}
+                          model={model}
+                          searchQuery={dropdownSearch}
+                        />
+                      ))}
+                    </div>
+                  ),
+                )
+              )}
+            </div>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-10 px-2 sm:px-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200"
+            >
+              <Settings2 className="h-4 w-4 sm:mr-2" />
+              <span className="text-sm font-medium hidden sm:inline">
+                All Models
+              </span>
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-w-6xl w-[95vw] h-[90vh] flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+            <DialogHeader className="border-b border-gray-100 dark:border-gray-800 pb-4 sm:pb-6 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <DialogTitle className="flex items-center gap-3 text-lg sm:text-xl font-semibold">
+                  <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg">
+                    <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    AI Models
+                  </span>
+                </DialogTitle>
+
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search models, capabilities..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10 h-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
                   />
-                ))}
+                  {searchQuery && (
+                    <button
+                      onClick={clearSearchQuery}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-});
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto py-4 sm:py-6 min-h-0">
+              {Object.keys(groupedFilteredForModal).length === 0 ? (
+                <AnimatedWrapper show={true}>
+                  <div className="text-center py-12">
+                    <Search className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">
+                      No models found matching your search.
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 px-4">
+                      Try searching by model name, provider, or capabilities
+                      like &quot;vision&quot;, &quot;reasoning&quot;,
+                      &quot;image generation&quot;
+                    </p>
+                  </div>
+                </AnimatedWrapper>
+              ) : (
+                <div className="space-y-6 sm:space-y-8 px-1">
+                  {Object.entries(groupedFilteredForModal).map(
+                    ([provider, models], index) => (
+                      <ProviderSection
+                        key={provider}
+                        provider={provider}
+                        models={models}
+                        selectedModel={selectedModel}
+                        onModelSelect={handleModelSelect}
+                        searchQuery={searchQuery}
+                        index={index}
+                      />
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  },
+);
 
 ModelSelector.displayName = "ModelSelector";
 

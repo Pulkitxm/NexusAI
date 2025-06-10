@@ -177,7 +177,8 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile, setOpen } = useSidebar();
+    const { isMobile, state, openMobile, setOpenMobile, setOpen } =
+      useSidebar();
 
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {

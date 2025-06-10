@@ -78,16 +78,16 @@ export const MessageBubble = React.memo(
           setIsDropdownOpen(false);
           try {
             await onReload(modelId);
+          } catch (error) {
+            console.error("Failed to regenerate message:", error);
           } finally {
-            // Don't set isRegenerating to false here, as we want to keep the loading state
-            // until the stream starts or an error occurs
+            setIsRegenerating(false);
           }
         }
       },
       [onReload],
     );
 
-    // Update isRegenerating based on isStreaming prop
     useEffect(() => {
       if (!isStreaming) {
         setIsRegenerating(false);
@@ -239,7 +239,9 @@ export const MessageBubble = React.memo(
                       )}
                     />
                     <span className="hidden xs:inline text-xs">
-                      {isRegenerating || isStreaming ? "Regenerating..." : "Regenerate"}
+                      {isRegenerating || isStreaming
+                        ? "Regenerating..."
+                        : "Regenerate"}
                     </span>
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
                   </Button>
@@ -263,7 +265,11 @@ export const MessageBubble = React.memo(
                     <DropdownMenuItem
                       key={model.id}
                       onClick={() => handleReload(model.id)}
-                      disabled={model.id === selectedModel || isRegenerating || isStreaming}
+                      disabled={
+                        model.id === selectedModel ||
+                        isRegenerating ||
+                        isStreaming
+                      }
                       className="flex items-center gap-2"
                     >
                       <model.icon className="h-3 w-3" />

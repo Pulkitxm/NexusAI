@@ -4,20 +4,18 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { AI_MODELS } from "@/lib/models";
 
-// Custom error class for API errors
 class APIError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
     public code?: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
-// Error response formatter
 function formatErrorResponse(error: unknown) {
   if (error instanceof APIError) {
     return {
@@ -25,8 +23,8 @@ function formatErrorResponse(error: unknown) {
         message: error.message,
         code: error.code || "API_ERROR",
         status: error.statusCode,
-        details: error.details
-      }
+        details: error.details,
+      },
     };
   }
 
@@ -36,8 +34,8 @@ function formatErrorResponse(error: unknown) {
         message: error.message,
         code: "UNKNOWN_ERROR",
         status: 500,
-        details: error.stack
-      }
+        details: error.stack,
+      },
     };
   }
 
@@ -45,8 +43,8 @@ function formatErrorResponse(error: unknown) {
     error: {
       message: "An unexpected error occurred",
       code: "UNKNOWN_ERROR",
-      status: 500
-    }
+      status: 500,
+    },
   };
 }
 
@@ -58,7 +56,7 @@ export async function POST(req: Request) {
       throw new APIError(
         "Missing required fields. Please ensure you have provided messages, model, and API key.",
         400,
-        "MISSING_FIELDS"
+        "MISSING_FIELDS",
       );
     }
 
@@ -67,7 +65,7 @@ export async function POST(req: Request) {
       throw new APIError(
         `Model "${model}" is not supported. Please select a valid model.`,
         400,
-        "MODEL_NOT_FOUND"
+        "MODEL_NOT_FOUND",
       );
     }
 
@@ -95,15 +93,15 @@ export async function POST(req: Request) {
           throw new APIError(
             `Provider "${modelProvider}" is not supported. Please use OpenAI, Anthropic, or Google.`,
             400,
-            "PROVIDER_NOT_SUPPORTED"
+            "PROVIDER_NOT_SUPPORTED",
           );
       }
     } catch (error) {
       throw new APIError(
-        `Failed to initialize AI provider: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to initialize AI provider: ${error instanceof Error ? error.message : "Unknown error"}`,
         500,
         "PROVIDER_INIT_ERROR",
-        error
+        error,
       );
     }
 
@@ -137,29 +135,31 @@ export async function POST(req: Request) {
       });
 
       const stream = result.toDataStreamResponse();
-      
-      // Create a new TransformStream to handle errors in the stream
+
       const transform = new TransformStream({
         async transform(chunk, controller) {
           try {
             const text = new TextDecoder().decode(chunk);
-            
-            // Check for error messages in the stream
-            if (text.startsWith('3:')) {
+
+            if (text.startsWith("3:")) {
               const errorMsg = text.slice(2).trim();
               const errorResponse = formatErrorResponse(
                 new APIError(
-                  errorMsg || "The AI model encountered an error while generating the response.",
+                  errorMsg ||
+                    "The AI model encountered an error while generating the response.",
                   500,
-                  "AI_RESPONSE_ERROR"
-                )
+                  "AI_RESPONSE_ERROR",
+                ),
               );
-              controller.enqueue(new TextEncoder().encode(`error:${JSON.stringify(errorResponse)}\n`));
+              controller.enqueue(
+                new TextEncoder().encode(
+                  `error:${JSON.stringify(errorResponse)}\n`,
+                ),
+              );
               controller.terminate();
               return;
             }
 
-            // For normal messages, pass them through
             controller.enqueue(chunk);
           } catch (error) {
             console.error("Transform error:", error);
@@ -168,10 +168,14 @@ export async function POST(req: Request) {
                 "Failed to process the AI response stream. Please try again.",
                 500,
                 "STREAM_TRANSFORM_ERROR",
-                error
-              )
+                error,
+              ),
             );
-            controller.enqueue(new TextEncoder().encode(`error:${JSON.stringify(errorResponse)}\n`));
+            controller.enqueue(
+              new TextEncoder().encode(
+                `error:${JSON.stringify(errorResponse)}\n`,
+              ),
+            );
             controller.terminate();
           }
         },
@@ -181,48 +185,44 @@ export async function POST(req: Request) {
           } catch (error) {
             console.error("Error terminating stream:", error);
           }
-        }
+        },
       });
 
-      // Create a new ReadableStream that includes our error handling
       const transformedStream = stream.body?.pipeThrough(transform);
-      
+
       if (!transformedStream) {
         throw new APIError(
           "Failed to create response stream. Please try again.",
           500,
-          "STREAM_ERROR"
+          "STREAM_ERROR",
         );
       }
 
       return new Response(transformedStream, {
         headers: {
           ...stream.headers,
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        }
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
       });
     } catch (error) {
       throw new APIError(
         "Failed to generate response. Please check your inputs and try again.",
         500,
         "GENERATION_ERROR",
-        error
+        error,
       );
     }
   } catch (error) {
     console.error("Chat API Error:", error);
     const errorResponse = formatErrorResponse(error);
-    
-    return new Response(
-      JSON.stringify(errorResponse),
-      {
-        status: errorResponse.error.status,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      }
-    );
+
+    return new Response(JSON.stringify(errorResponse), {
+      status: errorResponse.error.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+      },
+    });
   }
 }

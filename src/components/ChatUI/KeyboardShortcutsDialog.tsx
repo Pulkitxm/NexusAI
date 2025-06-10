@@ -45,10 +45,10 @@ export function KeyboardShortcutsDialog({
   onOpenChange,
 }: KeyboardShortcutsDialogProps) {
   const navigationShortcuts = keyboardShortcuts.filter(
-    (shortcut) => shortcut.category === "navigation"
+    (shortcut) => shortcut.category === "navigation",
   );
   const messagingShortcuts = keyboardShortcuts.filter(
-    (shortcut) => shortcut.category === "messaging"
+    (shortcut) => shortcut.category === "messaging",
   );
 
   return (
