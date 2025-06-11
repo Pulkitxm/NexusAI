@@ -40,6 +40,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
+import { getStoredValue, setStoredValue } from "@/lib/utils";
 
 interface Chat {
   id: string;
@@ -63,9 +64,9 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (user) {
-      const savedChats = localStorage.getItem(`nexus-chats-${user?.id}`);
+      const savedChats = getStoredValue(`nexus-chats-${user?.id}`, [] as Chat[]);
       if (savedChats) {
-        const parsedChats = JSON.parse(savedChats).map((chat: Chat) => ({
+        const parsedChats = savedChats.map((chat: Chat) => ({
           ...chat,
           timestamp: new Date(chat.timestamp),
         }));
@@ -93,10 +94,7 @@ export function AppSidebar() {
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
     setChats(updatedChats);
     if (user) {
-      localStorage.setItem(
-        `nexus-chats-${user?.id}`,
-        JSON.stringify(updatedChats),
-      );
+      setStoredValue(`nexus-chats-${user?.id}`, updatedChats);
     }
   };
 

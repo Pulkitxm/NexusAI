@@ -1,78 +1,131 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useChat } from "@/providers/chat-provider"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { SendHorizontal, Loader2, Command } from "lucide-react"
-import { useRef, useEffect, useState } from "react"
-import { cn } from "@/lib/utils"
+import { useChat } from "@/providers/chat-provider";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { SendHorizontal, Loader2, Command, AlertCircle, Sparkles, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { MESSAGE_LIMIT } from "@/lib/data";
 
 interface EnhancedChatInputProps {
-  onShowShortcuts: () => void
+  onShowShortcuts: () => void;
 }
 
 export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
-  const { input, handleInputChange, handleSubmit, isLoading, inputRef } =
-    useChat()
-  const [isFocused, setIsFocused] = useState(false)
+  const { input, handleInputChange, handleSubmit, isLoading, inputRef, messageCount, showWarning, setShowWarning } =
+    useChat();
+  const [isFocused, setIsFocused] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = "auto"
-      inputRef.current.style.height = `${Math.min(
-        inputRef.current.scrollHeight,
-        120
-      )}px`
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
-  }, [input])
+  }, [input]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        e.preventDefault()
-        setIsFocused(false)
-        inputRef.current?.blur()
+        e.preventDefault();
+        setIsFocused(false);
+        inputRef.current?.blur();
       }
 
       if (e.key === "/") {
-        e.preventDefault()
-        inputRef.current?.focus()
+        e.preventDefault();
+        inputRef.current?.focus();
       }
     }
-    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [])
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
+      e.preventDefault();
       if (input.trim() && !isLoading) {
-        handleSubmit(e)
+        handleSubmit(e);
       }
     }
 
     if ((e.metaKey || e.ctrlKey) && e.key === "/") {
-      e.preventDefault()
-      onShowShortcuts()
+      e.preventDefault();
+      onShowShortcuts();
     }
-  }
+  };
+
+  const isLimitReached = !session && messageCount >= MESSAGE_LIMIT;
+  const remainingMessages = MESSAGE_LIMIT - messageCount;
 
   return (
     <div className="sticky bottom-0 z-10">
-      <div className="max-w-4xl mx-auto p-4">
+      {!session && (
+        <div className="flex justify-center mb-1">
+          {(showWarning || isLimitReached) && (
+            <div
+              className={cn(
+                "flex items-center gap-2 text-xs px-4 py-2 rounded-full transition-all duration-300",
+                "backdrop-blur-md border shadow-lg",
+                isLimitReached
+                  ? "text-red-600 dark:text-red-400 bg-red-50/90 dark:bg-red-950/50 border-red-200 dark:border-red-800 shadow-red-100 dark:shadow-red-950/50"
+                  : remainingMessages < 5
+                    ? "text-yellow-600 dark:text-yellow-400 bg-yellow-50/90 dark:bg-yellow-950/50 border-yellow-200 dark:border-yellow-800 shadow-yellow-100 dark:shadow-yellow-950/50"
+                    : "text-emerald-600 dark:text-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 shadow-emerald-100 dark:shadow-emerald-950/50"
+              )}
+            >
+              {isLimitReached ? (
+                <>
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  <span className="font-medium">No messages left</span>
+                  <div className="w-px h-4 bg-red-300 dark:bg-red-700" />
+                  <button
+                    onClick={() => signIn("google")}
+                    className="text-red-700 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200 font-semibold underline underline-offset-2 transition-colors"
+                  >
+                    Sign in to continue
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="font-medium">
+                    <span className="font-semibold">{remainingMessages}</span> messages remaining.{" "}
+                    <span onClick={() => signIn("google")} className="underline cursor-pointer">
+                      Log in
+                    </span>{" "}
+                    to use more
+                  </span>
+                  <button
+                    onClick={() => setShowWarning(false)}
+                    className="ml-1 p-0.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors"
+                    aria-label="Dismiss warning"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto p-4 pt-2">
         <form onSubmit={handleSubmit} className="relative">
           <div
             className={cn(
               "relative flex items-end gap-3 p-4 rounded-xl transition-all duration-200",
               "bg-white dark:bg-slate-900 border border-zinc-200 dark:border-slate-700",
               "backdrop-blur-sm",
-              isFocused &&
-                "border-zinc-300 dark:border-slate-600 shadow-lg shadow-zinc-200/10 dark:shadow-slate-950/30"
+              isFocused && "border-zinc-300 dark:border-slate-600 shadow-lg shadow-zinc-200/10 dark:shadow-slate-950/30"
             )}
           >
             <div className="absolute top-4 left-4 flex items-center gap-2 text-xs text-zinc-400 dark:text-slate-500">
@@ -139,15 +192,11 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                   : "bg-zinc-200 dark:bg-slate-700 text-zinc-400 dark:text-slate-500 cursor-not-allowed"
               )}
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SendHorizontal className="h-4 w-4" />
-              )}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
             </Button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

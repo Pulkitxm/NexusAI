@@ -12,8 +12,10 @@ import { ChatInput } from "./ChatInput";
 import { motion } from "framer-motion";
 import { SUGGESTED_PROMPTS } from "@/lib/data";
 import { Button } from "../ui/button";
+import { useSession } from "next-auth/react";
 
 export default function ChatUI() {
+  const { data: session } = useSession();
   const { messages, isLoading, input, setInput, inputRef } = useChat();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const { scrollAreaRef, showScrollButton, isAutoScrollEnabled, scrollToBottom, forceScrollToBottom } = useAutoScroll();
@@ -101,7 +103,7 @@ export default function ChatUI() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                    How can I help you today?
+                    How can I help you{session?.user?.name ? `, ${session.user.name}?` : "today?"}
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">
                     Ask me anything, and I'll help you out. Press ⌘/ for keyboard shortcuts.

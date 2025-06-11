@@ -9,11 +9,12 @@ import {
 import { useKeys } from "@/providers/key-provider";
 import { getAvailableModels } from "@/lib/models";
 import { ModelSelector } from "@/components/ModelSwitcher";
+import { getStoredValue, setStoredValue } from "@/lib/utils";
 
 interface ModelContextType {
   selectedModel: string;
   changeModel: (model: string) => void;
-  ModelSwitcher: () => React.ReactNode;
+  ModelSwitcher: (() => React.ReactNode) | null;
   setSelectedModel: (model: string) => void;
 }
 
@@ -26,13 +27,13 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
 
   const changeModel = useCallback((model: string) => {
     setSelectedModel(model);
-    localStorage.setItem("selectedModel", model);
+    setStoredValue("selectedModel", model);
   }, []);
 
   useEffect(() => {
     if (availableModels.length === 0) return;
 
-    const storedModel = localStorage.getItem("selectedModel");
+    const storedModel = getStoredValue("selectedModel", "");
     const modelExists = availableModels.find(
       (model) => model.id === storedModel,
     );
@@ -60,7 +61,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
       value={{
         selectedModel,
         changeModel,
-        ModelSwitcher: ModelSwitcherComponent,
+        ModelSwitcher: Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
         setSelectedModel,
       }}
     >

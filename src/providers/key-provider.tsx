@@ -4,6 +4,7 @@ import type React from "react";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ApiKeys } from "@/types/keys";
+import { getStoredValue, setStoredValue } from "@/lib/utils";
 
 interface KeyContextType {
   keys: ApiKeys;
@@ -17,16 +18,16 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
   const [keys, setKeys] = useState<ApiKeys>({});
 
   useEffect(() => {
-    const savedKeys = localStorage.getItem("nexus-api-keys");
+    const savedKeys = getStoredValue("nexus-api-keys", {} as ApiKeys);
     if (savedKeys) {
-      setKeys(JSON.parse(savedKeys));
+      setKeys(savedKeys);
     }
   }, []);
 
   const updateKeys = (newKeys: Partial<ApiKeys>) => {
     const updatedKeys = { ...keys, ...newKeys };
     setKeys(updatedKeys);
-    localStorage.setItem("nexus-api-keys", JSON.stringify(updatedKeys));
+    setStoredValue("nexus-api-keys", updatedKeys);
   };
 
   const hasAnyKeys = Object.values(keys).some(

@@ -1,6 +1,8 @@
 import { Sparkles, Compass, GraduationCap, Code, LucideProps } from "lucide-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 
+export const MESSAGE_LIMIT = 10;
+
 export const SUGGESTED_PROMPTS:{
     section: "Create" | "Explore" | "Code" | "Learn"
     icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>
