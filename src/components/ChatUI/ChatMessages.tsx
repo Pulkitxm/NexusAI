@@ -1,71 +1,22 @@
 "use client";
 
+import { useChat } from "@/providers/chat-provider";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
-import { EditMessageForm } from "./EditMessageForm";
-import type { AIModel } from "@/types/models";
 
-interface ChatMessagesProps {
-  messages: Array<{ role: string; content: string; id: string }>;
-  isLoading: boolean;
-  isTyping: boolean;
-  editingMessageId: string | null;
-  onEditMessage: (messageId: string, newContent: string) => void;
-  onStartEdit: (messageId: string) => void;
-  onCancelEdit: () => void;
-  onReloadMessage: (messageId: string, modelId?: string) => void;
-  availableModels: AIModel[];
-  selectedModel: string;
-  regeneratingMessageId: string | null;
-}
+export function ChatMessages() {
+  const { messages, isLoading } = useChat();
 
-export function ChatMessages({
-  messages,
-  isLoading,
-  isTyping,
-  editingMessageId,
-  onEditMessage,
-  onStartEdit,
-  onCancelEdit,
-  onReloadMessage,
-  availableModels,
-  selectedModel,
-  regeneratingMessageId,
-}: ChatMessagesProps) {
   return (
-    <div role="log" aria-label="Chat conversation" className="space-y-1">
-      {messages.map((message, index) => (
-        <div key={message.id}>
-          {editingMessageId === message.id ? (
-            <EditMessageForm
-              message={message}
-              onSave={(newContent) => onEditMessage(message.id, newContent)}
-              onCancel={onCancelEdit}
-            />
-          ) : (
-            <MessageBubble
-              message={message}
-              isStreaming={
-                (isLoading && index === messages.length - 1) ||
-                regeneratingMessageId === message.id
-              }
-              onStartEdit={
-                message.role === "user"
-                  ? () => onStartEdit(message.id)
-                  : undefined
-              }
-              onReload={
-                message.role === "assistant"
-                  ? (modelId) => onReloadMessage(message.id, modelId)
-                  : undefined
-              }
-              availableModels={availableModels}
-              selectedModel={selectedModel}
-            />
-          )}
-        </div>
+    <div className="space-y-4">
+      {messages.map((message) => (
+        <MessageBubble
+          key={message.id}
+          message={message}
+          isStreaming={isLoading && message.id === messages[messages.length - 1]?.id}
+        />
       ))}
-      {isTyping && !isLoading && <TypingIndicator />}
+      {isLoading && <TypingIndicator />}
     </div>
   );
 }
