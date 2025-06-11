@@ -78,17 +78,6 @@ export default function ChatUI() {
     },
   });
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current && isAtBottom) {
-      const viewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, [isAtBottom]);
-
   const handleScroll = useCallback(() => {
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector(
@@ -103,10 +92,6 @@ export default function ChatUI() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping, scrollToBottom]);
 
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector(
