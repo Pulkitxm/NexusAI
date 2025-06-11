@@ -8,6 +8,7 @@ import { SessionProviderWrapper } from "@/providers/session";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { SettingsModalProvider } from "./settings-modal-provider";
 import { ModelProvider } from "./model-provider";
+import { ChatProvider } from "./chat-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +20,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <SettingsModalProvider>
                 <AppSidebar />
                 <ModelProvider>
-                  <main className="flex-1">{children}</main>
+                  <ChatProvider>
+                    <main className="flex-1">{children}</main>
+                  </ChatProvider>
                 </ModelProvider>
               </SettingsModalProvider>
             </div>

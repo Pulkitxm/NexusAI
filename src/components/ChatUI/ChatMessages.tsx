@@ -5,10 +5,10 @@ import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 
 export function ChatMessages() {
-  const { messages, isLoading } = useChat();
+  const { isLoading, messages } = useChat();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 py-4">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}

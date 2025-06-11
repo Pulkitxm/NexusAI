@@ -19,12 +19,8 @@ export default function ChatPage() {
           <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <RiKeyLine className="text-amber-600 dark:text-amber-400 text-xl" />
           </div>
-          <h2 className="text-xl font-semibold mb-2 dark:text-white">
-            No API Keys Found
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Add your API keys to start chatting with AI models.
-          </p>
+          <h2 className="text-xl font-semibold mb-2 dark:text-white">No API Keys Found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">Add your API keys to start chatting with AI models.</p>
           <Button
             onClick={openModal}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
@@ -43,12 +39,8 @@ export default function ChatPage() {
           <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <RiKeyLine className="text-amber-600 dark:text-amber-400 text-xl" />
           </div>
-          <h2 className="text-xl font-semibold mb-2 dark:text-white">
-            No API Keys Found
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Add your API keys to start chatting with AI models.
-          </p>
+          <h2 className="text-xl font-semibold mb-2 dark:text-white">No API Keys Found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">Add your API keys to start chatting with AI models.</p>
           <Button
             onClick={openModal}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
@@ -61,5 +53,9 @@ export default function ChatPage() {
     );
   }
 
-  return <ChatUI />;
+  return (
+    <div className="h-full w-screen sm:w-auto overflow-hidden">
+      <ChatUI />
+    </div>
+  );
 }

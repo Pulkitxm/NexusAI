@@ -1,5 +1,5 @@
 "use client";
-import React, { memo, useMemo, useState, useCallback } from "react";
+import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from "react";
 import type { IconType } from "react-icons";
 import {
   Select,
@@ -377,9 +377,29 @@ ProviderSection.displayName = "ProviderSection";
 export const ModelSelector = memo<ModelSelectorProps>(
   ({ availableModels, selectedModel, onModelChange }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [dropdownSearch, setDropdownSearch] = useState("");
+    const dropdownSearchRef = useRef<HTMLInputElement>(null);
+    const modalSearchRef = useRef<HTMLInputElement>(null);
+    
+    useEffect(() => {
+      if (modalSearchRef.current && isModalOpen) {
+        modalSearchRef.current.focus();
+      }
+    }, [isModalOpen]);
 
+    useEffect(() => {
+      if (isDropdownOpen) {
+        const timer = setTimeout(() => {
+          if (dropdownSearchRef.current) {
+            dropdownSearchRef.current.focus();
+          }
+        }, 50);
+        return () => clearTimeout(timer);
+      }
+    }, [isDropdownOpen]);
+    
     const groupedByProvider = useMemo(() => {
       return availableModels.reduce(
         (acc, model) => {
@@ -474,7 +494,11 @@ export const ModelSelector = memo<ModelSelectorProps>(
 
     return (
       <div className="flex items-center gap-2">
-        <Select value={selectedModel} onValueChange={onModelChange}>
+        <Select 
+          value={selectedModel} 
+          onValueChange={onModelChange}
+          onOpenChange={setIsDropdownOpen}
+        >
           <SelectTrigger className="w-[180px] sm:w-[220px] lg:w-[260px] h-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm">
             <SelectValue placeholder="Select AI Model">
               {selectedModelData && (
@@ -499,6 +523,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
                 <Input
                   placeholder="Search models, capabilities..."
                   value={dropdownSearch}
+                  ref={dropdownSearchRef}
                   onChange={(e) => setDropdownSearch(e.target.value)}
                   className="pl-10 pr-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
@@ -576,6 +601,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
                   <Input
                     placeholder="Search models, capabilities..."
                     value={searchQuery}
+                    ref={modalSearchRef}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-10 h-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-200"
                   />

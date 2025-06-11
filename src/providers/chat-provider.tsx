@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useRef } from "react";
 import { useChat as useChatAI } from "ai/react";
 import { useModel } from "./model-provider";
 import { useKeys } from "./key-provider";
@@ -11,10 +11,12 @@ import { UIMessage } from "ai";
 interface ChatContextType {
   messages: UIMessage[];
   input: string;
+  setInput: (input: string) => void;
   isLoading: boolean;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
   error: Error | null;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { keys } = useKeys();
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const availableModels = getAvailableModels(keys);
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
@@ -60,10 +63,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       value={{
         messages,
         input,
+        setInput: (input: string) => {
+          handleInputChange({
+            target: {
+              value: input,
+            },
+          } as React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>);
+        },
         isLoading,
         handleInputChange,
         handleSubmit,
         error,
+        inputRef,
       }}
     >
       {children}
