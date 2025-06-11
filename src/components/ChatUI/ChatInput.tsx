@@ -27,7 +27,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
       inputRef.current.style.height = "auto";
       inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
-  }, [input]);
+  }, [input, inputRef]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -47,7 +47,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [inputRef]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -100,7 +100,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const userMessages = messages.filter((msg) => msg.role === "user");
     prevMessageLengthRef.current = userMessages.length;
-  }, []);
+  }, [messages]);
 
   useEffect(() => {
     setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, messageCount);

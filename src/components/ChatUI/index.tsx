@@ -34,7 +34,7 @@ export default function ChatUI() {
 
   useEffect(() => {
     forceScrollToBottom();
-  }, []);
+  }, [forceScrollToBottom]);
 
   useEffect(() => {
     if (isLoading && !prevIsLoading.current) {
@@ -106,7 +106,7 @@ export default function ChatUI() {
                     How can I help you{session?.user?.name ? `, ${session.user.name}?` : "today?"}
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Ask me anything, and I'll help you out. Press ⌘/ for keyboard shortcuts.
+                    Ask me anything, and I&apos;ll help you out. Press ⌘/ for keyboard shortcuts.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 justify-center items-center">

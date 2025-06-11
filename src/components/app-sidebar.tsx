@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useKeys } from "@/providers/key-provider";
-import { Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { signIn, useSession } from "next-auth/react";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
@@ -237,7 +236,7 @@ export function AppSidebar() {
               ) : status === "authenticated" ? (
                 <SidebarMenuButton className="flex items-center gap-2">
                   {user?.avatar ? (
-                    <img src={user.avatar} className="w-6 h-6 rounded-full" />
+                    <img src={user.avatar} className="w-6 h-6 rounded-full" alt={user.name} />
                   ) : (
                     <User className="w-4 h-4" />
                   )}
