@@ -17,7 +17,6 @@ import {
 } from "@/components/sidebar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useKeys } from "@/providers/key-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -25,15 +24,13 @@ import { signIn, useSession } from "next-auth/react"
 import { useSettingsModal } from "@/providers/settings-modal-provider"
 import Link from "next/link"
 import { Skeleton } from "./ui/skeleton"
-import { setStoredValue } from "@/lib/utils"
 import type { Chat } from "@/types/chat"
 
 export function AppSidebar() {
-  const { chats, setChats, loading } = useSidebar()
+  const { chats, deleteChat, loading } = useSidebar()
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredChats, setFilteredChats] = useState<Chat[]>([])
 
-  const router = useRouter()
   const { data: session, status } = useSession()
   const { openModal } = useSettingsModal()
 
@@ -52,15 +49,6 @@ export function AppSidebar() {
       setFilteredChats(filtered)
     }
   }, [searchQuery, chats])
-
-  const deleteChat = (chatId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const updatedChats = chats.filter((chat) => chat.id !== chatId)
-    setChats(updatedChats)
-    if (user) {
-      setStoredValue(`nexus-chats-${user?.id}`, updatedChats)
-    }
-  }
 
   return (
     <>
@@ -156,7 +144,7 @@ export function AppSidebar() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
-                                <DropdownMenuItem onClick={(e) => deleteChat(chat.id, e)} className="text-destructive">
+                                <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
                                   <Trash2 className="w-4 h-4 mr-2" />
                                   Delete Chat
                                 </DropdownMenuItem>

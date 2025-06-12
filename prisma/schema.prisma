@@ -26,6 +26,8 @@ model Chat {
   userId    String?
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]
+
+  isDeleted Boolean   @default(false)
 }
 
 enum Role {

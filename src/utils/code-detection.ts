@@ -27,13 +27,10 @@ export function detectCodeInText(text: string): CodeBlock[] {
 function findAllMatches(text: string): Match[] {
   const matches: Match[] = [];
 
-  // Fenced code blocks (highest priority)
   addFencedCodeMatches(text, matches);
 
-  // Inline code (medium priority)
   addInlineCodeMatches(text, matches);
 
-  // Code patterns (lowest priority)
   addCodePatternMatches(text, matches);
 
   return resolveOverlaps(matches);
@@ -74,41 +71,39 @@ function addInlineCodeMatches(text: string, matches: Match[]): void {
 
 function addCodePatternMatches(text: string, matches: Match[]): void {
   const patterns = [
-    // Programming keywords and structures
     {
       regex:
         /\b(function|const|let|var|class|import|export|return|if|else|for|while|switch|case|def|print|public|private|protected)\s+[\w\s(){}[\].,;:=>"'`-]+/g,
       priority: 1,
     },
-    // File paths
+
     {
       regex: /[a-zA-Z]:[\\/][\w\\/.-]+|\/[\w/.-]+\.\w+|\w+\.\w{2,4}/g,
       priority: 1,
     },
-    // URLs
+
     {
       regex: /https?:\/\/[\w.-]+(?:\/[\w/?#[\]@!$&'()*+,;=.-]*)?/g,
       priority: 1,
     },
-    // JSON-like structures
+
     {
       regex: /\{[\s\S]*?\}/g,
       priority: 1,
     },
-    // Arrays
+
     {
       regex: /\[[\s\S]*?\]/g,
       priority: 1,
     },
-    // Command line patterns
+
     {
       regex: /^\s*(npm|yarn|git|cd|ls|mkdir|rm|cp|mv|sudo|chmod|chown)\s+.*/gm,
       priority: 1,
     },
-    // SQL patterns
+
     {
-      regex:
-        /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER)\b[\s\S]*?;?/gi,
+      regex: /\b(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER)\b[\s\S]*?;?/gi,
       priority: 1,
     },
   ];
@@ -118,7 +113,6 @@ function addCodePatternMatches(text: string, matches: Match[]): void {
     while ((match = regex.exec(text)) !== null) {
       const content = match[0].trim();
       if (content.length > 3) {
-        // Avoid very short matches
         matches.push({
           start: match.index,
           end: match.index + match[0].length,
@@ -135,7 +129,6 @@ function addCodePatternMatches(text: string, matches: Match[]): void {
 function resolveOverlaps(matches: Match[]): Match[] {
   if (matches.length === 0) return matches;
 
-  // Sort by start position, then by priority (higher first)
   matches.sort((a, b) => {
     if (a.start !== b.start) return a.start - b.start;
     return b.priority - a.priority;
@@ -145,7 +138,6 @@ function resolveOverlaps(matches: Match[]): Match[] {
   let lastEnd = 0;
 
   for (const match of matches) {
-    // Skip if this match overlaps with a higher priority match
     if (match.start < lastEnd) continue;
 
     resolved.push(match);
@@ -160,7 +152,6 @@ function buildBlocks(text: string, matches: Match[]): CodeBlock[] {
   let currentIndex = 0;
 
   for (const match of matches) {
-    // Add text block before code block if there's content
     if (match.start > currentIndex) {
       const textContent = text.slice(currentIndex, match.start);
       if (textContent.trim()) {
@@ -168,7 +159,6 @@ function buildBlocks(text: string, matches: Match[]): CodeBlock[] {
       }
     }
 
-    // Add code block
     blocks.push({
       type: "code",
       content: match.content,
@@ -180,7 +170,6 @@ function buildBlocks(text: string, matches: Match[]): CodeBlock[] {
     currentIndex = match.end;
   }
 
-  // Add remaining text if any
   if (currentIndex < text.length) {
     const remainingContent = text.slice(currentIndex);
     if (remainingContent.trim()) {
@@ -188,7 +177,6 @@ function buildBlocks(text: string, matches: Match[]): CodeBlock[] {
     }
   }
 
-  // If no matches found, return entire text as text block
   if (blocks.length === 0) {
     return [createTextBlock(text, 0, text.length)];
   }
@@ -196,11 +184,7 @@ function buildBlocks(text: string, matches: Match[]): CodeBlock[] {
   return blocks;
 }
 
-function createTextBlock(
-  content: string,
-  startIndex: number,
-  endIndex: number
-): CodeBlock {
+function createTextBlock(content: string, startIndex: number, endIndex: number): CodeBlock {
   return {
     type: "text",
     content,
@@ -212,7 +196,6 @@ function createTextBlock(
 function detectLanguage(code: string): string {
   const trimmedCode = code.trim().toLowerCase();
 
-  // Language detection patterns with better accuracy
   const languagePatterns = [
     {
       language: "typescript",
@@ -232,11 +215,7 @@ function detectLanguage(code: string): string {
     },
     {
       language: "python",
-      patterns: [
-        /\b(def|import|from|class|if __name__|print|return|lambda|yield)\b/,
-        /\.py$/,
-        /^\s*#.*python/i,
-      ],
+      patterns: [/\b(def|import|from|class|if __name__|print|return|lambda|yield)\b/, /\.py$/, /^\s*#.*python/i],
     },
     {
       language: "html",
@@ -244,26 +223,15 @@ function detectLanguage(code: string): string {
     },
     {
       language: "css",
-      patterns: [
-        /\{[^}]*:[^}]*\}/,
-        /\.(css|scss|sass|less)$/,
-        /@(media|import|keyframes)/,
-      ],
+      patterns: [/\{[^}]*:[^}]*\}/, /\.(css|scss|sass|less)$/, /@(media|import|keyframes)/],
     },
     {
       language: "json",
-      patterns: [
-        /^\s*[[{][\s\S]*[\]}]\s*$/,
-        /\.json$/,
-        /"[\w-]+"\s*:\s*(".*?"|[\d.]+|true|false|null)/,
-      ],
+      patterns: [/^\s*[[{][\s\S]*[\]}]\s*$/, /\.json$/, /"[\w-]+"\s*:\s*(".*?"|[\d.]+|true|false|null)/],
     },
     {
       language: "sql",
-      patterns: [
-        /\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i,
-        /\.sql$/,
-      ],
+      patterns: [/\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i, /\.sql$/],
     },
     {
       language: "bash",
@@ -297,7 +265,6 @@ function detectLanguage(code: string): string {
     }
   }
 
-  // Check for file extensions in the code
   const extensionMatch = trimmedCode.match(/\.(\w+)$/);
   if (extensionMatch) {
     const ext = extensionMatch[1];

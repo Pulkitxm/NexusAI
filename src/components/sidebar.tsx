@@ -6,7 +6,6 @@ import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +15,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { SIDEBAR_WIDTH_MOBILE, useSidebar } from "@/providers/sidebar";
+import { SIDEBAR_WIDTH_MOBILE, useSidebar } from "@/providers/sidebar-provider";
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,

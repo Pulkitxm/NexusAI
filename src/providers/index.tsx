@@ -1,6 +1,6 @@
 "use client";
 
-import { SidebarProvider } from "@/providers/sidebar";
+import { SidebarProvider } from "@/providers/sidebar-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { KeyProvider } from "@/providers/key-provider";
 import { SessionProviderWrapper } from "@/providers/session";

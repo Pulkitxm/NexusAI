@@ -71,7 +71,7 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
 
         if (dbUser) {
           session.user.id = dbUser.id.toString();
-          session.user.name = dbUser.name;
+          session.user.name = dbUser.name ?? "";
           session.user.avatar = dbUser.avatar ?? "";
         }
       }
