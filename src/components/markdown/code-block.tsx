@@ -58,7 +58,6 @@ export function CodeBlock({
   const { theme } = useTheme()
   const [copied, setCopied] = useState(false)
   const [isWrapped, setIsWrapped] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
   const codeRef = useRef<HTMLDivElement>(null)
 
   const copyCode = async () => {
@@ -158,7 +157,7 @@ export function CodeBlock({
       {/* Code content */}
       <div
         ref={codeRef}
-        className={cn("relative transition-all duration-200", isCollapsed ? "max-h-12 overflow-hidden" : "")}
+        className={cn("relative transition-all duration-200")}
       >
         <SyntaxHighlighter
           style={theme === "dark" ? oneDark : oneLight}

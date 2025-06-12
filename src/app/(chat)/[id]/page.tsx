@@ -1,5 +1,4 @@
 import { getChatMessages } from "@/actions/chat";
-import { redirect } from "next/navigation";
 import ChatDisplay from "./ChatDisplay";
 import { TriangleAlert } from "lucide-react";
 

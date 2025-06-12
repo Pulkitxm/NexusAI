@@ -5,7 +5,7 @@ import type React from "react";
 import { useChat } from "@/providers/chat-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SendHorizontal, Loader2, Command, AlertCircle, Sparkles, X, Mic, MicOff, Radio } from "lucide-react";
+import { SendHorizontal, Loader2, Command, AlertCircle, Sparkles, X, Mic, MicOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
@@ -47,9 +47,9 @@ interface SpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   abort(): void;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
 }
 
 declare global {
@@ -69,7 +69,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-  const [isListening, setIsListening] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -104,7 +103,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [inputRef, recognition]);
+  }, [inputRef, recognition, handleInputChange]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -134,7 +133,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
 
       setRecognition(recognition);
     }
-  }, []);
+  }, [handleInputChange]);
 
   const toggleRecording = () => {
     if (!recognition) return;
@@ -282,8 +281,8 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                         !recognition && "opacity-50 cursor-not-allowed"
                       )}
                       aria-label={isRecording ? "Stop speech recognition" : "Start speech recognition"}
-                      aria-pressed={isRecording}
                       role="switch"
+                      aria-checked={isRecording}
                     >
                       {isRecording ? (
                         <>
@@ -295,9 +294,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                           <Mic className="h-3.5 w-3.5" />
                           <span className="font-mono">speak</span>
                         </>
-                      )}
-                      {isListening && (
-                        <Radio className="h-3.5 w-3.5 animate-pulse text-purple-500 dark:text-purple-400" />
                       )}
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
