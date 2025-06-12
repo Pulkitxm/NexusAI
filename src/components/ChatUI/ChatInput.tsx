@@ -5,12 +5,59 @@ import type React from "react";
 import { useChat } from "@/providers/chat-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SendHorizontal, Loader2, Command, AlertCircle, Sparkles, X } from "lucide-react";
+import { SendHorizontal, Loader2, Command, AlertCircle, Sparkles, X, Mic, MicOff, Radio } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
 import { MESSAGE_LIMIT } from "@/lib/data";
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
 
 interface EnhancedChatInputProps {
   onShowShortcuts: () => void;
@@ -20,6 +67,9 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const { input, handleInputChange, handleSubmit, isLoading, inputRef, messageCount, showWarning, setShowWarning } =
     useChat();
   const [isFocused, setIsFocused] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [isListening, setIsListening] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -41,13 +91,61 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
         e.preventDefault();
         inputRef.current?.focus();
       }
+
+      if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        if (recognition) {
+          toggleRecording();
+        }
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [inputRef]);
+  }, [inputRef, recognition]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        
+        handleInputChange({ target: { value: transcript } } as React.ChangeEvent<HTMLTextAreaElement>);
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      setRecognition(recognition);
+    }
+  }, []);
+
+  const toggleRecording = () => {
+    if (!recognition) return;
+
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      recognition.start();
+      setIsRecording(true);
+    }
+  };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -170,14 +268,51 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                     <span className="text-zinc-500 dark:text-slate-400">new line</span>
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={onShowShortcuts}
-                  className="flex items-center gap-1 text-zinc-400 dark:text-slate-400 hover:text-zinc-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  <Command className="h-3 w-3" />
-                  <span className="font-mono">shortcuts</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      onClick={toggleRecording}
+                      disabled={!recognition}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200",
+                        "text-zinc-400 dark:text-slate-400 hover:text-zinc-600 dark:hover:text-slate-200",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:focus-visible:ring-purple-400",
+                        isRecording && "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/50",
+                        !recognition && "opacity-50 cursor-not-allowed"
+                      )}
+                      aria-label={isRecording ? "Stop speech recognition" : "Start speech recognition"}
+                      aria-pressed={isRecording}
+                      role="switch"
+                    >
+                      {isRecording ? (
+                        <>
+                          <MicOff className="h-3.5 w-3.5" />
+                          <span className="font-mono">stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-3.5 w-3.5" />
+                          <span className="font-mono">speak</span>
+                        </>
+                      )}
+                      {isListening && (
+                        <Radio className="h-3.5 w-3.5 animate-pulse text-purple-500 dark:text-purple-400" />
+                      )}
+                    </button>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                      Press {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+Shift+M to {isRecording ? "stop" : "start"} recording
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onShowShortcuts}
+                    className="flex items-center gap-1 text-zinc-400 dark:text-slate-400 hover:text-zinc-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <Command className="h-3 w-3" />
+                    <span className="font-mono">shortcuts</span>
+                  </button>
+                </div>
               </div>
             </div>
 

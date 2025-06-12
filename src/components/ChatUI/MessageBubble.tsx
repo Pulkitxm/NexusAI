@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserMessage } from "./UserMessage";
@@ -15,6 +15,7 @@ interface MessageBubbleProps {
 export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubbleProps) => {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const copyMessage = useCallback(async () => {
     try {
@@ -25,6 +26,23 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
       console.error("Failed to copy message:", error);
     }
   }, [message.content]);
+
+  const speakMessage = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(message.content);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  }, [message.content, isSpeaking]);
 
   return (
     <div
@@ -68,6 +86,14 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
             isUser ? "justify-end" : "justify-start"
           )}
         >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={speakMessage}
+            className="h-8 px-3 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-lg rounded-lg backdrop-blur-sm text-xs"
+          >
+            <Volume2 className={cn("h-3 w-3", isSpeaking && "text-blue-500")} />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
