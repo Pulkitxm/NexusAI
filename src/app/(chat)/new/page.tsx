@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { useKeys } from "@/providers/key-provider";
-import { getAvailableModels } from "@/lib/models";
-import { RiKeyLine } from "react-icons/ri";
-import { useSettingsModal } from "@/providers/settings-modal-provider";
-import ChatUI from "@/components/ChatUI";
+import { Button } from "@/components/ui/button"
+import { useKeys } from "@/providers/key-provider"
+import { getAvailableModels } from "@/lib/models"
+import { RiKeyLine } from "react-icons/ri"
+import { useSettingsModal } from "@/providers/settings-modal-provider"
+import ChatUI from "@/components/ChatUI"
 
-export default function ChatPage() {
-  const { keys, hasAnyKeys } = useKeys();
-  const { openModal } = useSettingsModal();
-  const availableModels = getAvailableModels(keys);
+export default function NewChatPage() {
+  const { keys, hasAnyKeys } = useKeys()
+  const { openModal } = useSettingsModal()
+  const availableModels = getAvailableModels(keys)
 
   if (!hasAnyKeys)
     return (
@@ -30,7 +30,7 @@ export default function ChatPage() {
           </Button>
         </div>
       </div>
-    );
+    )
 
   if (availableModels.length === 0) {
     return (
@@ -50,12 +50,12 @@ export default function ChatPage() {
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="h-full w-screen sm:w-auto overflow-hidden">
       <ChatUI />
     </div>
-  );
-}
+  )
+} 

@@ -8,25 +8,24 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   email     String   @unique
-  name      String
+  name      String?
   avatar    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chats     Chat[]
+  messages  Message[]
 }
 
 model Chat {
   id        String    @id @default(cuid())
-  userId    String
   title     String?
-  model     String    
-  provider  String    
-  messages  Message[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
 }
 
 enum Role {
@@ -36,10 +35,11 @@ enum Role {
 
 model Message {
   id        String   @id @default(cuid())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  role      Role
+  role      Role     @default(USER)
   content   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 } 
