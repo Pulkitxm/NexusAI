@@ -75,7 +75,7 @@ export default function ChatDisplay({ id, messages }: { id: string; messages: Me
 
   return (
     <div className="h-full w-screen sm:w-auto overflow-hidden">
-      <ChatUI />
+      <ChatUI id={id} />
     </div>
   );
 }

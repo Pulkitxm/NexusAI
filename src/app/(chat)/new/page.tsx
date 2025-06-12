@@ -6,11 +6,18 @@ import { getAvailableModels } from "@/lib/models"
 import { RiKeyLine } from "react-icons/ri"
 import { useSettingsModal } from "@/providers/settings-modal-provider"
 import ChatUI from "@/components/ChatUI"
+import { useEffect } from "react"
+import { useChat } from "@/providers/chat-provider"
 
 export default function NewChatPage() {
   const { keys, hasAnyKeys } = useKeys()
   const { openModal } = useSettingsModal()
   const availableModels = getAvailableModels(keys)
+  const { resetChat } = useChat()
+
+  useEffect(() => {
+    resetChat();
+  }, [resetChat])
 
   if (!hasAnyKeys)
     return (

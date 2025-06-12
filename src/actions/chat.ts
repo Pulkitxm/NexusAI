@@ -111,7 +111,7 @@ export async function getChatMessages(chatId: string) {
       },
     });
 
-    if (messages.length === 0) {
+    if (!messages) {
       return { success: false, error: "Chat not found" };
     }
 
