@@ -5,7 +5,7 @@ import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserMessage } from "./UserMessage";
-import { MemoizedMarkdown } from "../markdown-rendered";
+import { MemoizedMarkdown } from "../markdown/markdown-rendered";
 
 interface MessageBubbleProps {
   message: { role: string; content: string; id: string };

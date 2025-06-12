@@ -3,7 +3,7 @@
 import { memo } from "react"
 import ReactMarkdown from "react-markdown"
 import { cn } from "@/lib/utils"
-import { EnhancedCodeBlock } from "./ChatUI/EnhancedCodeBlock"
+import { CodeBlock } from "./code-block"
 
 const MemoizedMarkdown = memo(({ content, className }: { content: string; className?: string }) => {
   return (
@@ -16,7 +16,7 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
             const codeContent = String(children).replace(/\n$/, "")
 
             if (language) {
-              return <EnhancedCodeBlock code={codeContent} language={language} className={className} />
+              return <CodeBlock code={codeContent} language={language} className={className} />
             }
 
             return (
