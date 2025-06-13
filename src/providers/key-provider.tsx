@@ -17,7 +17,9 @@ const KeyContext = createContext<KeyContextType | undefined>(undefined);
 
 const getInitialKeys = (): ApiKeys => {
   if (typeof window === "undefined") return {};
-  return getStoredValue("nexus-api-keys", {} as ApiKeys) || {};
+  const emptyRecord: ApiKeys = {};
+  const initialKeys = getStoredValue("nexus-api-keys", emptyRecord) || {};
+  return initialKeys;
 };
 
 export function KeyProvider({ children }: { children: React.ReactNode }) {

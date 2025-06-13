@@ -1,7 +1,6 @@
 "use client";
 
 import { useChat as useChatAI } from "ai/react";
-
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";

@@ -167,7 +167,7 @@ export function CodeBlock({ code, language, className, showLineNumbers = false, 
           codeTagProps={{
             style: {
               fontFamily:
-                'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                "ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
               fontSize: "0.875rem",
               lineHeight: "1.5"
             }

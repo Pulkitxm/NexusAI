@@ -23,11 +23,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { MESSAGE_LIMIT } from "@/lib/data";
-import { getAvailableModels, AI_MODELS } from "@/lib/models";
+import { AI_MODELS } from "@/lib/models";
 import { SpeechToTextService } from "@/lib/speech-to-text";
 import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat-provider";
-import { useKeys } from "@/providers/key-provider";
 import { useModel } from "@/providers/model-provider";
 
 import type React from "react";
@@ -56,7 +55,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   } = useChat();
 
   const { selectedModel } = useModel();
-  const { keys } = useKeys();
   const selectedModelDetails = useMemo(() => {
     return AI_MODELS.find((m) => m.id === selectedModel);
   }, [selectedModel]);

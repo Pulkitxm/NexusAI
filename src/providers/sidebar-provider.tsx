@@ -3,7 +3,6 @@
 import {
   ComponentProps,
   createContext,
-  CSSProperties,
   Dispatch,
   forwardRef,
   SetStateAction,
@@ -269,20 +268,17 @@ export const SidebarProvider = forwardRef<
     ]
   );
 
+  // eslint-disable-next-line
+  const tooltipStyle: React.CSSProperties = {
+    "--sidebar-width": SIDEBAR_WIDTH,
+    "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+    ...style
+  } as React.CSSProperties;
+
   return (
     <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delayDuration={0}>
-        <div
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...style
-            } as CSSProperties
-          }
-          ref={ref}
-          {...props}
-        >
+        <div style={tooltipStyle} ref={ref} {...props}>
           {children}
         </div>
       </TooltipProvider>

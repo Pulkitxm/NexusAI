@@ -1,4 +1,5 @@
 export class ReasoningHandler {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static getReasoningConfig(reasoning: string | boolean | undefined, modelConfig: any) {
     if (!reasoning || !modelConfig.capabilities.reasoning) {
       return { enabled: false };
@@ -41,6 +42,7 @@ export class ReasoningHandler {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static shouldUseReasoningModel(reasoning: any, currentModel: any, availableModels: any[]): string {
     if (!reasoning || currentModel.capabilities.reasoning) {
       return currentModel.id;

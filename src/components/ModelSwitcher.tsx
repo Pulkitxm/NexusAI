@@ -342,16 +342,14 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
   }, [isDropdownOpen]);
 
   const groupedByProvider = useMemo(() => {
-    return availableModels.reduce(
-      (acc, model) => {
-        if (!acc[model.provider]) {
-          acc[model.provider] = [];
-        }
-        acc[model.provider].push(model);
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
-    );
+    const emptyRecord: Record<string, AIModel[]> = {};
+    return availableModels.reduce((acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = [];
+      }
+      acc[model.provider].push(model);
+      return acc;
+    }, emptyRecord);
   }, [availableModels]);
 
   const filterModels = useCallback((models: AIModel[], query: string) => {
@@ -381,16 +379,14 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
   }, []);
 
   const filteredGroupedByProvider = useMemo(() => {
-    return Object.entries(groupedByProvider).reduce(
-      (acc, [provider, models]) => {
-        const filtered = filterModels(models, dropdownSearch);
-        if (filtered.length > 0) {
-          acc[provider] = filtered;
-        }
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
-    );
+    const emptyRecord: Record<string, AIModel[]> = {};
+    return Object.entries(groupedByProvider).reduce((acc, [provider, models]) => {
+      const filtered = filterModels(models, dropdownSearch);
+      if (filtered.length > 0) {
+        acc[provider] = filtered;
+      }
+      return acc;
+    }, emptyRecord);
   }, [groupedByProvider, dropdownSearch, filterModels]);
 
   const selectedModelData = useMemo(
@@ -399,16 +395,14 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
   );
 
   const groupedFilteredForModal = useMemo(() => {
-    return AI_MODELS.reduce(
-      (acc, model) => {
-        if (!acc[model.provider]) {
-          acc[model.provider] = [];
-        }
-        acc[model.provider].push(model);
-        return acc;
-      },
-      {} as Record<string, AIModel[]>
-    );
+    const emptyRecord: Record<string, AIModel[]> = {};
+    return AI_MODELS.reduce((acc, model) => {
+      if (!acc[model.provider]) {
+        acc[model.provider] = [];
+      }
+      acc[model.provider].push(model);
+      return acc;
+    }, emptyRecord);
   }, []);
 
   const handleModelSelect = useCallback(

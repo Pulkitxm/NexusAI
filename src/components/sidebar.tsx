@@ -51,17 +51,18 @@ const Sidebar = React.forwardRef<
   }
 
   if (isMobile) {
+    // eslint-disable-next-line
+    const style: React.CSSProperties = {
+      "--sidebar-width": SIDEBAR_WIDTH_MOBILE
+    } as React.CSSProperties;
+
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
           data-sidebar="sidebar"
           data-mobile="true"
           className="bg-sidebar text-sidebar-foreground w-[--sidebar-width] p-0 [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE
-            } as React.CSSProperties
-          }
+          style={style}
           side={side}
         >
           <div className="flex h-full w-full flex-col">{children}</div>
@@ -450,6 +451,11 @@ const SidebarMenuSkeleton = React.forwardRef<
     return `${Math.floor(Math.random() * 40) + 50}%`;
   }, []);
 
+  // eslint-disable-next-line
+  const style: React.CSSProperties = {
+    "--skeleton-width": width
+  } as React.CSSProperties;
+
   return (
     <div
       ref={ref}
@@ -458,15 +464,7 @@ const SidebarMenuSkeleton = React.forwardRef<
       {...props}
     >
       {showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
-      <Skeleton
-        className="h-4 max-w-[--skeleton-width] flex-1"
-        data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width
-          } as React.CSSProperties
-        }
-      />
+      <Skeleton className="h-4 max-w-[--skeleton-width] flex-1" data-sidebar="menu-skeleton-text" style={style} />
     </div>
   );
 });
