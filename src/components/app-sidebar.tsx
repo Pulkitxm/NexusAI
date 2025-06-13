@@ -31,14 +31,8 @@ import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 import type { Chat } from "@/types/chat";
 
-// --- MANUAL VIRTUALIZATION: Configuration ---
-// The estimated height of a single chat item in pixels.
-// Adjust this if you change the item's padding or font size.
 const ITEM_HEIGHT = 68;
-// How many extra items to render above and below the visible area.
-// This makes scrolling feel smoother.
 const OVERSCAN_COUNT = 5;
-// The number of chats below which we won't virtualize for simplicity.
 const VIRTUALIZATION_THRESHOLD = 15;
 
 export function AppSidebar() {
@@ -52,7 +46,6 @@ export function AppSidebar() {
   const user = session?.user;
   const { hasAnyKeys } = useKeys();
 
-  // --- MANUAL VIRTUALIZATION: Refs and State ---
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [visibleRange, setVisibleRange] = useState({
     startIndex: 0,
@@ -72,7 +65,6 @@ export function AppSidebar() {
     setFilteredChats(filtered);
   }, [searchQuery, chats]);
 
-  // --- MANUAL VIRTUALIZATION: Effect to handle scrolling ---
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || filteredChats.length < VIRTUALIZATION_THRESHOLD) return;
@@ -89,22 +81,19 @@ export function AppSidebar() {
       setVisibleRange({ startIndex, endIndex });
     };
 
-    // Run once on mount to set initial visible items
     handleScroll();
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [filteredChats.length]); // Rerun if the number of chats changes
+  }, [filteredChats.length]);
 
   const Wrapper = status === "authenticated" ? Link : Fragment;
 
   const renderChatList = () => {
-    // --- LOGIC: If the list is short, render it normally ---
     if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {
       return filteredChats.map((chat) => <ChatItem key={chat.id} chat={chat} deleteChat={deleteChat} />);
     }
 
-    // --- LOGIC: If the list is long, render the virtualized window ---
     const visibleItems = filteredChats.slice(visibleRange.startIndex, visibleRange.endIndex);
 
     return (
@@ -140,7 +129,6 @@ export function AppSidebar() {
     <>
       <Sidebar className="border-r border-border bg-background">
         <SidebarHeader className="p-3 border-b border-border/50">
-          {/* ... Header content is unchanged ... */}
           <div className="flex items-center justify-between mb-3">
             <Link href={"/"} className="flex items-center gap-2">
               <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
@@ -216,7 +204,6 @@ export function AppSidebar() {
         </SidebarContent>
 
         <SidebarFooter className="p-3 border-t border-border/50">
-          {/* ... Footer content is unchanged ... */}
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">

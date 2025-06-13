@@ -47,6 +47,10 @@ interface ChatContextType {
   resetChat: () => void;
   micError: string | null;
   setMicError: React.Dispatch<React.SetStateAction<string | null>>;
+  webSearch: boolean | null;
+  setWebSearch: (enabled: boolean | null) => void;
+  reasoning: "high" | "medium" | "low" | null;
+  setReasoning: (level: "high" | "medium" | "low" | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -70,6 +74,8 @@ export function ChatProvider({
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
+  const [webSearch, setWebSearch] = useState<boolean | null>(null);
+  const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
@@ -122,6 +128,8 @@ export function ChatProvider({
       apiKey: apiKey,
       chatId,
       userId: session?.user?.id,
+      webSearch,
+      reasoning,
     },
     initialMessages,
     onError,
@@ -168,6 +176,14 @@ export function ChatProvider({
   useEffect(() => {
     setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, messageCount);
   }, [messageCount]);
+
+  useEffect(() => {
+    const supportedReasoning = selectedModelDetails?.capabilities?.reasoning;
+    setReasoning(supportedReasoning ? "high" : null);
+
+    const supportedWebSearch = selectedModelDetails?.capabilities?.search;
+    setWebSearch(supportedWebSearch ? true : null);
+  }, [selectedModel]);
 
   useEffect(() => {
     setStoredValue(STORAGE_KEYS.SHOW_WARNING, showWarning);
@@ -292,6 +308,10 @@ export function ChatProvider({
         resetChat,
         micError,
         setMicError,
+        webSearch,
+        setWebSearch,
+        reasoning,
+        setReasoning,
       }}
     >
       {children}

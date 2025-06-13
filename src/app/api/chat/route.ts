@@ -5,6 +5,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { AI_MODELS } from "@/lib/models";
 import { saveAssistantMessage } from "@/actions/chat";
 import { auth } from "@/lib/authOptions";
+import { prisma } from "@/lib/db";
 
 export const maxDuration = 30;
 
@@ -13,7 +14,7 @@ class APIError extends Error {
     message: string,
     public statusCode = 500,
     public code?: string,
-    public details?: unknown,
+    public details?: unknown
   ) {
     super(message);
     this.name = "APIError";
@@ -61,24 +62,55 @@ export async function POST(req: Request) {
       throw new APIError("User not authenticated", 401, "UNAUTHORIZED");
     }
 
-    const { messages, model, provider, apiKey, webSearch, chatId } =
-      await req.json();
+    const { messages, model, provider, apiKey, webSearch, chatId, reasoning } = await req.json();
 
     if (!messages?.length || !model || !apiKey) {
       throw new APIError(
         "Missing required fields. Please ensure you have provided messages, model, and API key.",
         400,
-        "MISSING_FIELDS",
+        "MISSING_FIELDS"
       );
     }
 
+    const [userSettings, globalMemories] = await Promise.all([
+      prisma.userSettings.findUnique({
+        where: { userId },
+        select: {
+          name: true,
+          jobTitle: true,
+          occupation: true,
+          bio: true,
+          location: true,
+          company: true,
+          website: true,
+        },
+      }),
+      prisma.globalMemory.findMany({
+        where: {
+          userId,
+          isDeleted: false,
+        },
+        select: {
+          content: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 5,
+      }),
+    ]);
+
     const modelConfig = AI_MODELS.find((m) => m.id === model);
     if (!modelConfig) {
-      throw new APIError(
-        `Model "${model}" is not supported. Please select a valid model.`,
-        400,
-        "MODEL_NOT_FOUND",
-      );
+      throw new APIError(`Model "${model}" is not supported. Please select a valid model.`, 400, "MODEL_NOT_FOUND");
+    }
+
+    let finalModel = model;
+    if (reasoning && !modelConfig.capabilities.reasoning) {
+      const reasoningModel = AI_MODELS.find((m) => m.provider === modelConfig.provider && m.capabilities.reasoning);
+      if (reasoningModel) {
+        finalModel = reasoningModel.id;
+      }
     }
 
     const modelProvider = modelConfig.provider || provider;
@@ -88,24 +120,36 @@ export async function POST(req: Request) {
       switch (modelProvider) {
         case "OpenAI":
           const openai = createOpenAI({ apiKey });
-          aiModel = openai(model);
+          aiModel = openai(finalModel, {
+            structuredOutputs: true,
+            reasoningEffort:
+              reasoning === "high"
+                ? "high"
+                : reasoning === "medium"
+                  ? "medium"
+                  : reasoning === "low"
+                    ? "low"
+                    : undefined,
+          });
           break;
 
         case "Anthropic":
           const anthropic = createAnthropic({ apiKey });
-          aiModel = anthropic(model);
+          aiModel = anthropic(finalModel, {
+            sendReasoning: reasoning ? true : false,
+          });
           break;
 
         case "Google":
           const google = createGoogleGenerativeAI({ apiKey });
-          aiModel = google(model);
+          aiModel = google(finalModel);
           break;
 
         default:
           throw new APIError(
             `Provider "${modelProvider}" is not supported. Please use OpenAI, Anthropic, or Google.`,
             400,
-            "PROVIDER_NOT_SUPPORTED",
+            "PROVIDER_NOT_SUPPORTED"
           );
       }
     } catch (error) {
@@ -113,7 +157,7 @@ export async function POST(req: Request) {
         `Failed to initialize AI provider: ${error instanceof Error ? error.message : "Unknown error"}`,
         500,
         "PROVIDER_INIT_ERROR",
-        error,
+        error
       );
     }
 
@@ -121,19 +165,38 @@ export async function POST(req: Request) {
 
     let processedMessages = coreMessages;
 
-    if (webSearch && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "user") {
-        processedMessages = [
-          {
-            role: "system",
-            content:
-              "You have access to current web information. When answering questions, you can reference recent events, current data, and up-to-date information from the web. Always cite your sources when using web information.",
-          },
-          ...processedMessages,
-        ];
-      }
-    }
+    const isWebSearchInConfig = AI_MODELS.find((m) => m.id === finalModel)?.capabilities?.search;
+
+    const systemMessage = convertToCoreMessages([
+      {
+        role: "system",
+        content: `You are a helpful AI assistant. Here is some context about the user:
+
+${
+  userSettings
+    ? `User Profile:
+${userSettings.name ? `Name: ${userSettings.name}` : ""}
+${userSettings.jobTitle ? `Job Title: ${userSettings.jobTitle}` : ""}
+${userSettings.occupation ? `Occupation: ${userSettings.occupation}` : ""}
+${userSettings.bio ? `Bio: ${userSettings.bio}` : ""}
+${userSettings.location ? `Location: ${userSettings.location}` : ""}
+${userSettings.company ? `Company: ${userSettings.company}` : ""}
+${userSettings.website ? `Website: ${userSettings.website}` : ""}`
+    : ""
+}
+
+${
+  globalMemories.length > 0
+    ? `Recent Memories:
+${globalMemories.map((memory) => `- ${memory.content}`).join("\n")}`
+    : ""
+}
+
+${webSearch && isWebSearchInConfig ? "You have access to current web information. When answering questions, you can reference recent events, current data, and up-to-date information from the web. Always cite your sources when using web information." : ""}`,
+      },
+    ])[0];
+
+    processedMessages = [systemMessage, ...processedMessages];
 
     try {
       const result = streamText({
@@ -144,21 +207,14 @@ export async function POST(req: Request) {
         onFinish: async ({ text }) => {
           if (chatId && text && text.trim()) {
             try {
-              const saveResult = await saveAssistantMessage(
-                chatId,
-                text.trim(),
-              );
+              const saveResult = await saveAssistantMessage(chatId, text.trim());
               if (saveResult.success) {
               } else {
-                console.error(
-                  "Failed to save assistant message:",
-                  saveResult.error,
-                );
+                console.error("Failed to save assistant message:", saveResult.error);
               }
             } catch (error) {
               console.error("Error saving assistant message:", error);
             }
-          } else {
           }
         },
       });
@@ -169,7 +225,7 @@ export async function POST(req: Request) {
         "Failed to generate response. Please check your inputs and try again.",
         500,
         "GENERATION_ERROR",
-        error,
+        error
       );
     }
   } catch (error) {
