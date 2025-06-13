@@ -3,7 +3,6 @@
 import { deleteChat, getUserChats } from "@/actions/chat";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 import { Chat } from "@/types/chat";
 import {
   ComponentProps,
@@ -75,7 +74,7 @@ export const SidebarProvider = forwardRef<
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }
->(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, className, style, children, ...props }, ref) => {
+>(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useState(false);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -217,7 +216,6 @@ export const SidebarProvider = forwardRef<
               ...style,
             } as CSSProperties
           }
-          className={cn("group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar", className)}
           ref={ref}
           {...props}
         >

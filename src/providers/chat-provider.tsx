@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { useChat as useChatAI } from "ai/react";
 import { useModel } from "./model-provider";
@@ -21,6 +20,7 @@ interface ChatContextType {
   input: string;
   setInput: (input: string) => void;
   isLoading: boolean;
+
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: React.FormEventHandler;
   error: Error | null;
@@ -34,6 +34,8 @@ interface ChatContextType {
   setChatId: (id: string | null) => void;
   setMessages: (messages: UIMessage[]) => void;
   resetChat: () => void;
+  micError: string | null;
+  setMicError: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -56,6 +58,7 @@ export function ChatProvider({
   const { keys } = useKeys();
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
@@ -73,7 +76,7 @@ export function ChatProvider({
 
   const onError = useCallback(
     (error: Error) => {
-      console.error("Chat error:", error);
+      console.error("AI Chat error:", error);
       setError(error);
       toast({
         variant: "destructive",
@@ -91,6 +94,7 @@ export function ChatProvider({
     handleSubmit: originalHandleSubmit,
     isLoading,
     setMessages,
+    setInput: setAIInput,
   } = useChatAI({
     api: "/api/chat",
     body: {
@@ -103,9 +107,20 @@ export function ChatProvider({
     initialMessages,
     onError,
     onFinish: (message) => {
-      debugLog("Chat finished", { messageId: message.id, role: message.role, contentLength: message.content.length });
+      debugLog("Chat finished", {
+        messageId: message.id,
+        role: message.role,
+        contentLength: message.content.length,
+      });
     },
   });
+
+  const setInput = useCallback(
+    (value: string) => {
+      setAIInput(value);
+    },
+    [setAIInput]
+  );
 
   useEffect(() => {
     if (!session) {
@@ -123,6 +138,7 @@ export function ChatProvider({
   useEffect(() => {
     if (session) {
       setMessageCount(0);
+
       prevMessageLengthRef.current = messages.filter((msg) => msg.role === "user").length;
     }
   }, [session, messages]);
@@ -187,7 +203,10 @@ export function ChatProvider({
 
       if (currentChatId) {
         try {
-          debugLog("Saving user message", { chatId: currentChatId, content: currentInput });
+          debugLog("Saving user message", {
+            chatId: currentChatId,
+            content: currentInput,
+          });
           const result = await saveUserMessage(currentChatId, currentInput);
           if (!result.success) {
             console.error("Failed to save user message:", result.error);
@@ -200,6 +219,7 @@ export function ChatProvider({
       }
 
       debugLog("Submitting to AI");
+
       originalHandleSubmit(e);
     },
     [session, messageCount, originalHandleSubmit, toast, chatId, input]
@@ -209,27 +229,21 @@ export function ChatProvider({
     setMessages([]);
     setMessageCount(0);
     setError(null);
+    setMicError(null);
     prevMessageLengthRef.current = 0;
     setChatId(null);
 
     removeStoredValue(STORAGE_KEYS.MESSAGE_COUNT);
+    removeStoredValue(STORAGE_KEYS.SHOW_WARNING);
 
     router.push("/");
   }, [setMessages, router]);
-
-  const setInput = useCallback(
-    (input: string) => {
-      handleInputChange({
-        target: { value: input },
-      } as React.ChangeEvent<HTMLInputElement>);
-    },
-    [handleInputChange]
-  );
 
   const resetChat = useCallback(() => {
     setMessages([]);
     setMessageCount(0);
     setError(null);
+    setMicError(null);
     prevMessageLengthRef.current = 0;
     setChatId(null);
   }, [setMessages, setMessageCount, setError, setChatId]);
@@ -253,7 +267,9 @@ export function ChatProvider({
         chatId,
         setChatId,
         setMessages,
-        resetChat
+        resetChat,
+        micError,
+        setMicError,
       }}
     >
       {children}

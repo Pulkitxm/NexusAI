@@ -69,11 +69,11 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
           },
         });
 
-        if (dbUser) {
-          session.user.id = dbUser.id.toString();
-          session.user.name = dbUser.name ?? "";
-          session.user.avatar = dbUser.avatar ?? "";
-        }
+        if (!dbUser) throw new Error("User not found");
+
+        session.user.id = dbUser.id.toString();
+        session.user.name = dbUser.name ?? "";
+        session.user.avatar = dbUser.avatar ?? "";
       }
       return session;
     },

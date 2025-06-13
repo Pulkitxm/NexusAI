@@ -77,7 +77,7 @@ export default function ChatUI({ id }: { id?: string }) {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 mb-20">
         <div className="max-w-4xl mx-auto py-6">
           {messages.length === 0 && !isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[60vh]">

@@ -16,6 +16,7 @@ model User {
   updatedAt DateTime @updatedAt
   chats     Chat[]
   messages  Message[]
+  settings  UserSettings?
 }
 
 model Chat {
@@ -44,4 +45,22 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   userId    String?
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String?
+  jobTitle    String?
+  occupation  String?
+  bio         String?
+  location    String?
+  company     String?
+  website     String?
+  customFont  String?
+  theme       String   @default("system")
+  fontSize    String   @default("medium")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 } 

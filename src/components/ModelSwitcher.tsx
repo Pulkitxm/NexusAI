@@ -33,6 +33,7 @@ import {
   Filter,
 } from "lucide-react";
 import type { AIModel } from "@/types/models";
+import { AI_MODELS } from "@/lib/models";
 
 interface ModelSelectorProps {
   availableModels: AIModel[];
@@ -190,7 +191,8 @@ const ModelCard = memo<{
   onClick: () => void;
   searchQuery?: string;
   index: number;
-}>(({ model, isSelected, onClick, searchQuery = "", index }) => {
+  isAvailable: boolean;
+}>(({ model, isSelected, onClick, searchQuery = "", index, isAvailable }) => {
   const ModelIcon = model.icon;
 
   const isNameHighlighted =
@@ -203,8 +205,10 @@ const ModelCard = memo<{
           isSelected
             ? "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-blue-200 dark:border-blue-700 shadow-lg ring-2 ring-blue-100 dark:ring-blue-900/50"
             : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md"
+        } ${
+          isAvailable ? "" : "opacity-50 cursor-not-allowed select-none"
         }`}
-        onClick={onClick}
+        onClick={isAvailable ? onClick : undefined}
       >
         {isSelected && (
           <div className="absolute -top-2 -right-2 p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-lg animate-bounce">
@@ -337,7 +341,8 @@ const ProviderSection = memo<{
   onModelSelect: (modelId: string) => void;
   searchQuery: string;
   index: number;
-}>(({ provider, models, selectedModel, onModelSelect, searchQuery, index }) => {
+  isAvailable: boolean;
+}>(({ provider, models, selectedModel, onModelSelect, searchQuery, index, isAvailable }) => {
   return (
     <AnimatedWrapper show={true} delay={index * 100}>
       <div className="space-y-4">
@@ -364,6 +369,7 @@ const ProviderSection = memo<{
               onClick={() => onModelSelect(model.id)}
               searchQuery={searchQuery}
               index={modelIndex}
+              isAvailable={isAvailable}
             />
           ))}
         </div>
@@ -443,11 +449,6 @@ export const ModelSelector = memo<ModelSelectorProps>(
       });
     }, []);
 
-    const filteredModelsForModal = useMemo(
-      () => filterModels(availableModels, searchQuery),
-      [availableModels, searchQuery, filterModels],
-    );
-
     const filteredGroupedByProvider = useMemo(() => {
       return Object.entries(groupedByProvider).reduce(
         (acc, [provider, models]) => {
@@ -467,7 +468,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
     );
 
     const groupedFilteredForModal = useMemo(() => {
-      return filteredModelsForModal.reduce(
+      return AI_MODELS.reduce(
         (acc, model) => {
           if (!acc[model.provider]) {
             acc[model.provider] = [];
@@ -477,7 +478,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
         },
         {} as Record<string, AIModel[]>,
       );
-    }, [filteredModelsForModal]);
+    }, []);
 
     const handleModelSelect = useCallback(
       (modelId: string) => {
@@ -644,6 +645,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
                         onModelSelect={handleModelSelect}
                         searchQuery={searchQuery}
                         index={index}
+                        isAvailable={availableModels.some((model) => model.provider === provider)}
                       />
                     ),
                   )}

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react"
+import { useState, useEffect, Fragment } from "react";
+import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,41 +14,48 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
   useSidebar,
-} from "@/components/sidebar"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useKeys } from "@/providers/key-provider"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { signIn, useSession } from "next-auth/react"
-import { useSettingsModal } from "@/providers/settings-modal-provider"
-import Link from "next/link"
-import { Skeleton } from "./ui/skeleton"
-import type { Chat } from "@/types/chat"
+} from "@/components/sidebar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useKeys } from "@/providers/key-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { signIn, useSession } from "next-auth/react";
+import { useSettingsModal } from "@/providers/settings-modal-provider";
+import Link from "next/link";
+import { Skeleton } from "./ui/skeleton";
+import type { Chat } from "@/types/chat";
 
 export function AppSidebar() {
-  const { chats, deleteChat, loading } = useSidebar()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filteredChats, setFilteredChats] = useState<Chat[]>([])
+  const { chats, deleteChat, loading } = useSidebar();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
 
-  const { data: session, status } = useSession()
-  const { openModal } = useSettingsModal()
+  const { data: session, status } = useSession();
+  const { openModal } = useSettingsModal();
 
-  const user = session?.user
-  const { hasAnyKeys } = useKeys()
+  const user = session?.user;
+  const { hasAnyKeys } = useKeys();
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredChats(chats)
+      setFilteredChats(chats);
     } else {
       const filtered = chats.filter(
         (chat) =>
           chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chat.updatedAt.toLocaleDateString().includes(searchQuery.toLowerCase()),
-      )
-      setFilteredChats(filtered)
+          chat.updatedAt.toLocaleDateString().includes(searchQuery.toLowerCase())
+      );
+      setFilteredChats(filtered);
     }
-  }, [searchQuery, chats])
+  }, [searchQuery, chats]);
+
+  const Wrapper = status === "authenticated" ? Link : Fragment;
 
   return (
     <>
@@ -166,35 +173,39 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">
                 <Settings className="w-4 h-4" />
-                <span className="text-sm">Settings & API Keys</span>
+                <span className="text-sm">Manage API Keys</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            <SidebarMenuItem>
-              {status === "loading" ? (
-                <div className="flex items-center gap-2 px-2 py-1.5">
-                  <Skeleton className="w-5 h-5 rounded-full" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ) : status === "authenticated" ? (
-                <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
-                  {user?.avatar ? (
-                    <img src={user.avatar || "/placeholder.svg"} className="w-5 h-5 rounded-full" alt={user.name} />
+            {
+              <Wrapper href={"/settings"}>
+                <SidebarMenuItem>
+                  {status === "loading" ? (
+                    <div className="flex items-center gap-2 px-2 py-1.5">
+                      <Skeleton className="w-5 h-5 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  ) : status === "authenticated" ? (
+                    <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
+                      {user?.avatar ? (
+                        <img src={user.avatar || "/placeholder.svg"} className="w-5 h-5 rounded-full" alt={user.name} />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
+                      <span className="truncate text-sm">{user?.name}</span>
+                    </SidebarMenuButton>
                   ) : (
-                    <User className="w-4 h-4" />
+                    <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
+                      <LogIn className="w-4 h-4" />
+                      <span className="text-sm">Login</span>
+                    </SidebarMenuButton>
                   )}
-                  <span className="truncate text-sm">{user?.name}</span>
-                </SidebarMenuButton>
-              ) : (
-                <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
-                  <LogIn className="w-4 h-4" />
-                  <span className="text-sm">Login</span>
-                </SidebarMenuButton>
-              )}
-            </SidebarMenuItem>
+                </SidebarMenuItem>
+              </Wrapper>
+            }
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
     </>
-  )
+  );
 }
