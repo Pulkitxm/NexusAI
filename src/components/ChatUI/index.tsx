@@ -82,7 +82,7 @@ export default function ChatUI({ id }: { id?: string }) {
   const hide = input || id;
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 mb-20">
         <div className="max-w-4xl mx-auto py-6">
           {messages.length === 0 && !isLoading ? (
@@ -98,7 +98,7 @@ export default function ChatUI({ id }: { id?: string }) {
                 exit={{ opacity: 0, display: "none", pointerEvents: "none" }}
                 className="text-center space-y-4"
               >
-                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                   <svg
                     className="w-8 h-8 text-white"
                     fill="none"
@@ -131,7 +131,11 @@ export default function ChatUI({ id }: { id?: string }) {
                         variant={
                           promptSection === prompt.section ? "default" : "link"
                         }
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-purple-500 dark:text-purple-400 ${
+                          promptSection === prompt.section
+                            ? "bg-purple-500 dark:bg-purple-400 text-white dark:text-black hover:bg-purple-500 dark:hover:bg-purple-400"
+                            : ""
+                        }`}
                         onClick={() => setPromptSection(prompt.section)}
                       >
                         <prompt.icon className="w-4 h-4" />

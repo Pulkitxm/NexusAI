@@ -300,7 +300,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
 
                 <div className="flex items-center gap-4">
                   {webSearch !== null && (
-                    <div className="flex items-center gap-2 text-black">
+                    <div className="flex items-center gap-2 text-black dark:text-white">
                       <Label htmlFor="web-search" className="text-xs">
                         <Search className="h-3.5 w-3.5" />
                       </Label>
@@ -310,13 +310,14 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                           checked={webSearch}
                           onCheckedChange={(val)=>setWebSearch(val)}
                           disabled={!selectedModelDetails?.capabilities?.search}
+                          className="data-[state=checked]:bg-purple-500 data-[state=checked]:text-purple-500 dark:data-[state=checked]:bg-purple-400 dark:data-[state=checked]:text-purple-400"
                         />
                       </div>
                     </div>
                   )}
 
                   {reasoning && (
-                    <div className="flex items-center gap-2 text-black">
+                    <div className="flex items-center gap-2 text-black dark:text-white">
                       <Brain className="h-3.5 w-3.5" />
                       <Select
                         value={reasoning || "none"}

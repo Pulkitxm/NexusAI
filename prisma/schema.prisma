@@ -52,7 +52,6 @@ model UserSettings {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String?
   jobTitle    String?
   occupation  String?
   bio         String?
@@ -66,13 +65,17 @@ model UserSettings {
 } 
 
 model GlobalMemory {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDeleted Boolean  @default(false)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  content    String
+  category   String?  // personal, professional, preferences, knowledge, other
+  importance Int      @default(5) // 1-10 scale
+  reasoning  String?  // Why this memory is important
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, importance])
+  @@index([userId, category])
 }

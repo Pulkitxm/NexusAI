@@ -1,0 +1,65 @@
+// lib/reasoningHandler.ts
+export class ReasoningHandler {
+    static getReasoningConfig(
+      reasoning: string | boolean | undefined,
+      modelConfig: any
+    ) {
+      if (!reasoning || !modelConfig.capabilities.reasoning) {
+        return { enabled: false };
+      }
+  
+      const reasoningLevel = typeof reasoning === "string" ? reasoning : "medium";
+  
+      switch (modelConfig.provider) {
+        case "OpenAI":
+          return {
+            enabled: true,
+            config: {
+              reasoningEffort: this.mapReasoningLevel(reasoningLevel),
+            },
+          };
+  
+        case "Anthropic":
+          return {
+            enabled: true,
+            config: {
+              sendReasoning: true,
+              reasoningDepth: reasoningLevel,
+            },
+          };
+  
+        default:
+          return { enabled: false };
+      }
+    }
+  
+    private static mapReasoningLevel(level: string): string {
+      switch (level.toLowerCase()) {
+        case "high":
+          return "high";
+        case "low":
+          return "low";
+        case "medium":
+        default:
+          return "medium";
+      }
+    }
+  
+    static shouldUseReasoningModel(
+      reasoning: any,
+      currentModel: any,
+      availableModels: any[]
+    ): string {
+      if (!reasoning || currentModel.capabilities.reasoning) {
+        return currentModel.id;
+      }
+  
+      // Find a reasoning-capable model from the same provider
+      const reasoningModel = availableModels.find(
+        (m) =>
+          m.provider === currentModel.provider && m.capabilities.reasoning
+      );
+  
+      return reasoningModel?.id || currentModel.id;
+    }
+  }

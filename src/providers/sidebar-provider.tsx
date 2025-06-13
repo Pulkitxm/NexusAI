@@ -16,6 +16,7 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 
@@ -74,6 +75,7 @@ type ChatState = {
   chats: Chat[];
   loading: boolean;
   error: string | null;
+  initialized: boolean;
 };
 
 type ChatAction =
@@ -88,9 +90,20 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
     case "FETCH_START":
       return { ...state, loading: true, error: null };
     case "FETCH_SUCCESS":
-      return { ...state, loading: false, chats: action.payload, error: null };
+      return {
+        ...state,
+        loading: false,
+        chats: action.payload,
+        error: null,
+        initialized: true,
+      };
     case "FETCH_ERROR":
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+        initialized: true,
+      };
     case "DELETE_CHAT":
       return {
         ...state,
@@ -124,11 +137,13 @@ export const SidebarProvider = forwardRef<
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = useState(false);
+    const loadingRef = useRef(false);
 
     const [chatState, dispatch] = useReducer(chatReducer, {
       chats: [],
       loading: false,
       error: null,
+      initialized: false,
     });
 
     const [_open, _setOpen] = useState(() => {
@@ -164,45 +179,40 @@ export const SidebarProvider = forwardRef<
     }, [isMobile, setOpen]);
 
     const loadChats = useCallback(async () => {
-      if (chatState.loading) return;
+      if (loadingRef.current) return;
+      loadingRef.current = true;
 
       dispatch({ type: "FETCH_START" });
 
       try {
-        try {
-          const userChats = await getUserChats();
+        const userChats = await getUserChats();
 
-          if (!userChats.success) {
-            console.error("Error loading chats:", userChats.error);
-            dispatch({
-              type: "FETCH_ERROR",
-              payload: userChats.error || "Failed to load chats.",
-            });
-            return;
-          }
-
-          const mappedChats = userChats.chats?.map((chat) => ({
-            id: chat.id,
-            title: chat.title || `Chat ${chat.id}`,
-            updatedAt: chat.updatedAt,
-          }));
-
-          dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
-        } catch (error) {
-          console.error("Error loading chats:", error);
+        if (!userChats.success) {
+          console.error("Error loading chats:", userChats.error);
           dispatch({
             type: "FETCH_ERROR",
-            payload: (error as Error).message || "An unknown error occurred.",
+            payload: userChats.error || "Failed to load chats.",
           });
+          return;
         }
+
+        const mappedChats = userChats.chats?.map((chat) => ({
+          id: chat.id,
+          title: chat.title || `Chat ${chat.id}`,
+          updatedAt: chat.updatedAt,
+        }));
+
+        dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
       } catch (error) {
         console.error("Error loading chats:", error);
         dispatch({
           type: "FETCH_ERROR",
           payload: (error as Error).message || "An unknown error occurred.",
         });
+      } finally {
+        loadingRef.current = false;
       }
-    }, [chatState.loading]);
+    }, []);
 
     const refreshChats = useCallback(() => {
       loadChats();
@@ -213,7 +223,6 @@ export const SidebarProvider = forwardRef<
         const res = await deleteChat(chatId);
         if (!res.success) {
           console.error("Error deleting chat:", res.error);
-
           return;
         }
         dispatch({ type: "DELETE_CHAT", payload: chatId });
@@ -222,22 +231,12 @@ export const SidebarProvider = forwardRef<
       }
     }, []);
 
+    // Load chats when sidebar opens for the first time
     useEffect(() => {
-      if (
-        open &&
-        chatState.chats.length === 0 &&
-        !chatState.loading &&
-        !chatState.error
-      ) {
+      if (open && !chatState.initialized && !loadingRef.current) {
         loadChats();
       }
-    }, [
-      open,
-      chatState.chats.length,
-      chatState.loading,
-      chatState.error,
-      loadChats,
-    ]);
+    }, [open, chatState.initialized, loadChats]);
 
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
