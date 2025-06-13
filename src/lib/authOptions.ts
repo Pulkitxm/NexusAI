@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "@/lib/env";
-
 import { prisma } from "@/lib/db";
+import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "@/lib/env";
 
 declare module "next-auth" {
   interface Session {
@@ -24,8 +23,8 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
   providers: [
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_CLIENT_SECRET,
-    }),
+      clientSecret: GOOGLE_CLIENT_SECRET
+    })
   ],
   callbacks: {
     signIn: async (param) => {
@@ -46,8 +45,8 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
 
       const dbUser = await prisma.user.findUnique({
         where: {
-          email,
-        },
+          email
+        }
       });
 
       if (dbUser) return true;
@@ -56,8 +55,8 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
         data: {
           name: name ?? email.split("@")[0],
           email,
-          avatar,
-        },
+          avatar
+        }
       });
 
       return true;
@@ -73,10 +72,10 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
             settings: {
               select: {
                 customFont: true,
-                theme: true,
-              },
-            },
-          },
+                theme: true
+              }
+            }
+          }
         });
 
         if (!dbUser) throw new Error("User not found");
@@ -92,11 +91,11 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
         token.email = user.email;
       }
       return token;
-    },
+    }
   },
   session: {
-    maxAge: 60 * 60 * 24,
-  },
+    maxAge: 60 * 60 * 24
+  }
 });
 
 export { auth, handlers, signIn, signOut, unstable_update };

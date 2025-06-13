@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@/providers/chat-provider";
+
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
 
@@ -13,9 +14,7 @@ export function ChatMessages() {
         <MessageBubble
           key={message.id}
           message={message}
-          isStreaming={
-            isLoading && message.id === messages[messages.length - 1]?.id
-          }
+          isStreaming={isLoading && message.id === messages[messages.length - 1]?.id}
         />
       ))}
       {isLoading && <TypingIndicator />}

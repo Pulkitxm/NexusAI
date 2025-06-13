@@ -1,8 +1,10 @@
-import { ApiKeys } from "@/types/keys";
-import type { AIModel } from "@/types/models";
+import { FaGoogle } from "react-icons/fa";
 import { RiAnthropicFill } from "react-icons/ri";
 import { SiOpenai } from "react-icons/si";
-import { FaGoogle } from "react-icons/fa";
+
+import { ApiKeys } from "@/types/keys";
+
+import type { AIModel } from "@/types/models";
 
 export const AI_MODELS: AIModel[] = [
   // Google Models
@@ -17,8 +19,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      search: true,
-    },
+      search: true
+    }
   },
   {
     id: "gemini-2.5-pro",
@@ -31,8 +33,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      search: true,
-    },
+      search: true
+    }
   },
   {
     id: "gemini-2.5-flash-thinking",
@@ -46,8 +48,8 @@ export const AI_MODELS: AIModel[] = [
       imageUpload: true,
       pdfUpload: true,
       search: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "gemini-2.5-pro-thinking",
@@ -61,8 +63,8 @@ export const AI_MODELS: AIModel[] = [
       imageUpload: true,
       pdfUpload: true,
       search: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "gemini-2.0-flash",
@@ -75,8 +77,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      search: true,
-    },
+      search: true
+    }
   },
   {
     id: "gemini-2.0-flash-lite",
@@ -88,8 +90,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "google",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "gemini-1.5-pro",
@@ -102,8 +104,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      search: true,
-    },
+      search: true
+    }
   },
   {
     id: "gemini-1.5-flash",
@@ -116,8 +118,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      search: true,
-    },
+      search: true
+    }
   },
   {
     id: "gemini-1.5-flash-8b",
@@ -129,8 +131,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "google",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "gemini-1.0-pro",
@@ -142,8 +144,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "google",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
 
   // OpenAI Models
@@ -156,8 +158,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Most capable GPT model with vision",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4o-mini",
@@ -168,8 +170,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Faster and more affordable GPT-4 level intelligence",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4.1",
@@ -180,8 +182,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Enhanced GPT-4 with improved coding and instruction following",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4.1-mini",
@@ -192,8 +194,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Compact version of GPT-4.1 with improved performance",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4.1-nano",
@@ -204,8 +206,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Ultra-lightweight GPT-4.1 variant",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4.5",
@@ -216,8 +218,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Next-generation GPT model with advanced capabilities",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "o4-mini",
@@ -229,8 +231,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "openai",
     capabilities: {
       imageUpload: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "o3",
@@ -242,8 +244,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "openai",
     capabilities: {
       imageUpload: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "gpt-4-turbo",
@@ -254,8 +256,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Large multimodal model optimized for chat and accuracy",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4-turbo-preview",
@@ -266,8 +268,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Preview version of GPT-4 Turbo with latest features",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-4",
@@ -278,8 +280,8 @@ export const AI_MODELS: AIModel[] = [
     description: "Original GPT-4 model with high capability",
     requiresKey: "openai",
     capabilities: {
-      imageUpload: true,
-    },
+      imageUpload: true
+    }
   },
   {
     id: "gpt-3.5-turbo",
@@ -289,7 +291,7 @@ export const AI_MODELS: AIModel[] = [
     icon: SiOpenai,
     description: "Fast and cost-effective model for many tasks",
     requiresKey: "openai",
-    capabilities: {},
+    capabilities: {}
   },
 
   // Anthropic Models
@@ -303,8 +305,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-4-opus",
@@ -316,8 +318,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-4-sonnet-reasoning",
@@ -330,8 +332,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "claude-3.7-sonnet",
@@ -343,8 +345,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3.7-sonnet-reasoning",
@@ -357,8 +359,8 @@ export const AI_MODELS: AIModel[] = [
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
-      reasoning: true,
-    },
+      reasoning: true
+    }
   },
   {
     id: "claude-3.5-sonnet-20241022",
@@ -370,8 +372,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3.5-sonnet-20240620",
@@ -383,8 +385,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3-5-haiku-20241022",
@@ -396,8 +398,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3-opus-20240229",
@@ -409,8 +411,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3-sonnet-20240229",
@@ -422,8 +424,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-3-haiku-20240307",
@@ -435,8 +437,8 @@ export const AI_MODELS: AIModel[] = [
     requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
-      pdfUpload: true,
-    },
+      pdfUpload: true
+    }
   },
   {
     id: "claude-2.1",
@@ -447,9 +449,9 @@ export const AI_MODELS: AIModel[] = [
     description: "Previous generation Claude model",
     requiresKey: "anthropic",
     capabilities: {
-      pdfUpload: true,
-    },
-  },
+      pdfUpload: true
+    }
+  }
 ];
 
 export const getModelsByCategory = (category?: string) => {
@@ -475,7 +477,7 @@ const providerConfigs = [
     description: "GPT models for general AI tasks",
     icon: SiOpenai,
     color: "bg-green-500/90 dark:bg-green-600/80",
-    link: "https://platform.openai.com/api-keys",
+    link: "https://platform.openai.com/api-keys"
   },
   {
     key: "anthropic",
@@ -483,7 +485,7 @@ const providerConfigs = [
     description: "Claude models for thoughtful AI assistance",
     icon: RiAnthropicFill,
     color: "bg-orange-500/90 dark:bg-orange-600/80",
-    link: "https://console.anthropic.com/",
+    link: "https://console.anthropic.com/"
   },
   {
     key: "google",
@@ -491,8 +493,8 @@ const providerConfigs = [
     description: "Gemini models for multimodal AI",
     icon: FaGoogle,
     color: "bg-blue-500/90 dark:bg-blue-600/80",
-    link: "https://aistudio.google.com/app/apikey",
-  },
+    link: "https://aistudio.google.com/app/apikey"
+  }
 ];
 
 export const keyConfigs = providerConfigs;

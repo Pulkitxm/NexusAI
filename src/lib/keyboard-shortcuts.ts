@@ -8,41 +8,41 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
   {
     keys: ["/"],
     description: "Focus message input",
-    category: "navigation",
+    category: "navigation"
   },
   {
     keys: ["Cmd", "/"],
     description: "Toggle shortcuts dialog",
-    category: "navigation",
+    category: "navigation"
   },
   {
     keys: ["Cmd", "b"],
     description: "Toggle open sidebar",
-    category: "navigation",
+    category: "navigation"
   },
   {
     keys: ["Esc"],
     description: "Clear input or close dialog",
-    category: "navigation",
+    category: "navigation"
   },
   {
     keys: ["Enter"],
     description: "Send message",
-    category: "messaging",
+    category: "messaging"
   },
   {
     keys: ["Shift", "Enter"],
     description: "Add new line",
-    category: "messaging",
+    category: "messaging"
   },
   {
     keys: ["Cmd", "Enter"],
     description: "Save edited message",
-    category: "messaging",
+    category: "messaging"
   },
   {
     keys: ["Cmd", "Shift", "m"],
     description: "Mute/Unmute microphone",
-    category: "messaging",
-  },
+    category: "messaging"
+  }
 ];

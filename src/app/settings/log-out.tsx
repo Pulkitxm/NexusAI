@@ -11,6 +11,6 @@ export function LogOut({ children }: { children: React.ReactNode }) {
   }
 
   return cloneElement(child, {
-    onClick: () => signOut(),
+    onClick: () => signOut()
   });
 }

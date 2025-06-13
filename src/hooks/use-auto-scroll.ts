@@ -9,13 +9,11 @@ export function useAutoScroll() {
 
   const scrollToBottom = useCallback((smooth = true) => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
+      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
       if (scrollContainer) {
         scrollContainer.scrollTo({
           top: scrollContainer.scrollHeight,
-          behavior: smooth ? "smooth" : "auto",
+          behavior: smooth ? "smooth" : "auto"
         });
       }
     }
@@ -23,9 +21,7 @@ export function useAutoScroll() {
 
   const forceScrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
+      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -34,9 +30,7 @@ export function useAutoScroll() {
 
   const checkScrollPosition = useCallback(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
+      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
       if (scrollContainer) {
         const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
@@ -48,13 +42,10 @@ export function useAutoScroll() {
   }, []);
 
   useEffect(() => {
-    const scrollContainer = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]",
-    );
+    const scrollContainer = scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]");
     if (scrollContainer) {
       scrollContainer.addEventListener("scroll", checkScrollPosition);
-      return () =>
-        scrollContainer.removeEventListener("scroll", checkScrollPosition);
+      return () => scrollContainer.removeEventListener("scroll", checkScrollPosition);
     }
   }, [checkScrollPosition]);
 
@@ -64,6 +55,6 @@ export function useAutoScroll() {
     isAutoScrollEnabled,
     scrollToBottom,
     forceScrollToBottom,
-    checkScrollPosition,
+    checkScrollPosition
   };
 }

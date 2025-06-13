@@ -1,26 +1,23 @@
 "use client";
 
-import type React from "react";
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
 import { useChat as useChatAI } from "ai/react";
-import { useModel } from "./model-provider";
-import { useKeys } from "./key-provider";
-import { getAvailableModels } from "@/lib/models";
-import { useToast } from "@/hooks/use-toast";
-import type { UIMessage } from "ai";
-import { useSession } from "next-auth/react";
-import { MESSAGE_LIMIT } from "@/lib/data";
-import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
+
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
+
 import { createChat, saveUserMessage } from "@/actions/chat";
+import { useToast } from "@/hooks/use-toast";
+import { MESSAGE_LIMIT } from "@/lib/data";
 import { debugLog } from "@/lib/debug";
+import { getAvailableModels } from "@/lib/models";
+import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
+
+import { useKeys } from "./key-provider";
+import { useModel } from "./model-provider";
+
+import type { UIMessage } from "ai";
+import type React from "react";
 
 interface ChatContextType {
   messages: UIMessage[];
@@ -28,11 +25,7 @@ interface ChatContextType {
   setInput: (input: string) => void;
   isLoading: boolean;
 
-  handleInputChange: (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>,
-  ) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: React.FormEventHandler;
   error: Error | null;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -57,13 +50,13 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
   MESSAGE_COUNT: "chat_message_count",
-  SHOW_WARNING: "chat_show_warning",
+  SHOW_WARNING: "chat_show_warning"
 } as const;
 
 export function ChatProvider({
   children,
   initialMessages = [],
-  initialChatId = null,
+  initialChatId = null
 }: {
   children: React.ReactNode;
   initialMessages?: UIMessage[];
@@ -80,23 +73,15 @@ export function ChatProvider({
   const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
-  const [chatId, setChatId] = useState<string | null>(
-    initialChatId || (params?.id as string) || null,
-  );
+  const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
 
-  const [messageCount, setMessageCount] = useState(() =>
-    getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0),
-  );
-  const [showWarning, setShowWarning] = useState(() =>
-    getStoredValue(STORAGE_KEYS.SHOW_WARNING, true),
-  );
+  const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
+  const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
 
   const prevMessageLengthRef = useRef(0);
 
   const availableModels = getAvailableModels(keys);
-  const selectedModelDetails = availableModels.find(
-    (m) => m.id === selectedModel,
-  );
+  const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
   const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
 
   const onError = useCallback(
@@ -106,10 +91,10 @@ export function ChatProvider({
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message
       });
     },
-    [toast],
+    [toast]
   );
 
   const {
@@ -119,17 +104,17 @@ export function ChatProvider({
     handleSubmit: originalHandleSubmit,
     isLoading,
     setMessages,
-    setInput: setAIInput,
+    setInput: setAIInput
   } = useChatAI({
     api: "/api/chat",
     body: {
       model: selectedModel,
       provider: selectedModelDetails?.provider,
-      apiKey: apiKey,
+      apiKey,
       chatId,
       userId: session?.user?.id,
       webSearch,
-      reasoning,
+      reasoning
     },
     initialMessages,
     onError,
@@ -137,16 +122,16 @@ export function ChatProvider({
       debugLog("Chat finished", {
         messageId: message.id,
         role: message.role,
-        contentLength: message.content.length,
+        contentLength: message.content.length
       });
-    },
+    }
   });
 
   const setInput = useCallback(
     (value: string) => {
       setAIInput(value);
     },
-    [setAIInput],
+    [setAIInput]
   );
 
   useEffect(() => {
@@ -155,8 +140,7 @@ export function ChatProvider({
       const currentUserMessageCount = userMessages.length;
 
       if (currentUserMessageCount > prevMessageLengthRef.current) {
-        const newUserMessages =
-          currentUserMessageCount - prevMessageLengthRef.current;
+        const newUserMessages = currentUserMessageCount - prevMessageLengthRef.current;
         setMessageCount((prev) => prev + newUserMessages);
         prevMessageLengthRef.current = currentUserMessageCount;
       }
@@ -167,9 +151,7 @@ export function ChatProvider({
     if (session) {
       setMessageCount(0);
 
-      prevMessageLengthRef.current = messages.filter(
-        (msg) => msg.role === "user",
-      ).length;
+      prevMessageLengthRef.current = messages.filter((msg) => msg.role === "user").length;
     }
   }, [session, messages]);
 
@@ -183,7 +165,7 @@ export function ChatProvider({
 
     const supportedWebSearch = selectedModelDetails?.capabilities?.search;
     setWebSearch(supportedWebSearch ? true : null);
-  }, [selectedModel]);
+  }, [selectedModel, selectedModelDetails]);
 
   useEffect(() => {
     setStoredValue(STORAGE_KEYS.SHOW_WARNING, showWarning);
@@ -198,7 +180,7 @@ export function ChatProvider({
           variant: "destructive",
           title: "Message Limit Reached",
           description:
-            "Please sign in to continue chatting. You've reached the limit of 10 messages for non-logged-in users.",
+            "Please sign in to continue chatting. You've reached the limit of 10 messages for non-logged-in users."
         });
         return;
       }
@@ -224,7 +206,7 @@ export function ChatProvider({
             toast({
               variant: "destructive",
               title: "Error",
-              description: "Failed to create chat. Please try again.",
+              description: "Failed to create chat. Please try again."
             });
             return;
           }
@@ -233,7 +215,7 @@ export function ChatProvider({
           toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to create chat. Please try again.",
+            description: "Failed to create chat. Please try again."
           });
           return;
         }
@@ -243,7 +225,7 @@ export function ChatProvider({
         try {
           debugLog("Saving user message", {
             chatId: currentChatId,
-            content: currentInput,
+            content: currentInput
           });
           const result = await saveUserMessage(currentChatId, currentInput);
           if (!result.success) {
@@ -260,7 +242,7 @@ export function ChatProvider({
 
       originalHandleSubmit(e);
     },
-    [session, messageCount, originalHandleSubmit, toast, chatId, input],
+    [session, messageCount, originalHandleSubmit, toast, chatId, input]
   );
 
   const clearChat = useCallback(() => {
@@ -311,7 +293,7 @@ export function ChatProvider({
         webSearch,
         setWebSearch,
         reasoning,
-        setReasoning,
+        setReasoning
       }}
     >
       {children}

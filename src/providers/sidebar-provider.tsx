@@ -1,9 +1,5 @@
 "use client";
 
-import { deleteChat, getUserChats } from "@/actions/chat";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Chat } from "@/types/chat";
 import {
   ComponentProps,
   createContext,
@@ -17,8 +13,13 @@ import {
   useMemo,
   useReducer,
   useRef,
-  useState,
+  useState
 } from "react";
+
+import { deleteChat, getUserChats } from "@/actions/chat";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Chat } from "@/types/chat";
 
 export const SIDEBAR_STORAGE_KEY = "sidebar:state";
 export const SIDEBAR_WIDTH = "16rem";
@@ -95,19 +96,19 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
         loading: false,
         chats: action.payload,
         error: null,
-        initialized: true,
+        initialized: true
       };
     case "FETCH_ERROR":
       return {
         ...state,
         loading: false,
         error: action.payload,
-        initialized: true,
+        initialized: true
       };
     case "DELETE_CHAT":
       return {
         ...state,
-        chats: state.chats.filter((chat) => chat.id !== action.payload),
+        chats: state.chats.filter((chat) => chat.id !== action.payload)
       };
     case "SET_CHATS":
       return { ...state, chats: action.payload };
@@ -123,186 +124,170 @@ export const SidebarProvider = forwardRef<
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }
->(
-  (
-    {
-      defaultOpen,
-      open: openProp,
-      onOpenChange: setOpenProp,
-      style,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
-    const isMobile = useIsMobile();
-    const [openMobile, setOpenMobile] = useState(false);
-    const loadingRef = useRef(false);
+>(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, style, children, ...props }, ref) => {
+  const isMobile = useIsMobile();
+  const [openMobile, setOpenMobile] = useState(false);
+  const loadingRef = useRef(false);
 
-    const [chatState, dispatch] = useReducer(chatReducer, {
-      chats: [],
-      loading: false,
-      error: null,
-      initialized: false,
-    });
+  const [chatState, dispatch] = useReducer(chatReducer, {
+    chats: [],
+    loading: false,
+    error: null,
+    initialized: false
+  });
 
-    const [_open, _setOpen] = useState(() => {
-      if (defaultOpen !== undefined) return defaultOpen;
-      return getStoredSidebarState();
-    });
+  const [_open, _setOpen] = useState(() => {
+    if (defaultOpen !== undefined) return defaultOpen;
+    return getStoredSidebarState();
+  });
 
-    const open = openProp ?? _open;
+  const open = openProp ?? _open;
 
-    const setOpen = useCallback(
-      (value: boolean | ((prev: boolean) => boolean)) => {
-        const newOpenState = typeof value === "function" ? value(open) : value;
+  const setOpen = useCallback(
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      const newOpenState = typeof value === "function" ? value(open) : value;
 
-        if (setOpenProp) {
-          setOpenProp(newOpenState);
-        } else {
-          _setOpen(newOpenState);
-        }
-
-        if (!isMobile) {
-          setSidebarState(newOpenState);
-        }
-      },
-      [open, setOpenProp, isMobile],
-    );
-
-    const toggleSidebar = useCallback(() => {
-      if (isMobile) {
-        setOpenMobile((prev) => !prev);
+      if (setOpenProp) {
+        setOpenProp(newOpenState);
       } else {
-        setOpen((prev) => !prev);
+        _setOpen(newOpenState);
       }
-    }, [isMobile, setOpen]);
 
-    const loadChats = useCallback(async () => {
-      if (loadingRef.current) return;
-      loadingRef.current = true;
+      if (!isMobile) {
+        setSidebarState(newOpenState);
+      }
+    },
+    [open, setOpenProp, isMobile]
+  );
 
-      dispatch({ type: "FETCH_START" });
+  const toggleSidebar = useCallback(() => {
+    if (isMobile) {
+      setOpenMobile((prev) => !prev);
+    } else {
+      setOpen((prev) => !prev);
+    }
+  }, [isMobile, setOpen]);
 
-      try {
-        const userChats = await getUserChats();
+  const loadChats = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
 
-        if (!userChats.success) {
-          console.error("Error loading chats:", userChats.error);
-          dispatch({
-            type: "FETCH_ERROR",
-            payload: userChats.error || "Failed to load chats.",
-          });
-          return;
-        }
+    dispatch({ type: "FETCH_START" });
 
-        const mappedChats = userChats.chats?.map((chat) => ({
-          id: chat.id,
-          title: chat.title || `Chat ${chat.id}`,
-          updatedAt: chat.updatedAt,
-        }));
+    try {
+      const userChats = await getUserChats();
 
-        dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
-      } catch (error) {
-        console.error("Error loading chats:", error);
+      if (!userChats.success) {
+        console.error("Error loading chats:", userChats.error);
         dispatch({
           type: "FETCH_ERROR",
-          payload: (error as Error).message || "An unknown error occurred.",
+          payload: userChats.error || "Failed to load chats."
         });
-      } finally {
-        loadingRef.current = false;
+        return;
       }
-    }, []);
 
-    const refreshChats = useCallback(() => {
+      const mappedChats = userChats.chats?.map((chat) => ({
+        id: chat.id,
+        title: chat.title || `Chat ${chat.id}`,
+        updatedAt: chat.updatedAt
+      }));
+
+      dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
+    } catch (error) {
+      console.error("Error loading chats:", error);
+      dispatch({
+        type: "FETCH_ERROR",
+        payload: (error as Error).message || "An unknown error occurred."
+      });
+    } finally {
+      loadingRef.current = false;
+    }
+  }, []);
+
+  const refreshChats = useCallback(() => {
+    loadChats();
+  }, [loadChats]);
+
+  const handleDeleteChat = useCallback(async (chatId: string) => {
+    try {
+      const res = await deleteChat(chatId);
+      if (!res.success) {
+        console.error("Error deleting chat:", res.error);
+        return;
+      }
+      dispatch({ type: "DELETE_CHAT", payload: chatId });
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open && !chatState.initialized && !loadingRef.current) {
       loadChats();
-    }, [loadChats]);
+    }
+  }, [open, chatState.initialized, loadChats]);
 
-    const handleDeleteChat = useCallback(async (chatId: string) => {
-      try {
-        const res = await deleteChat(chatId);
-        if (!res.success) {
-          console.error("Error deleting chat:", res.error);
-          return;
-        }
-        dispatch({ type: "DELETE_CHAT", payload: chatId });
-      } catch (error) {
-        console.error("Error deleting chat:", error);
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        toggleSidebar();
       }
-    }, []);
+    };
 
-    // Load chats when sidebar opens for the first time
-    useEffect(() => {
-      if (open && !chatState.initialized && !loadingRef.current) {
-        loadChats();
-      }
-    }, [open, chatState.initialized, loadChats]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleSidebar]);
 
-    useEffect(() => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (
-          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-          (event.metaKey || event.ctrlKey)
-        ) {
-          event.preventDefault();
-          toggleSidebar();
-        }
-      };
+  const contextValue = useMemo<SidebarContext>(
+    () => ({
+      state: open ? "expanded" : "collapsed",
+      open,
+      setOpen,
+      isMobile,
+      openMobile,
+      setOpenMobile,
+      toggleSidebar,
+      chats: chatState.chats,
+      loading: chatState.loading,
+      error: chatState.error,
+      deleteChat: handleDeleteChat,
+      refreshChats
+    }),
+    [
+      open,
+      setOpen,
+      isMobile,
+      openMobile,
+      setOpenMobile,
+      toggleSidebar,
+      chatState.chats,
+      chatState.loading,
+      chatState.error,
+      handleDeleteChat,
+      refreshChats
+    ]
+  );
 
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [toggleSidebar]);
-
-    const contextValue = useMemo<SidebarContext>(
-      () => ({
-        state: open ? "expanded" : "collapsed",
-        open,
-        setOpen,
-        isMobile,
-        openMobile,
-        setOpenMobile,
-        toggleSidebar,
-        chats: chatState.chats,
-        loading: chatState.loading,
-        error: chatState.error,
-        deleteChat: handleDeleteChat,
-        refreshChats,
-      }),
-      [
-        open,
-        setOpen,
-        isMobile,
-        openMobile,
-        setOpenMobile,
-        toggleSidebar,
-        chatState.chats,
-        chatState.loading,
-        chatState.error,
-        handleDeleteChat,
-        refreshChats,
-      ],
-    );
-
-    return (
-      <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
-          <div
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH,
-                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-                ...style,
-              } as CSSProperties
-            }
-            ref={ref}
-            {...props}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
-      </SidebarContext.Provider>
-    );
-  },
-);
+  return (
+    <SidebarContext.Provider value={contextValue}>
+      <TooltipProvider delayDuration={0}>
+        <div
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              ...style
+            } as CSSProperties
+          }
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </div>
+      </TooltipProvider>
+    </SidebarContext.Provider>
+  );
+});
 
 SidebarProvider.displayName = "SidebarProvider";

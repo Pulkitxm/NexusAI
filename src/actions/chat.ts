@@ -1,8 +1,9 @@
 "use server";
 
-import { prisma } from "@/lib/db";
-import { auth } from "@/lib/authOptions";
 import { revalidatePath } from "next/cache";
+
+import { auth } from "@/lib/authOptions";
+import { prisma } from "@/lib/db";
 
 export async function createChat(title?: string) {
   const session = await auth();
@@ -11,8 +12,8 @@ export async function createChat(title?: string) {
     const chat = await prisma.chat.create({
       data: {
         title: title || "New Chat",
-        userId: session?.user?.id || null,
-      },
+        userId: session?.user?.id || null
+      }
     });
 
     revalidatePath("/");
@@ -23,11 +24,7 @@ export async function createChat(title?: string) {
   }
 }
 
-export async function saveUserMessage(
-  chatId: string,
-  content: string,
-  tempId?: string,
-) {
+export async function saveUserMessage(chatId: string, content: string, tempId?: string) {
   const session = await auth();
 
   try {
@@ -36,13 +33,13 @@ export async function saveUserMessage(
         chatId,
         role: "USER",
         content,
-        userId: session?.user?.id || null,
-      },
+        userId: session?.user?.id || null
+      }
     });
 
     await prisma.chat.update({
       where: { id: chatId },
-      data: { updatedAt: new Date() },
+      data: { updatedAt: new Date() }
     });
 
     revalidatePath(`/${chatId}`);
@@ -58,7 +55,7 @@ export async function saveAssistantMessage(chatId: string, content: string) {
 
   try {
     const chatExists = await prisma.chat.findUnique({
-      where: { id: chatId, isDeleted: false },
+      where: { id: chatId, isDeleted: false }
     });
 
     if (!chatExists) {
@@ -71,13 +68,13 @@ export async function saveAssistantMessage(chatId: string, content: string) {
         chatId,
         role: "ASSISTANT",
         content,
-        userId: session?.user?.id || null,
-      },
+        userId: session?.user?.id || null
+      }
     });
 
     await prisma.chat.update({
       where: { id: chatId },
-      data: { updatedAt: new Date() },
+      data: { updatedAt: new Date() }
     });
 
     revalidatePath(`/${chatId}`);
@@ -104,8 +101,8 @@ export async function getChatMessages(chatId: string) {
         id: true,
         role: true,
         content: true,
-        createdAt: true,
-      },
+        createdAt: true
+      }
     });
 
     if (!messages) {
@@ -132,9 +129,9 @@ export async function getChatWithMessages(chatId: string) {
       where: { id: chatId, userId, isDeleted: false },
       include: {
         messages: {
-          orderBy: { createdAt: "asc" },
-        },
-      },
+          orderBy: { createdAt: "asc" }
+        }
+      }
     });
 
     if (!chat) {
@@ -163,12 +160,12 @@ export async function getUserChats() {
       include: {
         messages: {
           take: 1,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: "desc" }
         },
         _count: {
-          select: { messages: true },
-        },
-      },
+          select: { messages: true }
+        }
+      }
     });
 
     return { success: true, chats };
@@ -189,7 +186,7 @@ export async function updateChatTitle(chatId: string, title: string) {
   try {
     const chat = await prisma.chat.update({
       where: { id: chatId, userId },
-      data: { title },
+      data: { title }
     });
 
     if (!chat) {
@@ -215,7 +212,7 @@ export async function deleteChat(chatId: string) {
   try {
     const chat = await prisma.chat.update({
       where: { id: chatId, userId },
-      data: { isDeleted: true },
+      data: { isDeleted: true }
     });
 
     if (!chat) {

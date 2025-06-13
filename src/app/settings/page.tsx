@@ -1,19 +1,21 @@
-import React from "react";
-import Link from "next/link";
 import { ArrowLeft, LogOutIcon } from "lucide-react";
-import { getUserSettings } from "@/lib/actions/user";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import React from "react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SettingsForm } from "./settings-form";
-import { LogOut } from "./log-out";
+import { getUserSettings } from "@/lib/actions/user";
 import { auth } from "@/lib/authOptions";
-import { redirect } from "next/navigation";
+
+import { LogOut } from "./log-out";
+import { SettingsForm } from "./settings-form";
 
 function SettingsCard({
   title,
   description,
-  children,
+  children
 }: {
   title: string;
   description: string;
@@ -43,14 +45,16 @@ export default async function SettingsPage() {
     <div className="container max-w-5xl py-8 md:py-12">
       <div className="mb-8 flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400 md:text-4xl">Settings</h1>
-          <p className="text-muted-foreground text-sm md:text-base">Manage your account settings and preferences.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-purple-600 dark:text-purple-400 md:text-4xl">
+            Settings
+          </h1>
+          <p className="text-sm text-muted-foreground md:text-base">Manage your account settings and preferences.</p>
         </div>
         <div className="flex gap-3">
           <Link href="/">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-2 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950"
             >
               <ArrowLeft className="h-4 w-4" />

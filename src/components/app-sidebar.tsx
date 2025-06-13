@@ -1,9 +1,10 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useEffect, Fragment, useRef } from "react";
 import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
+import Link from "next/link";
+import { signIn, useSession } from "next-auth/react";
+import { useState, useEffect, Fragment, useRef } from "react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -13,23 +14,24 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
+  useSidebar
 } from "@/components/sidebar";
-import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { useKeys } from "@/providers/key-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { signIn, useSession } from "next-auth/react";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
-import Link from "next/link";
+
 import { Skeleton } from "./ui/skeleton";
+
 import type { Chat } from "@/types/chat";
+import type React from "react";
 
 const ITEM_HEIGHT = 68;
 const OVERSCAN_COUNT = 5;
@@ -49,7 +51,7 @@ export function AppSidebar() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [visibleRange, setVisibleRange] = useState({
     startIndex: 0,
-    endIndex: 0,
+    endIndex: 0
   });
 
   useEffect(() => {
@@ -100,7 +102,7 @@ export function AppSidebar() {
       <div
         style={{
           height: `${filteredChats.length * ITEM_HEIGHT}px`,
-          position: "relative",
+          position: "relative"
         }}
       >
         {visibleItems.map((chat, index) => {
@@ -114,7 +116,7 @@ export function AppSidebar() {
                 left: 0,
                 width: "100%",
                 height: `${ITEM_HEIGHT}px`,
-                transform: `translateY(${actualIndex * ITEM_HEIGHT}px)`,
+                transform: `translateY(${actualIndex * ITEM_HEIGHT}px)`
               }}
             >
               <ChatItem chat={chat} deleteChat={deleteChat} />
@@ -128,11 +130,11 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar className="border-r border-border bg-background">
-        <SidebarHeader className="p-3 border-b border-border/50">
-          <div className="flex items-center justify-between mb-3">
+        <SidebarHeader className="border-b border-border/50 p-3">
+          <div className="mb-3 flex items-center justify-between">
             <Link href={"/"} className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-purple-600">
+                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -141,7 +143,7 @@ export function AppSidebar() {
                   />
                 </svg>
               </div>
-              <h2 className="text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
                 Nexus AI
               </h2>
             </Link>
@@ -152,38 +154,38 @@ export function AppSidebar() {
           </div>
 
           <Link href="/new">
-            <Button className="w-full mb-3 h-9 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-0 text-sm">
-              <Plus className="w-4 h-4 mr-2" />
+            <Button className="mb-3 h-9 w-full border-0 bg-gradient-to-r from-blue-500 to-purple-600 text-sm text-white hover:from-blue-600 hover:to-purple-700">
+              <Plus className="mr-2 h-4 w-4" />
               New Chat
             </Button>
           </Link>
 
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
             <Input
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              className="h-9 pl-9 text-sm"
             />
           </div>
 
           {!hasAnyKeys && (
-            <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/50 rounded-md">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs">
-                <Key className="w-3.5 h-3.5" />
+            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-800/50 dark:bg-amber-950/50">
+              <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+                <Key className="h-3.5 w-3.5" />
                 <span>Add API keys to start chatting</span>
               </div>
             </div>
           )}
         </SidebarHeader>
 
-        <SidebarContent ref={scrollContainerRef} className="px-2 bg-background">
+        <SidebarContent ref={scrollContainerRef} className="bg-background px-2">
           <SidebarMenu>
             {loading ? (
               <div className="space-y-2 px-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                  <div key={i} className="flex items-center gap-3 rounded-lg p-2">
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-1/2" />
@@ -192,10 +194,10 @@ export function AppSidebar() {
                 ))}
               </div>
             ) : filteredChats.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <div className="py-8 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-30" />
                 <p className="text-sm font-medium">No conversations yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>
+                <p className="mt-1 text-xs text-muted-foreground">Start a new chat to begin</p>
               </div>
             ) : (
               renderChatList()
@@ -203,11 +205,11 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarContent>
 
-        <SidebarFooter className="p-3 border-t border-border/50">
+        <SidebarFooter className="border-t border-border/50 p-3">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">
-                <Settings className="w-4 h-4" />
+              <SidebarMenuButton onClick={openModal} className="h-9 hover:bg-accent/50">
+                <Settings className="h-4 w-4" />
                 <span className="text-sm">Manage API Keys</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -217,21 +219,21 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   {status === "loading" ? (
                     <div className="flex items-center gap-2 px-2 py-1.5">
-                      <Skeleton className="w-5 h-5 rounded-full" />
+                      <Skeleton className="h-5 w-5 rounded-full" />
                       <Skeleton className="h-4 w-20" />
                     </div>
                   ) : status === "authenticated" ? (
                     <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
                       {user?.avatar ? (
-                        <img src={user.avatar || "/placeholder.svg"} className="w-5 h-5 rounded-full" alt={user.name} />
+                        <img src={user.avatar || "/placeholder.svg"} className="h-5 w-5 rounded-full" alt={user.name} />
                       ) : (
-                        <User className="w-4 h-4" />
+                        <User className="h-4 w-4" />
                       )}
                       <span className="truncate text-sm">{user?.name}</span>
                     </SidebarMenuButton>
                   ) : (
-                    <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
-                      <LogIn className="w-4 h-4" />
+                    <SidebarMenuButton className="px-2 py-1.5 hover:bg-accent" onClick={() => signIn("google")}>
+                      <LogIn className="h-4 w-4" />
                       <span className="text-sm">Login</span>
                     </SidebarMenuButton>
                   )}
@@ -249,24 +251,24 @@ function ChatItem({ chat, deleteChat }: { chat: Chat; deleteChat: (id: string) =
   return (
     <SidebarMenuItem>
       <Link href={`/${chat.id}`}>
-        <SidebarMenuButton className="w-full justify-start p-2 h-auto hover:bg-accent/50 rounded-md transition-colors group">
-          <div className="flex-1 text-left min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-medium text-sm truncate pr-2">{chat.title}</span>
+        <SidebarMenuButton className="group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50">
+          <div className="min-w-0 flex-1 text-left">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="truncate pr-2 text-sm font-medium">{chat.title}</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Trash2 className="w-3 h-3 text-muted-foreground" />
+                    <Trash2 className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Delete Chat
                   </DropdownMenuItem>
                 </DropdownMenuContent>

@@ -1,29 +1,15 @@
 "use client";
 
+import { Copy, Check, Download, FileCode, WrapTextIcon as Wrap, AlignJustify } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState, useRef } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  oneDark,
-  oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useTheme } from "next-themes";
-import {
-  Copy,
-  Check,
-  Download,
-  FileCode,
-  WrapTextIcon as Wrap,
-  AlignJustify,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface EnhancedCodeBlockProps {
   code: string;
@@ -60,16 +46,10 @@ const languageNames: Record<string, string> = {
   powershell: "PowerShell",
   yaml: "YAML",
   dockerfile: "Dockerfile",
-  graphql: "GraphQL",
+  graphql: "GraphQL"
 };
 
-export function CodeBlock({
-  code,
-  language,
-  className,
-  showLineNumbers = false,
-  fileName,
-}: EnhancedCodeBlockProps) {
+export function CodeBlock({ code, language, className, showLineNumbers = false, fileName }: EnhancedCodeBlockProps) {
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
   const [isWrapped, setIsWrapped] = useState(false);
@@ -104,18 +84,14 @@ export function CodeBlock({
   const displayLanguage = languageNames[language] || language || "Plain Text";
 
   return (
-    <div className="group not-prose my-6 rounded-lg border border-slate-200 dark:border-slate-700">
-      <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+    <div className="not-prose group my-6 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-slate-100 px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center gap-2">
           <FileCode className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Badge variant="outline" className="text-xs font-medium">
             {displayLanguage}
           </Badge>
-          {fileName && (
-            <span className="ml-2 font-mono text-sm text-slate-500 dark:text-slate-400">
-              {fileName}
-            </span>
-          )}
+          {fileName && <span className="ml-2 font-mono text-sm text-slate-500 dark:text-slate-400">{fileName}</span>}
         </div>
 
         <div className="flex items-center gap-1">
@@ -127,18 +103,12 @@ export function CodeBlock({
                   size="sm"
                   onClick={toggleWrap}
                   className="h-8 w-8 p-0"
-                  aria-label={
-                    isWrapped ? "Disable text wrap" : "Enable text wrap"
-                  }
+                  aria-label={isWrapped ? "Disable text wrap" : "Enable text wrap"}
                 >
-                  {isWrapped ? (
-                    <AlignJustify className="h-4 w-4" />
-                  ) : (
-                    <Wrap className="h-4 w-4" />
-                  )}
+                  {isWrapped ? <AlignJustify className="h-4 w-4" /> : <Wrap className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500 ">
+              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500">
                 <p>{isWrapped ? "Disable text wrap" : "Enable text wrap"}</p>
               </TooltipContent>
             </Tooltip>
@@ -157,7 +127,7 @@ export function CodeBlock({
                   <Download className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500 ">
+              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500">
                 <p>Download code</p>
               </TooltipContent>
             </Tooltip>
@@ -166,21 +136,11 @@ export function CodeBlock({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyCode}
-                  className="h-8 w-8 p-0"
-                  aria-label="Copy code"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm" onClick={copyCode} className="h-8 w-8 p-0" aria-label="Copy code">
+                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500 ">
+              <TooltipContent className="bg-purple-500 text-white dark:bg-purple-500">
                 <p>{copied ? "Copied!" : "Copy code"}</p>
               </TooltipContent>
             </Tooltip>
@@ -196,25 +156,21 @@ export function CodeBlock({
           showLineNumbers={showLineNumbers}
           wrapLines={true}
           wrapLongLines={isWrapped}
-          className={cn(
-            "!mt-0 !mb-0",
-            "bg-slate-50 dark:bg-slate-900",
-            className,
-          )}
+          className={cn("!mb-0 !mt-0", "bg-slate-50 dark:bg-slate-900", className)}
           customStyle={{
             margin: 0,
             borderRadius: 0,
             fontSize: "0.875rem",
             background: "transparent",
-            padding: "1.5rem",
+            padding: "1.5rem"
           }}
           codeTagProps={{
             style: {
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
               fontSize: "0.875rem",
-              lineHeight: "1.5",
-            },
+              lineHeight: "1.5"
+            }
           }}
         >
           {code}

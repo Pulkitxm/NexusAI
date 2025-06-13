@@ -1,51 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
-import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { RefreshCw, Trash2 } from "lucide-react";
+import { Session } from "next-auth";
+import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { useState, useEffect } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 
-import {
-  updateUserSettings,
-  type UserSettings,
-  getGlobalMemories,
-  deleteGlobalMemory,
-} from "@/lib/actions/user";
-import { useFont } from "@/providers/font-provider";
-
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,10 +20,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Session } from "next-auth";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { updateUserSettings, type UserSettings, getGlobalMemories, deleteGlobalMemory } from "@/lib/actions/user";
+import { useFont } from "@/providers/font-provider";
 
 const formSchema = z.object({
   jobTitle: z.string().optional(),
@@ -68,7 +41,7 @@ const formSchema = z.object({
   company: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),
   customFont: z.string().optional(),
-  theme: z.enum(["light", "dark"]),
+  theme: z.enum(["light", "dark"])
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -78,33 +51,20 @@ const FONT_OPTIONS = [
   { value: "roboto", label: "Roboto", className: "font-roboto" },
   { value: "open-sans", label: "Open Sans", className: "font-open-sans" },
   { value: "lato", label: "Lato", className: "font-lato" },
-  { value: "poppins", label: "Poppins", className: "font-poppins" },
+  { value: "poppins", label: "Poppins", className: "font-poppins" }
 ];
 
-function AccountSettingsForm({
-  form,
-  session,
-}: {
-  form: UseFormReturn<FormValues>;
-  session: Session;
-}) {
+function AccountSettingsForm({ form, session }: { form: UseFormReturn<FormValues>; session: Session }) {
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage
-            src={session?.user?.avatar}
-            alt={session?.user?.name || ""}
-          />
-          <AvatarFallback>
-            {session?.user?.name?.charAt(0).toUpperCase() || "U"}
-          </AvatarFallback>
+          <AvatarImage src={session?.user?.avatar} alt={session?.user?.name || ""} />
+          <AvatarFallback>{session?.user?.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
         <div>
           <h3 className="text-lg font-semibold">{session?.user?.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {session?.user?.email}
-          </p>
+          <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -180,11 +140,7 @@ function AccountSettingsForm({
             <FormItem className="md:col-span-2">
               <FormLabel>Bio</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Tell us a little about yourself"
-                  className="min-h-[100px]"
-                  {...field}
-                />
+                <Textarea placeholder="Tell us a little about yourself" className="min-h-[100px]" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -195,11 +151,7 @@ function AccountSettingsForm({
   );
 }
 
-function CustomizationSettingsForm({
-  form,
-}: {
-  form: UseFormReturn<FormValues>;
-}) {
+function CustomizationSettingsForm({ form }: { form: UseFormReturn<FormValues> }) {
   const { setCurrentFont } = useFont();
   return (
     <div className="space-y-6">
@@ -220,9 +172,7 @@ function CustomizationSettingsForm({
                 <SelectItem value="dark">Dark</SelectItem>
               </SelectContent>
             </Select>
-            <FormDescription>
-              Choose your preferred color scheme.
-            </FormDescription>
+            <FormDescription>Choose your preferred color scheme.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -247,19 +197,13 @@ function CustomizationSettingsForm({
               </FormControl>
               <SelectContent>
                 {FONT_OPTIONS.map((font) => (
-                  <SelectItem
-                    key={font.value}
-                    value={font.value}
-                    className={font.className}
-                  >
+                  <SelectItem key={font.value} value={font.value} className={font.className}>
                     {font.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <FormDescription>
-              Choose your preferred font for the application.
-            </FormDescription>
+            <FormDescription>Choose your preferred font for the application.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -320,18 +264,9 @@ function MemorySettingsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Here are the global memories saved from your conversations.
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-          />
+        <p className="text-sm text-muted-foreground">Here are the global memories saved from your conversations.</p>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </div>
@@ -362,12 +297,10 @@ function MemorySettingsTab() {
             ) : memories.length > 0 ? (
               memories.map((memory) => (
                 <TableRow key={memory.id}>
-                  <TableCell className="max-w-md truncate font-medium">
-                    {memory.content}
-                  </TableCell>
+                  <TableCell className="max-w-md truncate font-medium">{memory.content}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDistanceToNow(new Date(memory.updatedAt), {
-                      addSuffix: true,
+                      addSuffix: true
                     })}
                   </TableCell>
                   <TableCell className="text-right">
@@ -379,21 +312,16 @@ function MemorySettingsTab() {
                           className="text-red-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-400"
                           disabled={deletingId === memory.id}
                         >
-                          {deletingId === memory.id ? (
-                            "Deleting..."
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                          {deletingId === memory.id ? "Deleting..." : <Trash2 className="h-4 w-4" />}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently
-                            delete the memory created{" "}
+                            This action cannot be undone. This will permanently delete the memory created{" "}
                             {formatDistanceToNow(new Date(memory.createdAt), {
-                              addSuffix: true,
+                              addSuffix: true
                             })}
                             .
                           </AlertDialogDescription>
@@ -414,10 +342,7 @@ function MemorySettingsTab() {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="py-10 text-center text-muted-foreground"
-                >
+                <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
                   No memories found.
                 </TableCell>
               </TableRow>
@@ -450,8 +375,8 @@ export function SettingsForm({ initialData, tab }: SettingsFormProps) {
       company: initialData?.company || "",
       website: initialData?.website || "",
       customFont: initialData?.customFont || "inter",
-      theme: theme === "dark" ? "dark" : "light",
-    },
+      theme: theme === "dark" ? "dark" : "light"
+    }
   });
 
   async function onSubmit(data: FormValues) {
@@ -498,11 +423,7 @@ export function SettingsForm({ initialData, tab }: SettingsFormProps) {
 
         {tab !== "memory" && (
           <div className="flex justify-end border-t border-border pt-6">
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="bg-purple-600 text-white hover:bg-purple-700"
-            >
+            <Button type="submit" disabled={isSaving} className="bg-purple-600 text-white hover:bg-purple-700">
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>

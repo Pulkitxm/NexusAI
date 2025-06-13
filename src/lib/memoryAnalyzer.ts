@@ -1,9 +1,9 @@
-// lib/memoryAnalyzer.ts
-import { generateObject } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateObject } from "ai";
 import { z } from "zod";
+
 import { prisma } from "@/lib/db";
 import { AI_MODELS } from "@/lib/models";
 
@@ -11,17 +11,11 @@ const MemorySchema = z.object({
   memories: z.array(
     z.object({
       content: z.string().min(1),
-      category: z.enum([
-        "personal",
-        "professional", 
-        "preferences",
-        "knowledge",
-        "other"
-      ]),
+      category: z.enum(["personal", "professional", "preferences", "knowledge", "other"]),
       importance: z.number().min(1).max(10),
-      reasoning: z.string().min(1),
+      reasoning: z.string().min(1)
     })
-  ),
+  )
 });
 
 export async function analyzeAndStoreMemories(
@@ -32,14 +26,12 @@ export async function analyzeAndStoreMemories(
   modelId: string
 ) {
   try {
-    // Find the model configuration
     const modelConfig = AI_MODELS.find((m) => m.id === modelId);
     if (!modelConfig) {
       console.error(`[Memory] Model "${modelId}" not found`);
       return { success: false, error: "Model not found" };
     }
 
-    // Create the appropriate AI model instance
     let aiModel;
     const provider = modelConfig.provider;
 
@@ -47,14 +39,12 @@ export async function analyzeAndStoreMemories(
       switch (provider) {
         case "OpenAI":
           const openai = createOpenAI({ apiKey });
-          // Use a more efficient model for memory analysis if available
           const analysisModel = modelId.includes("gpt-4o") ? "gpt-4o-mini" : modelId;
           aiModel = openai(analysisModel);
           break;
 
         case "Anthropic":
           const anthropic = createAnthropic({ apiKey });
-          // Use the same model for Anthropic
           aiModel = anthropic(modelId);
           break;
 
@@ -71,7 +61,7 @@ export async function analyzeAndStoreMemories(
       console.error("[Memory] Error initializing AI provider:", error);
       return { success: false, error: "Failed to initialize AI provider" };
     }
-    
+
     const result = await generateObject({
       model: aiModel,
       schema: MemorySchema,
@@ -94,25 +84,22 @@ Rate importance 1-10 where:
 - 9-10: Critical identity or life-changing information
 
 Only extract genuinely useful information. Skip generic responses or temporary states.`,
-      temperature: 0.3,
+      temperature: 0.3
     });
 
     if (result.object.memories.length === 0) {
       return { success: true, memoriesStored: 0 };
     }
 
-    // Check for duplicates and store new memories
     const existingMemories = await prisma.globalMemory.findMany({
       where: { userId, isDeleted: false },
-      select: { content: true },
+      select: { content: true }
     });
 
-    const existingContents = new Set(
-      existingMemories.map(m => m.content.toLowerCase().trim())
-    );
+    const existingContents = new Set(existingMemories.map((m) => m.content.toLowerCase().trim()));
 
-    const newMemories = result.object.memories.filter(memory => 
-      !existingContents.has(memory.content.toLowerCase().trim())
+    const newMemories = result.object.memories.filter(
+      (memory) => !existingContents.has(memory.content.toLowerCase().trim())
     );
 
     if (newMemories.length === 0) {
@@ -120,25 +107,27 @@ Only extract genuinely useful information. Skip generic responses or temporary s
     }
 
     await prisma.globalMemory.createMany({
-      data: newMemories.map(memory => ({
+      data: newMemories.map((memory) => ({
         userId,
         content: memory.content,
         category: memory.category,
         importance: memory.importance,
-        reasoning: memory.reasoning,
-      })),
+        reasoning: memory.reasoning
+      }))
     });
 
     console.log(`[Memory] Stored ${newMemories.length} new memories for user ${userId}`);
-    
-    return { 
-      success: true, 
-      memoriesStored: newMemories.length,
-      memories: newMemories 
-    };
 
+    return {
+      success: true,
+      memoriesStored: newMemories.length,
+      memories: newMemories
+    };
   } catch (error) {
     console.error("[Memory] Error analyzing memories:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
   }
 }

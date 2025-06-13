@@ -25,7 +25,7 @@ export function detectCodeInText(text: string): CodeBlock[] {
           type: "text",
           content: textContent,
           startIndex: currentIndex,
-          endIndex: startIndex,
+          endIndex: startIndex
         });
       }
     }
@@ -35,7 +35,7 @@ export function detectCodeInText(text: string): CodeBlock[] {
       content: code.trim(),
       language: language || detectLanguage(code),
       startIndex,
-      endIndex,
+      endIndex
     });
 
     currentIndex = endIndex;
@@ -48,7 +48,7 @@ export function detectCodeInText(text: string): CodeBlock[] {
         type: "text",
         content: remainingContent,
         startIndex: currentIndex,
-        endIndex: text.length,
+        endIndex: text.length
       });
     }
   }
@@ -67,19 +67,19 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
   const inlineCodeRegex = /`([^`\n]+)`/g;
   let match;
 
-  const matches: Array<{
+  const matches: {
     start: number;
     end: number;
     content: string;
     type: "code" | "text";
-  }> = [];
+  }[] = [];
 
   while ((match = inlineCodeRegex.exec(text)) !== null) {
     matches.push({
       start: match.index,
       end: match.index + match[0].length,
       content: match[1],
-      type: "code",
+      type: "code"
     });
   }
 
@@ -93,7 +93,7 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
           type: "text",
           content: textContent,
           startIndex: currentIndex,
-          endIndex: match.start,
+          endIndex: match.start
         });
       }
     }
@@ -103,7 +103,7 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
       content: match.content,
       language: detectLanguage(match.content),
       startIndex: match.start,
-      endIndex: match.end,
+      endIndex: match.end
     });
 
     currentIndex = match.end;
@@ -115,14 +115,12 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
       type: "text",
       content: remainingContent,
       startIndex: currentIndex,
-      endIndex: text.length,
+      endIndex: text.length
     });
   }
 
   if (blocks.length === 0) {
-    return [
-      { type: "text", content: text, startIndex: 0, endIndex: text.length },
-    ];
+    return [{ type: "text", content: text, startIndex: 0, endIndex: text.length }];
   }
 
   return blocks;
@@ -132,18 +130,13 @@ function detectLanguage(code: string): string {
   const trimmedCode = code.trim().toLowerCase();
 
   if (
-    /\b(function|const|let|var|=>|import|export|class|interface|type)\b/.test(
-      trimmedCode,
-    ) ||
+    /\b(function|const|let|var|=>|import|export|class|interface|type)\b/.test(trimmedCode) ||
     /\.(js|ts|jsx|tsx)$/.test(trimmedCode)
   ) {
     return "javascript";
   }
 
-  if (
-    /\b(def|import|from|class|if __name__|print|return)\b/.test(trimmedCode) ||
-    /\.py$/.test(trimmedCode)
-  ) {
+  if (/\b(def|import|from|class|if __name__|print|return)\b/.test(trimmedCode) || /\.py$/.test(trimmedCode)) {
     return "python";
   }
 
@@ -151,11 +144,7 @@ function detectLanguage(code: string): string {
     return "html";
   }
 
-  if (
-    /\{[^}]*:[^}]*\}/.test(trimmedCode) ||
-    /\.css$/.test(trimmedCode) ||
-    /\.(scss|sass|less)$/.test(trimmedCode)
-  ) {
+  if (/\{[^}]*:[^}]*\}/.test(trimmedCode) || /\.css$/.test(trimmedCode) || /\.(scss|sass|less)$/.test(trimmedCode)) {
     return "css";
   }
 
@@ -163,18 +152,12 @@ function detectLanguage(code: string): string {
     return "json";
   }
 
-  if (
-    /\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i.test(
-      trimmedCode,
-    )
-  ) {
+  if (/\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i.test(trimmedCode)) {
     return "sql";
   }
 
   if (
-    /^\s*(npm|yarn|git|cd|ls|mkdir|rm|cp|mv|sudo|chmod|chown)/.test(
-      trimmedCode,
-    ) ||
+    /^\s*(npm|yarn|git|cd|ls|mkdir|rm|cp|mv|sudo|chmod|chown)/.test(trimmedCode) ||
     /\.(sh|bash)$/.test(trimmedCode)
   ) {
     return "bash";

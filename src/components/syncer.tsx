@@ -1,9 +1,10 @@
 "use client";
 
-import { useFont } from "@/providers/font-provider";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
+
+import { useFont } from "@/providers/font-provider";
 
 export default function Syncer() {
   const { data: session } = useSession();
@@ -17,12 +18,7 @@ export default function Syncer() {
     if (session?.user?.settings?.customFont) {
       setCurrentFont(session.user.settings.customFont);
     }
-  }, [
-    session?.user?.settings?.theme,
-    session?.user?.settings?.customFont,
-    setTheme,
-    setCurrentFont,
-  ]);
+  }, [session?.user?.settings?.theme, session?.user?.settings?.customFont, setTheme, setCurrentFont]);
 
   return null;
 }

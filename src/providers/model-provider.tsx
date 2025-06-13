@@ -1,15 +1,10 @@
 "use client";
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import { useKeys } from "@/providers/key-provider";
-import { getAvailableModels } from "@/lib/models";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+
 import { ModelSelector } from "@/components/ModelSwitcher";
+import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
+import { useKeys } from "@/providers/key-provider";
 
 interface ModelContextType {
   selectedModel: string;
@@ -34,9 +29,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     if (availableModels.length === 0) return;
 
     const storedModel = getStoredValue("selectedModel", "");
-    const modelExists = availableModels.find(
-      (model) => model.id === storedModel,
-    );
+    const modelExists = availableModels.find((model) => model.id === storedModel);
 
     if (storedModel && modelExists) {
       changeModel(storedModel);
@@ -46,14 +39,8 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   }, [availableModels, changeModel]);
 
   const ModelSwitcherComponent = useCallback(
-    () => (
-      <ModelSelector
-        availableModels={availableModels}
-        selectedModel={selectedModel}
-        onModelChange={changeModel}
-      />
-    ),
-    [availableModels, selectedModel, changeModel],
+    () => <ModelSelector availableModels={availableModels} selectedModel={selectedModel} onModelChange={changeModel} />,
+    [availableModels, selectedModel, changeModel]
   );
 
   return (
@@ -61,9 +48,8 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
       value={{
         selectedModel,
         changeModel,
-        ModelSwitcher:
-          Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
-        setSelectedModel,
+        ModelSwitcher: Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
+        setSelectedModel
       }}
     >
       {children}

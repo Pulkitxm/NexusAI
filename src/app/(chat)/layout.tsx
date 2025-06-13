@@ -1,7 +1,10 @@
-import type React from "react";
 import { ReactNode } from "react";
-import { LayoutContent } from "./LayoutContent";
+
 import { AppSidebar } from "@/components/app-sidebar";
+
+import { LayoutContent } from "./LayoutContent";
+
+import type React from "react";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

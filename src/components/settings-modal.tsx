@@ -1,37 +1,16 @@
 "use client";
 
+import { Eye, EyeOff, ExternalLink, Shield, Settings, Zap, Lock, DollarSign, RefreshCw, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useKeys } from "@/providers/key-provider";
-import {
-  Eye,
-  EyeOff,
-  ExternalLink,
-  Shield,
-  Settings,
-  Zap,
-  Lock,
-  DollarSign,
-  RefreshCw,
-  ArrowLeft,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { keyConfigs } from "@/lib/models";
+import { useKeys } from "@/providers/key-provider";
 
 interface SettingsModalProps {
   open: boolean;
@@ -59,35 +38,26 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b flex-shrink-0">
+      <DialogContent className="flex h-[90vh] w-[95vw] max-w-2xl flex-col overflow-hidden p-0">
+        <DialogHeader className="flex-shrink-0 border-b px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
           <DialogTitle className="flex items-center gap-2">
             {view === "about" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mr-2 -ml-2"
-                onClick={() => setView("keys")}
-              >
+              <Button variant="ghost" size="sm" className="-ml-2 mr-2" onClick={() => setView("keys")}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <Settings className="w-5 h-5" />
+            <Settings className="h-5 w-5" />
             {view === "keys" ? "Settings" : "About BYOK"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
           {view === "keys" ? (
-            <div className="flex flex-col h-full">
-              <div className="flex-1 p-4 sm:p-6 space-y-4">
+            <div className="flex h-full flex-col">
+              <div className="flex-1 space-y-4 p-4 sm:p-6">
                 <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setView("about")}
-                  >
-                    <Shield className="w-4 h-4 mr-2" />
+                  <Button variant="outline" size="sm" onClick={() => setView("about")}>
+                    <Shield className="mr-2 h-4 w-4" />
                     About BYOK
                   </Button>
                 </div>
@@ -96,24 +66,20 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   {keyConfigs.map((config) => (
                     <Card key={config.key}>
                       <CardHeader className="pb-3">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                              <config.icon className="w-5 h-5 text-muted-foreground" />
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                              <config.icon className="h-5 w-5 text-muted-foreground" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <CardTitle className="text-base font-medium">
-                                {config.name}
-                              </CardTitle>
-                              <CardDescription className="text-sm mt-1">
-                                {config.description}
-                              </CardDescription>
+                              <CardTitle className="text-base font-medium">{config.name}</CardTitle>
+                              <CardDescription className="mt-1 text-sm">{config.description}</CardDescription>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             {tempKeys[config.key as keyof typeof tempKeys] && (
                               <Badge variant="secondary" className="gap-1">
-                                <Zap className="w-3 h-3" />
+                                <Zap className="h-3 w-3" />
                                 Active
                               </Badge>
                             )}
@@ -123,7 +89,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               className="gap-1"
                               onClick={() => window.open(config.link, "_blank")}
                             >
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="h-3 w-3" />
                               Get Key
                             </Button>
                           </div>
@@ -139,14 +105,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               id={config.key}
                               type={showKeys[config.key] ? "text" : "password"}
                               placeholder={`Enter your ${config.name} API key`}
-                              value={
-                                tempKeys[config.key as keyof typeof tempKeys] ||
-                                ""
-                              }
+                              value={tempKeys[config.key as keyof typeof tempKeys] || ""}
                               onChange={(e) =>
                                 setTempKeys((prev) => ({
                                   ...prev,
-                                  [config.key]: e.target.value,
+                                  [config.key]: e.target.value
                                 }))
                               }
                               className="pr-10"
@@ -158,11 +121,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                               onClick={() => toggleKeyVisibility(config.key)}
                             >
-                              {showKeys[config.key] ? (
-                                <EyeOff className="w-4 h-4" />
-                              ) : (
-                                <Eye className="w-4 h-4" />
-                              )}
+                              {showKeys[config.key] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
                           </div>
                         </div>
@@ -172,7 +131,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 </div>
               </div>
 
-              <div className="mt-auto px-4 sm:px-6 py-4 border-t bg-background">
+              <div className="mt-auto border-t bg-background px-4 py-4 sm:px-6">
                 <div className="flex justify-end gap-3">
                   <Button variant="outline" onClick={() => onOpenChange(false)}>
                     Cancel
@@ -182,67 +141,61 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               </div>
             </div>
           ) : (
-            <div className="p-4 sm:p-6 space-y-4">
+            <div className="space-y-4 p-4 sm:p-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Shield className="h-5 w-5" />
                     Bring Your Own Key (BYOK)
                   </CardTitle>
-                  <CardDescription>
-                    Complete privacy and control over your AI interactions
-                  </CardDescription>
+                  <CardDescription>Complete privacy and control over your AI interactions</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
-                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Lock className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <Lock className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-medium">Your Keys, Your Control</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          API keys are stored locally in your browser and never
-                          sent to our servers
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          API keys are stored locally in your browser and never sent to our servers
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
-                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <Shield className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-medium">Direct Communication</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Your requests go directly to AI providers - we never
-                          see your data or conversations
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Your requests go directly to AI providers - we never see your data or conversations
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
-                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                        <DollarSign className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <DollarSign className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-medium">Pay Only What You Use</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          No subscription fees - pay AI providers directly based
-                          on your actual usage
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          No subscription fees - pay AI providers directly based on your actual usage
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card">
-                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                        <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                    <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <RefreshCw className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-medium">Sync Across Devices</h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Sign in to sync your chat history and settings across
-                          all your devices
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Sign in to sync your chat history and settings across all your devices
                         </p>
                       </div>
                     </div>
@@ -255,21 +208,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <CardTitle className="text-base">Getting Started</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                  <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
                     <li>
-                      Click &quot;Get Key&quot; next to any AI provider to
-                      create an account and obtain your API key
+                      Click &quot;Get Key&quot; next to any AI provider to create an account and obtain your API key
                     </li>
-                    <li>
-                      Paste your API key into the corresponding field above
-                    </li>
-                    <li>
-                      Click &quot;Save Keys&quot; to store them securely in your
-                      browser
-                    </li>
-                    <li>
-                      Start chatting with your preferred AI models immediately
-                    </li>
+                    <li>Paste your API key into the corresponding field above</li>
+                    <li>Click &quot;Save Keys&quot; to store them securely in your browser</li>
+                    <li>Start chatting with your preferred AI models immediately</li>
                   </ol>
                 </CardContent>
               </Card>

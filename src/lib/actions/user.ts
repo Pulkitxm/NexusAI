@@ -1,9 +1,10 @@
 "use server";
 
-import { prisma } from "@/lib/db";
-import { auth } from "@/lib/authOptions";
-import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+
+import { auth } from "@/lib/authOptions";
+import { prisma } from "@/lib/db";
 
 export type UserSettings = Prisma.UserSettingsGetPayload<{
   select: {
@@ -26,15 +27,15 @@ export async function updateUserSettings(data: Partial<UserSettings>) {
 
   await prisma.userSettings.upsert({
     where: {
-      userId: session.user.id,
+      userId: session.user.id
     },
     create: {
       userId: session.user.id,
-      ...data,
+      ...data
     },
     update: {
-      ...data,
-    },
+      ...data
+    }
   });
 
   revalidatePath("/settings");
@@ -49,7 +50,7 @@ export async function getUserSettings() {
 
   const settings = await prisma.userSettings.findUnique({
     where: {
-      userId: session.user.id,
+      userId: session.user.id
     },
     select: {
       jobTitle: true,
@@ -59,8 +60,8 @@ export async function getUserSettings() {
       company: true,
       website: true,
       customFont: true,
-      theme: true,
-    },
+      theme: true
+    }
   });
 
   return settings;
@@ -75,17 +76,17 @@ export async function getGlobalMemories() {
   const memories = await prisma.globalMemory.findMany({
     where: {
       userId: session.user.id,
-      isDeleted: false,
+      isDeleted: false
     },
     select: {
       id: true,
       content: true,
       createdAt: true,
-      updatedAt: true,
+      updatedAt: true
     },
     orderBy: {
-      createdAt: "desc",
-    },
+      createdAt: "desc"
+    }
   });
 
   return memories;
@@ -100,8 +101,8 @@ export async function addGlobalMemory(content: string) {
   await prisma.globalMemory.create({
     data: {
       userId: session.user.id,
-      content,
-    },
+      content
+    }
   });
 
   revalidatePath("/settings");
@@ -117,11 +118,11 @@ export async function deleteGlobalMemory(memoryId: string) {
   await prisma.globalMemory.update({
     where: {
       id: memoryId,
-      userId: session.user.id,
+      userId: session.user.id
     },
     data: {
-      isDeleted: true,
-    },
+      isDeleted: true
+    }
   });
 
   revalidatePath("/settings");

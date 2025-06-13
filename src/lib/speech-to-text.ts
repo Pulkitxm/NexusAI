@@ -33,17 +33,11 @@ interface SpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   abort(): void;
-  onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
-    | null;
-  onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
-    | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
   onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
-  onnomatch:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
-    | null;
+  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
   onspeechstart: ((this: SpeechRecognition, ev: Event) => void) | null;
   onspeechend: ((this: SpeechRecognition, ev: Event) => void) | null;
 }
@@ -57,17 +51,14 @@ declare global {
 
 export class SpeechToTextService {
   private recognition: SpeechRecognition | null = null;
-  private onResultCallback:
-    | ((transcript: string, isFinal: boolean) => void)
-    | null = null;
+  private onResultCallback: ((transcript: string, isFinal: boolean) => void) | null = null;
   private onErrorCallback: ((error: string) => void) | null = null;
   private onStartCallback: (() => void) | null = null;
   private onEndCallback: (() => void) | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = true;
@@ -93,9 +84,7 @@ export class SpeechToTextService {
         }
       }
       const isFinal = event.results[event.results.length - 1].isFinal;
-      const finalTranscript = isFinal
-        ? event.results[event.results.length - 1][0].transcript
-        : "";
+      const finalTranscript = isFinal ? event.results[event.results.length - 1][0].transcript : "";
 
       this.onResultCallback?.(finalTranscript || interimTranscript, isFinal);
     };
@@ -109,12 +98,10 @@ export class SpeechToTextService {
       switch (event.error) {
         case "not-allowed":
         case "permission-denied":
-          errorMessage =
-            "Microphone access denied. Please allow microphone permissions in your browser settings.";
+          errorMessage = "Microphone access denied. Please allow microphone permissions in your browser settings.";
           break;
         case "no-speech":
-          errorMessage =
-            "No speech detected. Please try speaking louder or clearer.";
+          errorMessage = "No speech detected. Please try speaking louder or clearer.";
           break;
         case "audio-capture":
           errorMessage = "Microphone not found or could not be accessed.";
@@ -138,7 +125,7 @@ export class SpeechToTextService {
     onResult: (transcript: string, isFinal: boolean) => void,
     onError: (error: string) => void,
     onStart: () => void,
-    onEnd: () => void,
+    onEnd: () => void
   ): Promise<void> {
     if (!this.recognition) {
       return Promise.reject("Speech Recognition API not initialized.");
@@ -159,18 +146,11 @@ export class SpeechToTextService {
         })
         .catch((err) => {
           if (err instanceof DOMException && err.name === "NotAllowedError") {
-            reject(
-              "Microphone access denied. Please allow microphone permissions.",
-            );
-          } else if (
-            err instanceof DOMException &&
-            err.name === "NotFoundError"
-          ) {
+            reject("Microphone access denied. Please allow microphone permissions.");
+          } else if (err instanceof DOMException && err.name === "NotFoundError") {
             reject("No microphone found. Please connect a microphone.");
           } else {
-            reject(
-              "Failed to access microphone. Please check your system settings.",
-            );
+            reject("Failed to access microphone. Please check your system settings.");
           }
         });
     });

@@ -128,7 +128,7 @@ body {
 
 /* Markdown code block styling */
 .prose pre {
-  @apply rounded-lg p-4 overflow-x-auto text-sm;
+  @apply overflow-x-auto rounded-lg p-4 text-sm;
 }
 
 .prose code {

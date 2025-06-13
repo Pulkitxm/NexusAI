@@ -1,7 +1,8 @@
 "use client";
 
-import { SettingsModal } from "@/components/settings-modal";
 import { createContext, useContext, useState, ReactNode } from "react";
+
+import { SettingsModal } from "@/components/settings-modal";
 
 interface SettingsModalContextType {
   isOpen: boolean;
@@ -9,9 +10,7 @@ interface SettingsModalContextType {
   closeModal: () => void;
 }
 
-const SettingsModalContext = createContext<
-  SettingsModalContextType | undefined
->(undefined);
+const SettingsModalContext = createContext<SettingsModalContextType | undefined>(undefined);
 
 export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,9 +29,7 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
 export function useSettingsModal() {
   const context = useContext(SettingsModalContext);
   if (context === undefined) {
-    throw new Error(
-      "useSettingsModal must be used within a SettingsModalProvider",
-    );
+    throw new Error("useSettingsModal must be used within a SettingsModalProvider");
   }
   return context;
 }

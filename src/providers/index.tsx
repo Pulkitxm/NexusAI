@@ -1,15 +1,16 @@
 "use client";
 
-import { SidebarProvider } from "@/providers/sidebar-provider";
+import Syncer from "@/components/syncer";
 import { Toaster } from "@/components/ui/toaster";
 import { KeyProvider } from "@/providers/key-provider";
 import { SessionProviderWrapper } from "@/providers/session";
+import { SidebarProvider } from "@/providers/sidebar-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { SettingsModalProvider } from "./settings-modal-provider";
-import { ModelProvider } from "./model-provider";
+
 import { ChatProvider } from "./chat-provider";
 import { FontProvider } from "./font-provider";
-import Syncer from "@/components/syncer";
+import { ModelProvider } from "./model-provider";
+import { SettingsModalProvider } from "./settings-modal-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

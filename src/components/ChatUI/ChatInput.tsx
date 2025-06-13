@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import {
   SendHorizontal,
   Loader2,
@@ -13,23 +11,26 @@ import {
   MicOff,
   TriangleAlert,
   Search,
-  Brain,
+  Brain
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 
-import { useChat } from "@/providers/chat-provider";
-import { useModel } from "@/providers/model-provider";
-import { useKeys } from "@/providers/key-provider";
-import { getAvailableModels, AI_MODELS } from "@/lib/models";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { MESSAGE_LIMIT } from "@/lib/data";
-import { SpeechToTextService } from "@/lib/speech-to-text";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { MESSAGE_LIMIT } from "@/lib/data";
+import { getAvailableModels, AI_MODELS } from "@/lib/models";
+import { SpeechToTextService } from "@/lib/speech-to-text";
+import { cn } from "@/lib/utils";
+import { useChat } from "@/providers/chat-provider";
+import { useKeys } from "@/providers/key-provider";
+import { useModel } from "@/providers/model-provider";
+
+import type React from "react";
 
 interface EnhancedChatInputProps {
   onShowShortcuts: () => void;
@@ -51,7 +52,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     webSearch,
     setWebSearch,
     reasoning,
-    setReasoning,
+    setReasoning
   } = useChat();
 
   const { selectedModel } = useModel();
@@ -174,27 +175,27 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   return (
     <div className="sticky bottom-0 z-10">
       {status === "unauthenticated" && (
-        <div className="flex justify-center mb-1">
+        <div className="mb-1 flex justify-center">
           {(showWarning || isLimitReached) && (
             <div
               className={cn(
-                "flex items-center gap-2 text-xs px-4 py-2 rounded-full transition-all duration-300",
-                "backdrop-blur-md border shadow-lg",
+                "flex items-center gap-2 rounded-full px-4 py-2 text-xs transition-all duration-300",
+                "border shadow-lg backdrop-blur-md",
                 isLimitReached
-                  ? "text-red-600 dark:text-red-400 bg-red-50/90 dark:bg-red-950/50 border-red-200 dark:border-red-800 shadow-red-100 dark:shadow-red-950/50"
+                  ? "border-red-200 bg-red-50/90 text-red-600 shadow-red-100 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400 dark:shadow-red-950/50"
                   : remainingMessages < 5
-                    ? "text-yellow-600 dark:text-yellow-400 bg-yellow-50/90 dark:bg-yellow-950/50 border-yellow-200 dark:border-yellow-800 shadow-yellow-100 dark:shadow-yellow-950/50"
-                    : "text-emerald-600 dark:text-emerald-400 bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 shadow-emerald-100 dark:shadow-emerald-950/50"
+                    ? "border-yellow-200 bg-yellow-50/90 text-yellow-600 shadow-yellow-100 dark:border-yellow-800 dark:bg-yellow-950/50 dark:text-yellow-400 dark:shadow-yellow-950/50"
+                    : "border-emerald-200 bg-emerald-50/90 text-emerald-600 shadow-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400 dark:shadow-emerald-950/50"
               )}
             >
               {isLimitReached ? (
                 <>
                   <AlertCircle className="h-3.5 w-3.5" />
                   <span className="font-medium">No messages left</span>
-                  <div className="w-px h-4 bg-red-300 dark:bg-red-700" />
+                  <div className="h-4 w-px bg-red-300 dark:bg-red-700" />
                   <button
                     onClick={() => signIn("google")}
-                    className="text-red-700 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200 font-semibold underline underline-offset-2 transition-colors"
+                    className="font-semibold text-red-700 underline underline-offset-2 transition-colors hover:text-red-800 dark:text-red-300 dark:hover:text-red-200"
                   >
                     Sign in to continue
                   </button>
@@ -204,14 +205,14 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                   <Sparkles className="h-3.5 w-3.5" />
                   <span className="font-medium">
                     <span className="font-semibold">{remainingMessages}</span> messages remaining.{" "}
-                    <span onClick={() => signIn("google")} className="underline cursor-pointer">
+                    <span onClick={() => signIn("google")} className="cursor-pointer underline">
                       Log in
                     </span>{" "}
                     to use more
                   </span>
                   <button
                     onClick={() => setShowWarning(false)}
-                    className="ml-1 p-0.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors"
+                    className="ml-1 rounded-full p-0.5 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900"
                     aria-label="Dismiss warning"
                   >
                     <X className="h-3 w-3" />
@@ -224,19 +225,19 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
       )}
 
       {micError && (
-        <div className="flex justify-center mb-1">
+        <div className="mb-1 flex justify-center">
           <div
             className={cn(
-              "flex items-center gap-2 text-xs px-4 py-2 rounded-full transition-all duration-300",
-              "backdrop-blur-md border shadow-lg",
-              "text-red-600 dark:text-red-400 bg-red-50/90 dark:bg-red-950/50 border-red-200 dark:border-red-800 shadow-red-100 dark:shadow-red-950/50"
+              "flex items-center gap-2 rounded-full px-4 py-2 text-xs transition-all duration-300",
+              "border shadow-lg backdrop-blur-md",
+              "border-red-200 bg-red-50/90 text-red-600 shadow-red-100 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400 dark:shadow-red-950/50"
             )}
           >
             <TriangleAlert className="h-3.5 w-3.5" />
             <span className="font-medium">{micError}</span>
             <button
               onClick={() => setMicError(null)}
-              className="ml-1 p-0.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+              className="ml-1 rounded-full p-0.5 transition-colors hover:bg-red-100 dark:hover:bg-red-900"
               aria-label="Dismiss microphone error"
             >
               <X className="h-3 w-3" />
@@ -245,25 +246,25 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto p-4 pt-2">
+      <div className="mx-auto max-w-4xl p-4 pt-2">
         <form onSubmit={handleSubmit} className="relative">
           <div
             className={cn(
-              "relative flex items-end gap-3 p-4 rounded-xl transition-all duration-200",
-              "bg-white dark:bg-slate-900 border border-zinc-200 dark:border-slate-700",
+              "relative flex items-end gap-3 rounded-xl p-4 transition-all duration-200",
+              "border border-zinc-200 bg-white dark:border-slate-700 dark:bg-slate-900",
               "backdrop-blur-sm",
-              isFocused && "border-zinc-300 dark:border-slate-600 shadow-lg shadow-zinc-200/10 dark:shadow-slate-950/30"
+              isFocused && "border-zinc-300 shadow-lg shadow-zinc-200/10 dark:border-slate-600 dark:shadow-slate-950/30"
             )}
           >
-            <div className="absolute top-4 left-4 flex items-center gap-2 text-xs text-zinc-400 dark:text-slate-500">
+            <div className="absolute left-4 top-4 flex items-center gap-2 text-xs text-zinc-400 dark:text-slate-500">
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-red-400/70 dark:bg-red-400/60" />
-                <div className="w-2 h-2 rounded-full bg-yellow-400/70 dark:bg-yellow-400/60" />
-                <div className="w-2 h-2 rounded-full bg-green-400/70 dark:bg-green-400/60" />
+                <div className="h-2 w-2 rounded-full bg-red-400/70 dark:bg-red-400/60" />
+                <div className="h-2 w-2 rounded-full bg-yellow-400/70 dark:bg-yellow-400/60" />
+                <div className="h-2 w-2 rounded-full bg-green-400/70 dark:bg-green-400/60" />
               </div>
             </div>
 
-            <div className="flex-1 mt-4">
+            <div className="mt-4 flex-1">
               <Textarea
                 ref={inputRef}
                 value={input}
@@ -273,25 +274,25 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                 onBlur={() => setIsFocused(false)}
                 placeholder="// Ask me anything..."
                 className={cn(
-                  "min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent",
-                  "px-0 py-0 text-sm font-mono leading-relaxed",
-                  "focus-visible:ring-0 focus-visible:ring-offset-0 outline-none",
-                  "placeholder:text-zinc-400 dark:placeholder:text-slate-400 placeholder:font-mono",
+                  "max-h-[120px] min-h-[44px] resize-none border-0 bg-transparent",
+                  "px-0 py-0 font-mono text-sm leading-relaxed",
+                  "outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "placeholder:font-mono placeholder:text-zinc-400 dark:placeholder:text-slate-400",
                   "text-zinc-900 dark:text-slate-100"
                 )}
                 disabled={isLoading}
               />
 
-              <div className="flex items-center justify-between mt-2 text-xs text-zinc-400 dark:text-slate-400">
+              <div className="mt-2 flex items-center justify-between text-xs text-zinc-400 dark:text-slate-400">
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded text-[10px] font-mono text-zinc-600 dark:text-slate-300">
+                    <kbd className="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       ⏎
                     </kbd>
                     <span className="text-zinc-500 dark:text-slate-400">send</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded text-[10px] font-mono text-zinc-600 dark:text-slate-300">
+                    <kbd className="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                       ⇧⏎
                     </kbd>
                     <span className="text-zinc-500 dark:text-slate-400">new line</span>
@@ -308,7 +309,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                         <Switch
                           id="web-search"
                           checked={webSearch}
-                          onCheckedChange={(val)=>setWebSearch(val)}
+                          onCheckedChange={(val) => setWebSearch(val)}
                           disabled={!selectedModelDetails?.capabilities?.search}
                           className="data-[state=checked]:bg-purple-500 data-[state=checked]:text-purple-500 dark:data-[state=checked]:bg-purple-400 dark:data-[state=checked]:text-purple-400"
                         />
@@ -340,17 +341,17 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
 
                   {/* Existing controls */}
                   <div className="flex items-center gap-2">
-                    <div className="relative group">
+                    <div className="group relative">
                       <button
                         type="button"
                         onClick={toggleRecording}
                         disabled={!speechToTextServiceRef.current?.isSupported()}
                         className={cn(
-                          "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200",
-                          "text-zinc-400 dark:text-slate-400 hover:text-zinc-600 dark:hover:text-slate-200",
+                          "flex items-center gap-1.5 rounded-md px-2 py-1 transition-all duration-200",
+                          "text-zinc-400 hover:text-zinc-600 dark:text-slate-400 dark:hover:text-slate-200",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 dark:focus-visible:ring-purple-400",
-                          isRecording && "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/50",
-                          !speechToTextServiceRef.current?.isSupported() && "opacity-50 cursor-not-allowed"
+                          isRecording && "bg-red-50 text-red-500 dark:bg-red-950/50 dark:text-red-400",
+                          !speechToTextServiceRef.current?.isSupported() && "cursor-not-allowed opacity-50"
                         )}
                         aria-label={isRecording ? "Stop speech recognition" : "Start speech recognition"}
                         role="switch"
@@ -370,11 +371,11 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                       </button>
 
                       {micError && !isRecording ? (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-red-600 text-white rounded opacity-100 pointer-events-auto whitespace-nowrap">
+                        <div className="pointer-events-auto absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-red-600 px-2 py-1 text-xs text-white opacity-100">
                           {micError}
                         </div>
                       ) : (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-xs text-zinc-100 opacity-0 transition-opacity group-hover:opacity-100 dark:bg-zinc-100 dark:text-zinc-900">
                           Press {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}
                           +Shift+M to {isRecording ? "stop" : "start"} recording
                         </div>
@@ -384,7 +385,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                     <button
                       type="button"
                       onClick={onShowShortcuts}
-                      className="flex items-center gap-1 text-zinc-400 dark:text-slate-400 hover:text-zinc-600 dark:hover:text-slate-200 transition-colors"
+                      className="flex items-center gap-1 text-zinc-400 transition-colors hover:text-zinc-600 dark:text-slate-400 dark:hover:text-slate-200"
                     >
                       <Command className="h-3 w-3" />
                       <span className="font-mono">shortcuts</span>
@@ -398,11 +399,11 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
               type="submit"
               disabled={isLoading || !input.trim()}
               className={cn(
-                "h-10 w-10 rounded-lg shrink-0 transition-all duration-200",
-                "focus-visible:ring-0 outline-none border-0 self-center",
+                "h-10 w-10 shrink-0 rounded-lg transition-all duration-200",
+                "self-center border-0 outline-none focus-visible:ring-0",
                 input.trim() && !isLoading
-                  ? "bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-500 text-white shadow-lg shadow-purple-500/25 dark:shadow-purple-500/20 hover:shadow-purple-500/40"
-                  : "bg-zinc-200 dark:bg-slate-700 text-zinc-400 dark:text-slate-500 cursor-not-allowed"
+                  ? "bg-purple-500 text-white shadow-lg shadow-purple-500/25 hover:bg-purple-600 hover:shadow-purple-500/40 dark:bg-purple-600 dark:shadow-purple-500/20 dark:hover:bg-purple-500"
+                  : "cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-slate-700 dark:text-slate-500"
               )}
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}

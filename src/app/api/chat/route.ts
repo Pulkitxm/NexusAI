@@ -1,12 +1,12 @@
-import { streamText, convertToCoreMessages } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { AI_MODELS } from "@/lib/models";
+import { createOpenAI } from "@ai-sdk/openai";
+import { streamText, convertToCoreMessages } from "ai";
+import { cache } from "react";
+
 import { saveAssistantMessage } from "@/actions/chat";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
-import { cache } from "react";
 
 export const maxDuration = 30;
 
@@ -20,15 +20,15 @@ const getUserData = cache(async (userId: string) => {
         bio: true,
         location: true,
         company: true,
-        website: true,
-      },
+        website: true
+      }
     }),
     prisma.globalMemory.findMany({
       where: { userId, isDeleted: false },
       select: { content: true, category: true, importance: true },
       orderBy: [{ importance: "desc" }, { createdAt: "desc" }],
-      take: 8,
-    }),
+      take: 8
+    })
   ]);
 
   return { userSettings, globalMemories };
@@ -53,8 +53,8 @@ function formatErrorResponse(error: unknown) {
         message: error.message,
         code: error.code || "API_ERROR",
         status: error.statusCode,
-        details: error.details,
-      },
+        details: error.details
+      }
     };
   }
 
@@ -64,8 +64,8 @@ function formatErrorResponse(error: unknown) {
         message: error.message,
         code: "UNKNOWN_ERROR",
         status: 500,
-        details: error.stack,
-      },
+        details: error.stack
+      }
     };
   }
 
@@ -73,13 +73,14 @@ function formatErrorResponse(error: unknown) {
     error: {
       message: "An unexpected error occurred",
       code: "UNKNOWN_ERROR",
-      status: 500,
-    },
+      status: 500
+    }
   };
 }
 
-import { ReasoningHandler } from "@/lib/reasoningHandler";
 import { analyzeAndStoreMemories } from "@/lib/memoryAnalyzer";
+import { AI_MODELS } from "@/lib/models";
+import { ReasoningHandler } from "@/lib/reasoningHandler";
 
 export async function POST(req: Request) {
   try {
@@ -118,16 +119,16 @@ export async function POST(req: Request) {
             structuredOutputs: true,
             ...(reasoningConfig.enabled && reasoningConfig.config
               ? {
-                  reasoningEffort: reasoningConfig.config.reasoningEffort as "high" | "medium" | "low",
+                  reasoningEffort: reasoningConfig.config.reasoningEffort as "high" | "medium" | "low"
                 }
-              : {}),
+              : {})
           });
           break;
 
         case "Anthropic":
           const anthropic = createAnthropic({ apiKey });
           aiModel = anthropic(finalModel, {
-            ...(reasoningConfig.enabled ? reasoningConfig.config : {}),
+            ...(reasoningConfig.enabled ? reasoningConfig.config : {})
           });
           break;
 
@@ -151,7 +152,7 @@ export async function POST(req: Request) {
     const lastUserMessage = messages[messages.length - 1]?.content || "";
 
     const systemMessageContent = [
-      `You are a helpful AI assistant with access to the user's profile and memories.`,
+      "You are a helpful AI assistant with access to the user's profile and memories.",
       `User Name: ${session?.user?.name}`,
       userSettings
         ? `User Profile:\n${Object.entries(userSettings)
@@ -169,7 +170,7 @@ export async function POST(req: Request) {
         : "",
       webSearch && modelConfig.capabilities?.search
         ? "You have access to current web information. Cite sources when using web data."
-        : "",
+        : ""
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -196,13 +197,13 @@ export async function POST(req: Request) {
                   } catch (error) {
                     console.error("[Chat API] Error in global memory analysis:", error);
                   }
-                })(),
+                })()
               ]);
             } catch (error) {
               console.error("Error in onFinish:", error);
             }
           }
-        },
+        }
       });
 
       return result.toDataStreamResponse();
@@ -217,8 +218,8 @@ export async function POST(req: Request) {
       status: errorResponse.error.status,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "no-cache",
-      },
+        "Cache-Control": "no-cache"
+      }
     });
   }
 }
