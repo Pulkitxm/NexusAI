@@ -116,8 +116,6 @@ Only extract genuinely useful information. Skip generic responses or temporary s
       }))
     });
 
-    console.log(`[Memory] Stored ${newMemories.length} new memories for user ${userId}`);
-
     return {
       success: true,
       memoriesStored: newMemories.length,

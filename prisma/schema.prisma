@@ -18,6 +18,7 @@ model User {
   messages  Message[]
   settings  UserSettings?
   globalMemory GlobalMemory[]
+  attachments  Attachment[]
 }
 
 model Chat {
@@ -28,6 +29,7 @@ model Chat {
   userId    String?
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  Message[]
+  attachments Attachment[]
 
   isDeleted Boolean   @default(false)
 }
@@ -44,8 +46,24 @@ model Message {
   createdAt DateTime @default(now())
   chatId    String
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
   userId    String?
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  isDeleted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chatId    String?
+  messageId String?
+  userId    String
+  chat      Chat?     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message   Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSettings {

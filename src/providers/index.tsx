@@ -11,6 +11,7 @@ import { ChatProvider } from "./chat-provider";
 import { FontProvider } from "./font-provider";
 import { ModelProvider } from "./model-provider";
 import { SettingsModalProvider } from "./settings-modal-provider";
+import { UploadAttachmentProvider } from "./upload-attachment-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -23,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <ChatProvider>
                   <FontProvider>
                     <Syncer />
-                    {children}
+                    <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
                   </FontProvider>
                 </ChatProvider>
               </ModelProvider>

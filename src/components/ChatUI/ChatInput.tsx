@@ -18,6 +18,7 @@ import { signIn } from "next-auth/react";
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FileUploadCards } from "@/components/ui/file-upload-cards";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -38,7 +39,6 @@ interface EnhancedChatInputProps {
 export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const {
     input,
-    handleInputChange,
     handleSubmit,
     isLoading,
     inputRef,
@@ -244,6 +244,9 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
         </div>
       )}
 
+      {/* File Upload Cards - positioned above the input */}
+      <FileUploadCards />
+
       <div className="mx-auto max-w-4xl p-4 pt-2">
         <form onSubmit={handleSubmit} className="relative">
           <div
@@ -266,7 +269,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
               <Textarea
                 ref={inputRef}
                 value={input}
-                onChange={handleInputChange}
+                onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKeyDown}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}

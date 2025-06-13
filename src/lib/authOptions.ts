@@ -2,7 +2,6 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 import { prisma } from "@/lib/db";
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "@/lib/env";
 
 declare module "next-auth" {
   interface Session {
@@ -18,6 +17,9 @@ declare module "next-auth" {
     };
   }
 }
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
   providers: [

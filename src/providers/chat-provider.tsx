@@ -3,7 +3,21 @@
 import { useChat as useChatAI } from "ai/react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  SetStateAction,
+  Dispatch,
+  FormEventHandler,
+  RefObject,
+  ReactNode,
+  FormEvent,
+  ProviderProps
+} from "react";
 
 import { createChat, saveUserMessage } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
@@ -11,38 +25,38 @@ import { MESSAGE_LIMIT } from "@/lib/data";
 import { debugLog } from "@/lib/debug";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
+import { Attachment, validateAttachment } from "@/types/chat";
 
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
 
 import type { UIMessage } from "ai";
-import type React from "react";
 
 interface ChatContextType {
   messages: UIMessage[];
   input: string;
-  setInput: (input: string) => void;
+  setInput: (input: string | ((prev: string) => string)) => void;
   isLoading: boolean;
-
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSubmit: React.FormEventHandler;
+  handleSubmit: FormEventHandler;
   error: Error | null;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  inputRef: RefObject<HTMLTextAreaElement | null>;
   messageCount: number;
-  setMessageCount: React.Dispatch<React.SetStateAction<number>>;
+  setMessageCount: Dispatch<SetStateAction<number>>;
   showWarning: boolean;
-  setShowWarning: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowWarning: Dispatch<SetStateAction<boolean>>;
   clearChat: () => void;
   chatId: string | null;
   setChatId: (id: string | null) => void;
   setMessages: (messages: UIMessage[]) => void;
   resetChat: () => void;
   micError: string | null;
-  setMicError: React.Dispatch<React.SetStateAction<string | null>>;
+  setMicError: Dispatch<SetStateAction<string | null>>;
   webSearch: boolean | null;
   setWebSearch: (enabled: boolean | null) => void;
   reasoning: "high" | "medium" | "low" | null;
   setReasoning: (level: "high" | "medium" | "low" | null) => void;
+  attachments: Attachment[];
+  setAttachments: (attachments: Attachment[] | ((prev: Attachment[]) => Attachment[])) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -52,12 +66,15 @@ const STORAGE_KEYS = {
   SHOW_WARNING: "chat_show_warning"
 } as const;
 
+const localAttachments = getStoredValue<Attachment[]>("attachments", []);
+const isValid = validateAttachment.safeParse(localAttachments);
+
 export function ChatProvider({
   children,
   initialMessages = [],
   initialChatId = null
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   initialMessages?: UIMessage[];
   initialChatId?: string | null;
 }) {
@@ -73,6 +90,7 @@ export function ChatProvider({
   const router = useRouter();
   const params = useParams();
   const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
+  const [attachments, setAttachments] = useState<Attachment[]>(isValid.success ? localAttachments : []);
 
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
   const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
@@ -99,11 +117,10 @@ export function ChatProvider({
   const {
     messages,
     input,
-    handleInputChange,
     handleSubmit: originalHandleSubmit,
     isLoading,
     setMessages,
-    setInput: setAIInput
+    setInput
   } = useChatAI({
     api: "/api/chat",
     body: {
@@ -115,6 +132,7 @@ export function ChatProvider({
       webSearch,
       reasoning
     },
+    initialInput: getStoredValue("input", ""),
     initialMessages,
     onError,
     onFinish: (message) => {
@@ -125,13 +143,6 @@ export function ChatProvider({
       });
     }
   });
-
-  const setInput = useCallback(
-    (value: string) => {
-      setAIInput(value);
-    },
-    [setAIInput]
-  );
 
   useEffect(() => {
     if (!session) {
@@ -171,7 +182,7 @@ export function ChatProvider({
   }, [showWarning]);
 
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault();
 
       if (!session && messageCount >= MESSAGE_LIMIT) {
@@ -267,37 +278,62 @@ export function ChatProvider({
     setChatId(null);
   }, [setMessages, setMessageCount, setError, setChatId]);
 
-  return (
-    <ChatContext.Provider
-      value={{
-        messages,
-        input,
-        setInput,
-        isLoading,
-        handleInputChange,
-        handleSubmit,
-        error,
-        inputRef,
-        messageCount,
-        setMessageCount,
-        showWarning,
-        setShowWarning,
-        clearChat,
-        chatId,
-        setChatId,
-        setMessages,
-        resetChat,
-        micError,
-        setMicError,
-        webSearch,
-        setWebSearch,
-        reasoning,
-        setReasoning
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
-  );
+  const contextValues: ProviderProps<ChatContextType | undefined>["value"] = {
+    messages,
+    input,
+    setInput: (value: string | ((prev: string) => string)) => {
+      if (typeof value === "function") {
+        setInput((prev) => {
+          const newInput = value(prev);
+          setStoredValue("input", newInput);
+          return newInput;
+        });
+      } else {
+        setInput(() => {
+          const newInput = value;
+          setStoredValue("input", newInput);
+          return newInput;
+        });
+      }
+    },
+    isLoading,
+    handleSubmit,
+    error,
+    inputRef,
+    messageCount,
+    setMessageCount,
+    showWarning,
+    setShowWarning,
+    clearChat,
+    chatId,
+    setChatId,
+    setMessages,
+    resetChat,
+    micError,
+    setMicError,
+    webSearch,
+    setWebSearch,
+    reasoning,
+    setReasoning,
+    attachments,
+    setAttachments: (value: Attachment[] | ((prev: Attachment[]) => Attachment[])) => {
+      if (typeof value === "function") {
+        setAttachments((prev) => {
+          const newAttachments = value(prev);
+          setStoredValue("attachments", newAttachments);
+          return newAttachments;
+        });
+      } else {
+        setAttachments((prev) => {
+          const newAttachments = [...prev, ...value];
+          setStoredValue("attachments", newAttachments);
+          return newAttachments;
+        });
+      }
+    }
+  };
+
+  return <ChatContext.Provider value={contextValues}>{children}</ChatContext.Provider>;
 }
 
 export function useChat() {
