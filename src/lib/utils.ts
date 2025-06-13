@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const getStoredValue = <T,>(key: string, defaultValue: T): T => {
+export const getStoredValue = <T>(key: string, defaultValue: T): T => {
   if (typeof window === "undefined") return defaultValue;
 
   try {
@@ -17,7 +17,7 @@ export const getStoredValue = <T,>(key: string, defaultValue: T): T => {
   }
 };
 
-export const setStoredValue = <T,>(key: string, value: T): void => {
+export const setStoredValue = <T>(key: string, value: T): void => {
   if (typeof window === "undefined") return;
 
   try {

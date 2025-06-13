@@ -2,7 +2,11 @@ import { getChatMessages } from "@/actions/chat";
 import ChatDisplay from "./ChatDisplay";
 import { TriangleAlert } from "lucide-react";
 
-export default async function page({ params }: { params: Promise<{ id: string }> }) {
+export default async function page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   const chatMessages = await getChatMessages(id);

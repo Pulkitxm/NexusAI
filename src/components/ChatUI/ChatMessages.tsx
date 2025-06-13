@@ -13,7 +13,9 @@ export function ChatMessages() {
         <MessageBubble
           key={message.id}
           message={message}
-          isStreaming={isLoading && message.id === messages[messages.length - 1]?.id}
+          isStreaming={
+            isLoading && message.id === messages[messages.length - 1]?.id
+          }
         />
       ))}
       {isLoading && <TypingIndicator />}

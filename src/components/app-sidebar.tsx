@@ -3,7 +3,16 @@
 import type React from "react";
 
 import { useState, useEffect, Fragment } from "react";
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MessageSquare,
+  Settings,
+  Trash2,
+  Key,
+  User,
+  LogIn,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -49,7 +58,9 @@ export function AppSidebar() {
       const filtered = chats.filter(
         (chat) =>
           chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chat.updatedAt.toLocaleDateString().includes(searchQuery.toLowerCase())
+          chat.updatedAt
+            .toLocaleDateString()
+            .includes(searchQuery.toLowerCase()),
       );
       setFilteredChats(filtered);
     }
@@ -64,7 +75,12 @@ export function AppSidebar() {
           <div className="flex items-center justify-between mb-3">
             <Link href={"/"} className="flex items-center gap-2">
               <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -115,7 +131,10 @@ export function AppSidebar() {
             {loading ? (
               <div className="space-y-2 px-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-2 rounded-lg"
+                  >
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-1/2" />
@@ -127,7 +146,9 @@ export function AppSidebar() {
               <div className="text-center text-muted-foreground py-8">
                 <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm font-medium">No conversations yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Start a new chat to begin
+                </p>
               </div>
             ) : (
               filteredChats
@@ -138,7 +159,9 @@ export function AppSidebar() {
                       <SidebarMenuButton className="w-full justify-start p-2 h-auto hover:bg-accent/50 rounded-md transition-colors group">
                         <div className="flex-1 text-left min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-sm truncate pr-2">{chat.title}</span>
+                            <span className="font-medium text-sm truncate pr-2">
+                              {chat.title}
+                            </span>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -151,14 +174,19 @@ export function AppSidebar() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
+                                <DropdownMenuItem
+                                  onClick={() => deleteChat(chat.id)}
+                                  className="text-destructive"
+                                >
                                   <Trash2 className="w-4 h-4 mr-2" />
                                   Delete Chat
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <p className="text-xs text-muted-foreground">{chat.updatedAt.toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {chat.updatedAt.toLocaleDateString()}
+                          </p>
                         </div>
                       </SidebarMenuButton>
                     </Link>
@@ -171,7 +199,10 @@ export function AppSidebar() {
         <SidebarFooter className="p-3 border-t border-border/50">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">
+              <SidebarMenuButton
+                onClick={openModal}
+                className="hover:bg-accent/50 h-9"
+              >
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">Manage API Keys</span>
               </SidebarMenuButton>
@@ -188,14 +219,21 @@ export function AppSidebar() {
                   ) : status === "authenticated" ? (
                     <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
                       {user?.avatar ? (
-                        <img src={user.avatar || "/placeholder.svg"} className="w-5 h-5 rounded-full" alt={user.name} />
+                        <img
+                          src={user.avatar || "/placeholder.svg"}
+                          className="w-5 h-5 rounded-full"
+                          alt={user.name}
+                        />
                       ) : (
                         <User className="w-4 h-4" />
                       )}
                       <span className="truncate text-sm">{user?.name}</span>
                     </SidebarMenuButton>
                   ) : (
-                    <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
+                    <SidebarMenuButton
+                      className="hover:bg-accent px-2 py-1.5"
+                      onClick={() => signIn("google")}
+                    >
                       <LogIn className="w-4 h-4" />
                       <span className="text-sm">Login</span>
                     </SidebarMenuButton>

@@ -1,7 +1,14 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { useChat as useChatAI } from "ai/react";
 import { useModel } from "./model-provider";
 import { useKeys } from "./key-provider";
@@ -21,7 +28,11 @@ interface ChatContextType {
   setInput: (input: string) => void;
   isLoading: boolean;
 
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
+  handleInputChange: (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>,
+  ) => void;
   handleSubmit: React.FormEventHandler;
   error: Error | null;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
@@ -63,15 +74,23 @@ export function ChatProvider({
   const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
-  const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
+  const [chatId, setChatId] = useState<string | null>(
+    initialChatId || (params?.id as string) || null,
+  );
 
-  const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
-  const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
+  const [messageCount, setMessageCount] = useState(() =>
+    getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0),
+  );
+  const [showWarning, setShowWarning] = useState(() =>
+    getStoredValue(STORAGE_KEYS.SHOW_WARNING, true),
+  );
 
   const prevMessageLengthRef = useRef(0);
 
   const availableModels = getAvailableModels(keys);
-  const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
+  const selectedModelDetails = availableModels.find(
+    (m) => m.id === selectedModel,
+  );
   const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
 
   const onError = useCallback(
@@ -84,7 +103,7 @@ export function ChatProvider({
         description: error.message,
       });
     },
-    [toast]
+    [toast],
   );
 
   const {
@@ -119,7 +138,7 @@ export function ChatProvider({
     (value: string) => {
       setAIInput(value);
     },
-    [setAIInput]
+    [setAIInput],
   );
 
   useEffect(() => {
@@ -128,7 +147,8 @@ export function ChatProvider({
       const currentUserMessageCount = userMessages.length;
 
       if (currentUserMessageCount > prevMessageLengthRef.current) {
-        const newUserMessages = currentUserMessageCount - prevMessageLengthRef.current;
+        const newUserMessages =
+          currentUserMessageCount - prevMessageLengthRef.current;
         setMessageCount((prev) => prev + newUserMessages);
         prevMessageLengthRef.current = currentUserMessageCount;
       }
@@ -139,7 +159,9 @@ export function ChatProvider({
     if (session) {
       setMessageCount(0);
 
-      prevMessageLengthRef.current = messages.filter((msg) => msg.role === "user").length;
+      prevMessageLengthRef.current = messages.filter(
+        (msg) => msg.role === "user",
+      ).length;
     }
   }, [session, messages]);
 
@@ -222,7 +244,7 @@ export function ChatProvider({
 
       originalHandleSubmit(e);
     },
-    [session, messageCount, originalHandleSubmit, toast, chatId, input]
+    [session, messageCount, originalHandleSubmit, toast, chatId, input],
   );
 
   const clearChat = useCallback(() => {

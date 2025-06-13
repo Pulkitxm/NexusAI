@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
-import { memo } from "react"
-import ReactMarkdown from "react-markdown"
-import { cn } from "@/lib/utils"
-import { CodeBlock } from "./code-block"
+import { memo } from "react";
+import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
+import { CodeBlock } from "./code-block";
 
 const MemoizedMarkdown = memo(
   ({ content, className }: { content: string; className?: string }) => {
     return (
-      <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)}>
+      <div
+        className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
+      >
         <ReactMarkdown
           components={{
             code: ({ className, children, ...props }) => {
-              const match = /language-(\w+)/.exec(className || "")
-              const language = match ? match[1] : ""
-              const codeContent = String(children).replace(/\n$/, "")
+              const match = /language-(\w+)/.exec(className || "");
+              const language = match ? match[1] : "";
+              const codeContent = String(children).replace(/\n$/, "");
 
               if (language) {
                 return (
@@ -23,7 +25,7 @@ const MemoizedMarkdown = memo(
                     language={language}
                     className={className}
                   />
-                )
+                );
               }
 
               return (
@@ -33,7 +35,7 @@ const MemoizedMarkdown = memo(
                 >
                   {codeContent}
                 </code>
-              )
+              );
             },
             pre: ({ children, ...props }) => (
               <pre className="not-prose" {...props}>
@@ -140,10 +142,10 @@ const MemoizedMarkdown = memo(
           {content}
         </ReactMarkdown>
       </div>
-    )
+    );
   },
-)
+);
 
-MemoizedMarkdown.displayName = "MemoizedMarkdown"
+MemoizedMarkdown.displayName = "MemoizedMarkdown";
 
-export { MemoizedMarkdown }
+export { MemoizedMarkdown };

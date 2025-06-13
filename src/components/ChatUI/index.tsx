@@ -1,79 +1,85 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useChat } from "@/providers/chat-provider"
-import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog"
-import { useAutoScroll } from "@/hooks/use-auto-scroll"
-import { MessageBubble } from "./MessageBubble"
-import { LoadingMessage } from "./LoadingMessage"
-import { ScrollToBottomButton } from "./ScrollToBottom"
-import { ChatInput } from "./ChatInput"
-import { motion } from "framer-motion"
-import { SUGGESTED_PROMPTS } from "@/lib/data"
-import { Button } from "../ui/button"
-import { useSession } from "next-auth/react"
+import { useState, useEffect, useRef } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useChat } from "@/providers/chat-provider";
+import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
+import { useAutoScroll } from "@/hooks/use-auto-scroll";
+import { MessageBubble } from "./MessageBubble";
+import { LoadingMessage } from "./LoadingMessage";
+import { ScrollToBottomButton } from "./ScrollToBottom";
+import { ChatInput } from "./ChatInput";
+import { motion } from "framer-motion";
+import { SUGGESTED_PROMPTS } from "@/lib/data";
+import { Button } from "../ui/button";
+import { useSession } from "next-auth/react";
 
 export default function ChatUI({ id }: { id?: string }) {
-  const { data: session } = useSession()
-  const { messages, isLoading, input, setInput, inputRef } = useChat()
-  const [showShortcuts, setShowShortcuts] = useState(false)
-  const { scrollAreaRef, showScrollButton, isAutoScrollEnabled, scrollToBottom, forceScrollToBottom } = useAutoScroll()
-  const prevMessagesLength = useRef(messages.length)
-  const prevIsLoading = useRef(isLoading)
-  const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
-    SUGGESTED_PROMPTS[0].section,
-  )
+  const { data: session } = useSession();
+  const { messages, isLoading, input, setInput, inputRef } = useChat();
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const {
+    scrollAreaRef,
+    showScrollButton,
+    isAutoScrollEnabled,
+    scrollToBottom,
+    forceScrollToBottom,
+  } = useAutoScroll();
+  const prevMessagesLength = useRef(messages.length);
+  const prevIsLoading = useRef(isLoading);
+  const [promptSection, setPromptSection] = useState<
+    (typeof SUGGESTED_PROMPTS)[number]["section"]
+  >(SUGGESTED_PROMPTS[0].section);
 
   useEffect(() => {
     if (messages.length > prevMessagesLength.current && isAutoScrollEnabled) {
-      setTimeout(() => scrollToBottom(true), 100)
+      setTimeout(() => scrollToBottom(true), 100);
     }
-    prevMessagesLength.current = messages.length
-  }, [messages.length, isAutoScrollEnabled, scrollToBottom])
+    prevMessagesLength.current = messages.length;
+  }, [messages.length, isAutoScrollEnabled, scrollToBottom]);
 
   useEffect(() => {
-    forceScrollToBottom()
-  }, [forceScrollToBottom])
+    forceScrollToBottom();
+  }, [forceScrollToBottom]);
 
   useEffect(() => {
     if (isLoading && !prevIsLoading.current) {
       setTimeout(() => {
-        forceScrollToBottom()
-        setTimeout(() => scrollToBottom(true), 50)
-      }, 10)
+        forceScrollToBottom();
+        setTimeout(() => scrollToBottom(true), 50);
+      }, 10);
     }
-    prevIsLoading.current = isLoading
-  }, [isLoading, forceScrollToBottom, scrollToBottom])
+    prevIsLoading.current = isLoading;
+  }, [isLoading, forceScrollToBottom, scrollToBottom]);
 
   useEffect(() => {
     if (isLoading && isAutoScrollEnabled) {
       const interval = setInterval(() => {
-        scrollToBottom(false)
-      }, 100)
+        scrollToBottom(false);
+      }, 100);
 
-      return () => clearInterval(interval)
+      return () => clearInterval(interval);
     }
-  }, [isLoading, isAutoScrollEnabled, scrollToBottom])
+  }, [isLoading, isAutoScrollEnabled, scrollToBottom]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "/") {
-        e.preventDefault()
-        setShowShortcuts((prev) => !prev)
+        e.preventDefault();
+        setShowShortcuts((prev) => !prev);
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key === "ArrowDown") {
-        e.preventDefault()
-        scrollToBottom(true)
+        e.preventDefault();
+        scrollToBottom(true);
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [scrollToBottom])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [scrollToBottom]);
 
-  const hide = input || id
+  const hide = input || id;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -93,7 +99,12 @@ export default function ChatUI({ id }: { id?: string }) {
                 className="text-center space-y-4"
               >
                 <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -104,10 +115,12 @@ export default function ChatUI({ id }: { id?: string }) {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                    How can I help you{session?.user?.name ? `, ${session.user.name}?` : "today?"}
+                    How can I help you
+                    {session?.user?.name ? `, ${session.user.name}?` : "today?"}
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Ask me anything, and I&apos;ll help you out. Press ⌘/ for keyboard shortcuts.
+                    Ask me anything, and I&apos;ll help you out. Press ⌘/ for
+                    keyboard shortcuts.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 justify-center items-center">
@@ -115,7 +128,9 @@ export default function ChatUI({ id }: { id?: string }) {
                     {SUGGESTED_PROMPTS.map((prompt) => (
                       <Button
                         key={prompt.section}
-                        variant={promptSection === prompt.section ? "default" : "link"}
+                        variant={
+                          promptSection === prompt.section ? "default" : "link"
+                        }
                         className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
                         onClick={() => setPromptSection(prompt.section)}
                       >
@@ -126,14 +141,16 @@ export default function ChatUI({ id }: { id?: string }) {
                   </div>
 
                   <div className="flex flex-col gap-2 max-h-[calc(100vh-24rem)] overflow-y-auto">
-                    {SUGGESTED_PROMPTS.find((prompt) => prompt.section === promptSection)?.prompts.map((prompt) => (
+                    {SUGGESTED_PROMPTS.find(
+                      (prompt) => prompt.section === promptSection,
+                    )?.prompts.map((prompt) => (
                       <Button
                         key={prompt}
                         variant="ghost"
                         className="h-auto px-4 py-3 rounded-lg text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         onClick={() => {
-                          setInput(prompt)
-                          inputRef.current?.focus()
+                          setInput(prompt);
+                          inputRef.current?.focus();
                         }}
                       >
                         {prompt}
@@ -149,21 +166,34 @@ export default function ChatUI({ id }: { id?: string }) {
                 <MessageBubble
                   key={message.id}
                   message={message}
-                  isStreaming={isLoading && message.id === messages[messages.length - 1]?.id}
+                  isStreaming={
+                    isLoading &&
+                    message.id === messages[messages.length - 1]?.id
+                  }
                 />
               ))}
 
-              {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === "user" && <LoadingMessage />}
+              {isLoading &&
+                messages.length > 0 &&
+                messages[messages.length - 1]?.role === "user" && (
+                  <LoadingMessage />
+                )}
             </div>
           )}
         </div>
       </ScrollArea>
 
-      <ScrollToBottomButton show={showScrollButton} onClick={() => scrollToBottom(true)} />
+      <ScrollToBottomButton
+        show={showScrollButton}
+        onClick={() => scrollToBottom(true)}
+      />
 
       <ChatInput onShowShortcuts={() => setShowShortcuts(true)} />
 
-      <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
+      <KeyboardShortcutsDialog
+        open={showShortcuts}
+        onOpenChange={setShowShortcuts}
+      />
     </div>
-  )
+  );
 }

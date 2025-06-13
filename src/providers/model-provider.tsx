@@ -61,7 +61,8 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
       value={{
         selectedModel,
         changeModel,
-        ModelSwitcher: Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
+        ModelSwitcher:
+          Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
         setSelectedModel,
       }}
     >

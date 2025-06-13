@@ -23,7 +23,11 @@ export async function createChat(title?: string) {
   }
 }
 
-export async function saveUserMessage(chatId: string, content: string, tempId?: string) {
+export async function saveUserMessage(
+  chatId: string,
+  content: string,
+  tempId?: string,
+) {
   const session = await auth();
 
   try {
@@ -85,7 +89,7 @@ export async function saveAssistantMessage(chatId: string, content: string) {
 }
 
 export async function getChatMessages(chatId: string) {
-  const session = await auth(); 
+  const session = await auth();
   const userId = session?.user?.id;
 
   if (!userId) {

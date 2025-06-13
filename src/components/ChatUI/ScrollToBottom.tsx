@@ -1,20 +1,25 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ScrollToBottomButtonProps {
-  show: boolean
-  onClick: () => void
+  show: boolean;
+  onClick: () => void;
 }
 
-export function ScrollToBottomButton({ show, onClick }: ScrollToBottomButtonProps) {
+export function ScrollToBottomButton({
+  show,
+  onClick,
+}: ScrollToBottomButtonProps) {
   return (
     <div
       className={cn(
         "fixed bottom-24 left-1/2 transform -translate-x-1/2 transition-all duration-300 z-20",
-        show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none",
+        show
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-4 pointer-events-none",
       )}
     >
       <Button
@@ -27,5 +32,5 @@ export function ScrollToBottomButton({ show, onClick }: ScrollToBottomButtonProp
         Scroll to bottom
       </Button>
     </div>
-  )
+  );
 }

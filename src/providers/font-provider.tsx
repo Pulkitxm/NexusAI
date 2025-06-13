@@ -15,15 +15,40 @@ import {
 } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const roboto = Roboto({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-roboto" });
-const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-open-sans" });
-const lato = Lato({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-lato" });
-const poppins = Poppins({ weight: ["400", "500", "600", "700"], subsets: ["latin"], variable: "--font-poppins" });
-const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
+const roboto = Roboto({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  variable: "--font-roboto",
+});
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-open-sans",
+});
+const lato = Lato({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-lato",
+});
+const poppins = Poppins({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-poppins",
+});
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+});
 const raleway = Raleway({ subsets: ["latin"], variable: "--font-raleway" });
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
-const sourceSansPro = Source_Sans_3({ subsets: ["latin"], variable: "--font-source-sans-pro" });
-const merriweather = Merriweather({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-merriweather" });
+const sourceSansPro = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-source-sans-pro",
+});
+const merriweather = Merriweather({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-merriweather",
+});
 
 const fonts = {
   inter,
@@ -64,7 +89,9 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <FontContext.Provider value={{ currentFont, setCurrentFont: handleFontChange }}>
+    <FontContext.Provider
+      value={{ currentFont, setCurrentFont: handleFontChange }}
+    >
       <div
         className={`${Object.values(fonts)
           .map((font) => font.variable)

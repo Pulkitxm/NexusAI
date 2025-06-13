@@ -1,5 +1,12 @@
 "use client";
-import React, { memo, useMemo, useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  memo,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import type { IconType } from "react-icons";
 import {
   Select,
@@ -205,9 +212,7 @@ const ModelCard = memo<{
           isSelected
             ? "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 border-blue-200 dark:border-blue-700 shadow-lg ring-2 ring-blue-100 dark:ring-blue-900/50"
             : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md"
-        } ${
-          isAvailable ? "" : "opacity-50 cursor-not-allowed select-none"
-        }`}
+        } ${isAvailable ? "" : "opacity-50 cursor-not-allowed select-none"}`}
         onClick={isAvailable ? onClick : undefined}
       >
         {isSelected && (
@@ -342,41 +347,51 @@ const ProviderSection = memo<{
   searchQuery: string;
   index: number;
   isAvailable: boolean;
-}>(({ provider, models, selectedModel, onModelSelect, searchQuery, index, isAvailable }) => {
-  return (
-    <AnimatedWrapper show={true} delay={index * 100}>
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 sticky top-0 bg-white dark:bg-gray-900 py-2 z-10 rounded-lg">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
-            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-300" />
+}>(
+  ({
+    provider,
+    models,
+    selectedModel,
+    onModelSelect,
+    searchQuery,
+    index,
+    isAvailable,
+  }) => {
+    return (
+      <AnimatedWrapper show={true} delay={index * 100}>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 sticky top-0 bg-white dark:bg-gray-900 py-2 z-10 rounded-lg">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-300" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {provider}
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                {models.length} model{models.length !== 1 ? "s" : ""} available
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {provider}
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              {models.length} model{models.length !== 1 ? "s" : ""} available
-            </p>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
-          {models.map((model, modelIndex) => (
-            <ModelCard
-              key={model.id}
-              model={model}
-              isSelected={selectedModel === model.id}
-              onClick={() => onModelSelect(model.id)}
-              searchQuery={searchQuery}
-              index={modelIndex}
-              isAvailable={isAvailable}
-            />
-          ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-3 sm:gap-4">
+            {models.map((model, modelIndex) => (
+              <ModelCard
+                key={model.id}
+                model={model}
+                isSelected={selectedModel === model.id}
+                onClick={() => onModelSelect(model.id)}
+                searchQuery={searchQuery}
+                index={modelIndex}
+                isAvailable={isAvailable}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    </AnimatedWrapper>
-  );
-});
+      </AnimatedWrapper>
+    );
+  },
+);
 
 ProviderSection.displayName = "ProviderSection";
 
@@ -388,7 +403,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
     const [dropdownSearch, setDropdownSearch] = useState("");
     const dropdownSearchRef = useRef<HTMLInputElement>(null);
     const modalSearchRef = useRef<HTMLInputElement>(null);
-    
+
     useEffect(() => {
       if (modalSearchRef.current && isModalOpen) {
         modalSearchRef.current.focus();
@@ -405,7 +420,7 @@ export const ModelSelector = memo<ModelSelectorProps>(
         return () => clearTimeout(timer);
       }
     }, [isDropdownOpen]);
-    
+
     const groupedByProvider = useMemo(() => {
       return availableModels.reduce(
         (acc, model) => {
@@ -495,8 +510,8 @@ export const ModelSelector = memo<ModelSelectorProps>(
 
     return (
       <div className="flex items-center gap-2">
-        <Select 
-          value={selectedModel} 
+        <Select
+          value={selectedModel}
           onValueChange={onModelChange}
           onOpenChange={setIsDropdownOpen}
         >
@@ -645,7 +660,9 @@ export const ModelSelector = memo<ModelSelectorProps>(
                         onModelSelect={handleModelSelect}
                         searchQuery={searchQuery}
                         index={index}
-                        isAvailable={availableModels.some((model) => model.provider === provider)}
+                        isAvailable={availableModels.some(
+                          (model) => model.provider === provider,
+                        )}
                       />
                     ),
                   )}

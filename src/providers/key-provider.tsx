@@ -1,7 +1,13 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useCallback, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import type { ApiKeys } from "@/types/keys";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
 
@@ -32,18 +38,16 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
 
   const hasAnyKeys = useMemo(
     () => Object.values(keys).some((key) => key && key.trim() !== ""),
-    [keys]
+    [keys],
   );
 
   const contextValue = useMemo(
     () => ({ keys, updateKeys, hasAnyKeys }),
-    [keys, updateKeys, hasAnyKeys]
+    [keys, updateKeys, hasAnyKeys],
   );
 
   return (
-    <KeyContext.Provider value={contextValue}>
-      {children}
-    </KeyContext.Provider>
+    <KeyContext.Provider value={contextValue}>{children}</KeyContext.Provider>
   );
 }
 

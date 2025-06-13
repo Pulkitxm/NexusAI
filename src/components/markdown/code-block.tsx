@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useRef } from "react"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { useState, useRef } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   oneDark,
   oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism"
-import { useTheme } from "next-themes"
+} from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useTheme } from "next-themes";
 import {
   Copy,
   Check,
@@ -14,23 +14,23 @@ import {
   FileCode,
   WrapTextIcon as Wrap,
   AlignJustify,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
 interface EnhancedCodeBlockProps {
-  code: string
-  language: string
-  className?: string
-  showLineNumbers?: boolean
-  fileName?: string
+  code: string;
+  language: string;
+  className?: string;
+  showLineNumbers?: boolean;
+  fileName?: string;
 }
 
 const languageNames: Record<string, string> = {
@@ -61,7 +61,7 @@ const languageNames: Record<string, string> = {
   yaml: "YAML",
   dockerfile: "Dockerfile",
   graphql: "GraphQL",
-}
+};
 
 export function CodeBlock({
   code,
@@ -70,42 +70,41 @@ export function CodeBlock({
   showLineNumbers = false,
   fileName,
 }: EnhancedCodeBlockProps) {
-  const { theme } = useTheme()
-  const [copied, setCopied] = useState(false)
-  const [isWrapped, setIsWrapped] = useState(false)
-  const codeRef = useRef<HTMLDivElement>(null)
+  const { theme } = useTheme();
+  const [copied, setCopied] = useState(false);
+  const [isWrapped, setIsWrapped] = useState(false);
+  const codeRef = useRef<HTMLDivElement>(null);
 
   const copyCode = async () => {
     try {
-      await navigator.clipboard.writeText(code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy code:", error)
+      console.error("Failed to copy code:", error);
     }
-  }
+  };
 
   const downloadCode = () => {
-    const blob = new Blob([code], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = fileName || `code.${language || "txt"}`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName || `code.${language || "txt"}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const toggleWrap = () => {
-    setIsWrapped(!isWrapped)
-  }
+    setIsWrapped(!isWrapped);
+  };
 
-  const displayLanguage = languageNames[language] || language || "Plain Text"
+  const displayLanguage = languageNames[language] || language || "Plain Text";
 
   return (
     <div className="group not-prose my-6 rounded-lg border border-slate-200 dark:border-slate-700">
-      {/* Sticky header with controls */}
       <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
           <FileCode className="h-4 w-4 text-slate-500 dark:text-slate-400" />
@@ -128,7 +127,9 @@ export function CodeBlock({
                   size="sm"
                   onClick={toggleWrap}
                   className="h-8 w-8 p-0"
-                  aria-label={isWrapped ? "Disable text wrap" : "Enable text wrap"}
+                  aria-label={
+                    isWrapped ? "Disable text wrap" : "Enable text wrap"
+                  }
                 >
                   {isWrapped ? (
                     <AlignJustify className="h-4 w-4" />
@@ -187,7 +188,6 @@ export function CodeBlock({
         </div>
       </div>
 
-      {/* Code content - no max-height or overflow: hidden here */}
       <div ref={codeRef} className={cn("relative transition-all duration-200")}>
         <SyntaxHighlighter
           style={theme === "dark" ? oneDark : oneLight}
@@ -221,5 +221,5 @@ export function CodeBlock({
         </SyntaxHighlighter>
       </div>
     </div>
-  )
+  );
 }

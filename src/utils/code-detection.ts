@@ -67,7 +67,12 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
   const inlineCodeRegex = /`([^`\n]+)`/g;
   let match;
 
-  const matches: Array<{ start: number; end: number; content: string; type: "code" | "text" }> = [];
+  const matches: Array<{
+    start: number;
+    end: number;
+    content: string;
+    type: "code" | "text";
+  }> = [];
 
   while ((match = inlineCodeRegex.exec(text)) !== null) {
     matches.push({
@@ -115,7 +120,9 @@ function detectInlineCodeAndPatterns(text: string): CodeBlock[] {
   }
 
   if (blocks.length === 0) {
-    return [{ type: "text", content: text, startIndex: 0, endIndex: text.length }];
+    return [
+      { type: "text", content: text, startIndex: 0, endIndex: text.length },
+    ];
   }
 
   return blocks;
@@ -125,13 +132,18 @@ function detectLanguage(code: string): string {
   const trimmedCode = code.trim().toLowerCase();
 
   if (
-    /\b(function|const|let|var|=>|import|export|class|interface|type)\b/.test(trimmedCode) ||
+    /\b(function|const|let|var|=>|import|export|class|interface|type)\b/.test(
+      trimmedCode,
+    ) ||
     /\.(js|ts|jsx|tsx)$/.test(trimmedCode)
   ) {
     return "javascript";
   }
 
-  if (/\b(def|import|from|class|if __name__|print|return)\b/.test(trimmedCode) || /\.py$/.test(trimmedCode)) {
+  if (
+    /\b(def|import|from|class|if __name__|print|return)\b/.test(trimmedCode) ||
+    /\.py$/.test(trimmedCode)
+  ) {
     return "python";
   }
 
@@ -139,7 +151,11 @@ function detectLanguage(code: string): string {
     return "html";
   }
 
-  if (/\{[^}]*:[^}]*\}/.test(trimmedCode) || /\.css$/.test(trimmedCode) || /\.(scss|sass|less)$/.test(trimmedCode)) {
+  if (
+    /\{[^}]*:[^}]*\}/.test(trimmedCode) ||
+    /\.css$/.test(trimmedCode) ||
+    /\.(scss|sass|less)$/.test(trimmedCode)
+  ) {
     return "css";
   }
 
@@ -147,12 +163,18 @@ function detectLanguage(code: string): string {
     return "json";
   }
 
-  if (/\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i.test(trimmedCode)) {
+  if (
+    /\b(select|insert|update|delete|create|drop|alter|from|where|join)\b/i.test(
+      trimmedCode,
+    )
+  ) {
     return "sql";
   }
 
   if (
-    /^\s*(npm|yarn|git|cd|ls|mkdir|rm|cp|mv|sudo|chmod|chown)/.test(trimmedCode) ||
+    /^\s*(npm|yarn|git|cd|ls|mkdir|rm|cp|mv|sudo|chmod|chown)/.test(
+      trimmedCode,
+    ) ||
     /\.(sh|bash)$/.test(trimmedCode)
   ) {
     return "bash";

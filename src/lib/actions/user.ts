@@ -1,28 +1,27 @@
-'use server'
+"use server";
 
-import { prisma } from '@/lib/db'
-import { auth } from '@/lib/authOptions'
-import { revalidatePath } from 'next/cache'
-import { Prisma } from '@prisma/client'
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/authOptions";
+import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 export type UserSettings = Prisma.UserSettingsGetPayload<{
   select: {
-    jobTitle: true
-    occupation: true
-    bio: true
-    location: true
-    company: true
-    website: true
-    customFont: true
-    theme: true
-    fontSize: true
-  }
-}>
+    jobTitle: true;
+    occupation: true;
+    bio: true;
+    location: true;
+    company: true;
+    website: true;
+    customFont: true;
+    theme: true;
+  };
+}>;
 
 export async function updateUserSettings(data: Partial<UserSettings>) {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
   await prisma.userSettings.upsert({
@@ -36,16 +35,16 @@ export async function updateUserSettings(data: Partial<UserSettings>) {
     update: {
       ...data,
     },
-  })
+  });
 
-  revalidatePath('/settings')
-  return { success: true }
+  revalidatePath("/settings");
+  return { success: true };
 }
 
 export async function getUserSettings() {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
   const settings = await prisma.userSettings.findUnique({
@@ -61,17 +60,16 @@ export async function getUserSettings() {
       website: true,
       customFont: true,
       theme: true,
-      fontSize: true,
     },
-  })
+  });
 
-  return settings
+  return settings;
 }
 
 export async function getGlobalMemories() {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
   const memories = await prisma.globalMemory.findMany({
@@ -86,17 +84,17 @@ export async function getGlobalMemories() {
       updatedAt: true,
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
-  })
+  });
 
-  return memories
+  return memories;
 }
 
 export async function addGlobalMemory(content: string) {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
   await prisma.globalMemory.create({
@@ -104,16 +102,16 @@ export async function addGlobalMemory(content: string) {
       userId: session.user.id,
       content,
     },
-  })
+  });
 
-  revalidatePath('/settings')
-  return { success: true }
+  revalidatePath("/settings");
+  return { success: true };
 }
 
 export async function deleteGlobalMemory(memoryId: string) {
-  const session = await auth()
+  const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Not authenticated')
+    throw new Error("Not authenticated");
   }
 
   await prisma.globalMemory.update({
@@ -124,8 +122,8 @@ export async function deleteGlobalMemory(memoryId: string) {
     data: {
       isDeleted: true,
     },
-  })
+  });
 
-  revalidatePath('/settings')
-  return { success: true }
-} 
+  revalidatePath("/settings");
+  return { success: true };
+}

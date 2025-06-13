@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSession } from "next-auth/react";
@@ -10,15 +10,41 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { RefreshCw, Trash2 } from "lucide-react";
 
-import { updateUserSettings, type UserSettings, getGlobalMemories, deleteGlobalMemory } from "@/lib/actions/user";
+import {
+  updateUserSettings,
+  type UserSettings,
+  getGlobalMemories,
+  deleteGlobalMemory,
+} from "@/lib/actions/user";
 import { useFont } from "@/providers/font-provider";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -32,6 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Session } from "next-auth";
 
 const formSchema = z.object({
   jobTitle: z.string().optional(),
@@ -54,17 +81,30 @@ const FONT_OPTIONS = [
   { value: "poppins", label: "Poppins", className: "font-poppins" },
 ];
 
-function AccountSettingsForm({ form, session }: { form: any; session: any }) {
+function AccountSettingsForm({
+  form,
+  session,
+}: {
+  form: UseFormReturn<FormValues>;
+  session: Session;
+}) {
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={session?.user?.avatar} alt={session?.user?.name || ""} />
-          <AvatarFallback>{session?.user?.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+          <AvatarImage
+            src={session?.user?.avatar}
+            alt={session?.user?.name || ""}
+          />
+          <AvatarFallback>
+            {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+          </AvatarFallback>
         </Avatar>
         <div>
           <h3 className="text-lg font-semibold">{session?.user?.name}</h3>
-          <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
+          <p className="text-sm text-muted-foreground">
+            {session?.user?.email}
+          </p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -140,7 +180,11 @@ function AccountSettingsForm({ form, session }: { form: any; session: any }) {
             <FormItem className="md:col-span-2">
               <FormLabel>Bio</FormLabel>
               <FormControl>
-                <Textarea placeholder="Tell us a little about yourself" className="min-h-[100px]" {...field} />
+                <Textarea
+                  placeholder="Tell us a little about yourself"
+                  className="min-h-[100px]"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -151,7 +195,11 @@ function AccountSettingsForm({ form, session }: { form: any; session: any }) {
   );
 }
 
-function CustomizationSettingsForm({ form }: { form: any }) {
+function CustomizationSettingsForm({
+  form,
+}: {
+  form: UseFormReturn<FormValues>;
+}) {
   const { setCurrentFont } = useFont();
   return (
     <div className="space-y-6">
@@ -172,7 +220,9 @@ function CustomizationSettingsForm({ form }: { form: any }) {
                 <SelectItem value="dark">Dark</SelectItem>
               </SelectContent>
             </Select>
-            <FormDescription>Choose your preferred color scheme.</FormDescription>
+            <FormDescription>
+              Choose your preferred color scheme.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -197,13 +247,19 @@ function CustomizationSettingsForm({ form }: { form: any }) {
               </FormControl>
               <SelectContent>
                 {FONT_OPTIONS.map((font) => (
-                  <SelectItem key={font.value} value={font.value} className={font.className}>
+                  <SelectItem
+                    key={font.value}
+                    value={font.value}
+                    className={font.className}
+                  >
                     {font.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <FormDescription>Choose your preferred font for the application.</FormDescription>
+            <FormDescription>
+              Choose your preferred font for the application.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -264,9 +320,18 @@ function MemorySettingsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Here are the global memories saved from your conversations.</p>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+        <p className="text-sm text-muted-foreground">
+          Here are the global memories saved from your conversations.
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -297,7 +362,9 @@ function MemorySettingsTab() {
             ) : memories.length > 0 ? (
               memories.map((memory) => (
                 <TableRow key={memory.id}>
-                  <TableCell className="max-w-md truncate font-medium">{memory.content}</TableCell>
+                  <TableCell className="max-w-md truncate font-medium">
+                    {memory.content}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDistanceToNow(new Date(memory.updatedAt), {
                       addSuffix: true,
@@ -312,14 +379,19 @@ function MemorySettingsTab() {
                           className="text-red-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-400"
                           disabled={deletingId === memory.id}
                         >
-                          {deletingId === memory.id ? "Deleting..." : <Trash2 className="h-4 w-4" />}
+                          {deletingId === memory.id ? (
+                            "Deleting..."
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the memory created{" "}
+                            This action cannot be undone. This will permanently
+                            delete the memory created{" "}
                             {formatDistanceToNow(new Date(memory.createdAt), {
                               addSuffix: true,
                             })}
@@ -342,7 +414,10 @@ function MemorySettingsTab() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={3}
+                  className="py-10 text-center text-muted-foreground"
+                >
                   No memories found.
                 </TableCell>
               </TableRow>
@@ -355,7 +430,7 @@ function MemorySettingsTab() {
 }
 
 interface SettingsFormProps {
-  initialData: UserSettings | null;
+  initialData: Partial<UserSettings> | null;
   tab: "account" | "customization" | "memory";
 }
 
@@ -403,6 +478,7 @@ export function SettingsForm({ initialData, tab }: SettingsFormProps) {
   }
 
   const renderTabContent = () => {
+    if (!session) return null;
     switch (tab) {
       case "account":
         return <AccountSettingsForm form={form} session={session} />;
@@ -422,7 +498,11 @@ export function SettingsForm({ initialData, tab }: SettingsFormProps) {
 
         {tab !== "memory" && (
           <div className="flex justify-end border-t border-border pt-6">
-            <Button type="submit" disabled={isSaving} className="bg-purple-600 text-white hover:bg-purple-700">
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
