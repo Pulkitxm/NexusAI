@@ -17,6 +17,7 @@ model User {
   chats     Chat[]
   messages  Message[]
   settings  UserSettings?
+  globalMemory GlobalMemory[]
 }
 
 model Chat {
@@ -60,7 +61,18 @@ model UserSettings {
   website     String?
   customFont  String?
   theme       String   @default("system")
-  fontSize    String   @default("medium")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 } 
+
+model GlobalMemory {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

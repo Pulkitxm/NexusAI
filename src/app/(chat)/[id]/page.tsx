@@ -7,8 +7,6 @@ export default async function page({ params }: { params: Promise<{ id: string }>
 
   const chatMessages = await getChatMessages(id);
 
-  console.log(chatMessages);
-
   if (!chatMessages.success) {
     return (
       <div className="flex grow justify-center items-center">

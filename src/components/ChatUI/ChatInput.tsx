@@ -35,7 +35,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const speechToTextServiceRef = useRef<SpeechToTextService | null>(null);
-  const { data: session } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     if (inputRef.current) {
@@ -141,12 +141,12 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     }
   };
 
-  const isLimitReached = !session && messageCount >= MESSAGE_LIMIT;
+  const isLimitReached = status ==="unauthenticated" && messageCount >= MESSAGE_LIMIT;
   const remainingMessages = MESSAGE_LIMIT - messageCount;
 
   return (
     <div className="sticky bottom-0 z-10">
-      {!session && (
+      {status === "unauthenticated" && (
         <div className="flex justify-center mb-1">
           {(showWarning || isLimitReached) && (
             <div

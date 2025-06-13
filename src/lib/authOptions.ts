@@ -12,6 +12,10 @@ declare module "next-auth" {
       email: string;
       name: string;
       avatar: string;
+      settings: {
+        customFont?: string;
+        theme?: string;
+      };
     };
   }
 }
@@ -66,6 +70,12 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
             id: true,
             name: true,
             avatar: true,
+            settings: {
+              select: {
+                customFont: true,
+                theme: true,
+              },
+            },
           },
         });
 

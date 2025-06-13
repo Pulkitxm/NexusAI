@@ -15,6 +15,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -34,8 +35,8 @@ export type SidebarContext = {
   isMobile: boolean;
   toggleSidebar: () => void;
   chats: Chat[];
-  setChats: Dispatch<SetStateAction<Chat[]>>;
   loading: boolean;
+  error: string | null;
   deleteChat: (chatId: string) => void;
   refreshChats: () => void;
 };
@@ -55,7 +56,8 @@ const getStoredSidebarState = (): boolean => {
   try {
     const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
     return stored ? JSON.parse(stored) : true;
-  } catch {
+  } catch (e) {
+    console.error("Failed to parse sidebar state from localStorage", e);
     return true;
   }
 };
@@ -64,7 +66,42 @@ const setSidebarState = (open: boolean): void => {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(open));
-  } catch {}
+  } catch (e) {
+    console.error("Failed to save sidebar state to localStorage", e);
+  }
+};
+
+type ChatState = {
+  chats: Chat[];
+  loading: boolean;
+  error: string | null;
+};
+
+type ChatAction =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: Chat[] }
+  | { type: "FETCH_ERROR"; payload: string }
+  | { type: "DELETE_CHAT"; payload: string }
+  | { type: "SET_CHATS"; payload: Chat[] };
+
+const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
+  switch (action.type) {
+    case "FETCH_START":
+      return { ...state, loading: true, error: null };
+    case "FETCH_SUCCESS":
+      return { ...state, loading: false, chats: action.payload, error: null };
+    case "FETCH_ERROR":
+      return { ...state, loading: false, error: action.payload };
+    case "DELETE_CHAT":
+      return {
+        ...state,
+        chats: state.chats.filter((chat) => chat.id !== action.payload),
+      };
+    case "SET_CHATS":
+      return { ...state, chats: action.payload };
+    default:
+      return state;
+  }
 };
 
 export const SidebarProvider = forwardRef<
@@ -77,11 +114,12 @@ export const SidebarProvider = forwardRef<
 >(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useState(false);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const loadingRef = useRef(false);
-  const mountedRef = useRef(true);
+  const [chatState, dispatch] = useReducer(chatReducer, {
+    chats: [],
+    loading: false,
+    error: null,
+  });
 
   const [_open, _setOpen] = useState(() => {
     if (defaultOpen !== undefined) return defaultOpen;
@@ -89,61 +127,77 @@ export const SidebarProvider = forwardRef<
   });
 
   const open = openProp ?? _open;
+
   const setOpen = useCallback(
-    (value: boolean | ((value: boolean) => boolean)) => {
-      const openState = typeof value === "function" ? value(open) : value;
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      const newOpenState = typeof value === "function" ? value(open) : value;
 
       if (setOpenProp) {
-        setOpenProp(openState);
+        setOpenProp(newOpenState);
       } else {
-        _setOpen(openState);
+        _setOpen(newOpenState);
       }
 
       if (!isMobile) {
-        setSidebarState(openState);
+        setSidebarState(newOpenState);
       }
     },
-    [setOpenProp, open, isMobile]
+    [open, setOpenProp, isMobile]
   );
 
   const toggleSidebar = useCallback(() => {
-    return isMobile ? setOpenMobile((prev) => !prev) : setOpen((prev) => !prev);
+    if (isMobile) {
+      setOpenMobile((prev) => !prev);
+    } else {
+      setOpen((prev) => !prev);
+    }
   }, [isMobile, setOpen]);
 
   const loadChats = useCallback(async () => {
-    if (loadingRef.current) return;
+    if (chatState.loading) return;
 
-    loadingRef.current = true;
-    setLoading(true);
+    dispatch({ type: "FETCH_START" });
 
     try {
       const userChats = await getUserChats();
 
-      if (!mountedRef.current) return;
+      const controller = new AbortController();
+      const signal = controller.signal;
 
-      if (!userChats.success) {
-        console.error("Error loading chats:", userChats.error);
-        return;
-      }
+      let didCancel = false;
+      const cleanup = () => {
+        didCancel = true;
+      };
 
-      const mappedChats = userChats.chats?.map((chat) => ({
-        id: chat.id,
-        title: chat.title || `Chat ${chat.id}`,
-        updatedAt: chat.updatedAt,
-      }));
+      try {
+        const userChats = await getUserChats();
+        if (didCancel) return;
 
-      setChats(mappedChats || []);
-    } catch (error) {
-      if (mountedRef.current) {
+        if (!userChats.success) {
+          console.error("Error loading chats:", userChats.error);
+          dispatch({ type: "FETCH_ERROR", payload: userChats.error || "Failed to load chats." });
+          return;
+        }
+
+        const mappedChats = userChats.chats?.map((chat) => ({
+          id: chat.id,
+          title: chat.title || `Chat ${chat.id}`,
+          updatedAt: chat.updatedAt,
+        }));
+
+        dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
+      } catch (error) {
+        if (didCancel) return;
         console.error("Error loading chats:", error);
+        dispatch({ type: "FETCH_ERROR", payload: (error as Error).message || "An unknown error occurred." });
+      } finally {
+        cleanup();
       }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-      loadingRef.current = false;
+    } catch (error) {
+      console.error("Error loading chats:", error);
+      dispatch({ type: "FETCH_ERROR", payload: (error as Error).message || "An unknown error occurred." });
     }
-  }, []);
+  }, [chatState.loading]);
 
   const refreshChats = useCallback(() => {
     loadChats();
@@ -154,20 +208,20 @@ export const SidebarProvider = forwardRef<
       const res = await deleteChat(chatId);
       if (!res.success) {
         console.error("Error deleting chat:", res.error);
+
         return;
       }
-
-      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+      dispatch({ type: "DELETE_CHAT", payload: chatId });
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
   }, []);
 
   useEffect(() => {
-    if (open && chats.length === 0 && !loadingRef.current) {
+    if (open && chatState.chats.length === 0 && !chatState.loading && !chatState.error) {
       loadChats();
     }
-  }, [open, chats.length, loadChats]);
+  }, [open, chatState.chats.length, chatState.loading, chatState.error, loadChats]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -181,12 +235,6 @@ export const SidebarProvider = forwardRef<
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
   const contextValue = useMemo<SidebarContext>(
     () => ({
       state: open ? "expanded" : "collapsed",
@@ -196,13 +244,25 @@ export const SidebarProvider = forwardRef<
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      chats,
-      setChats,
-      loading,
+      chats: chatState.chats,
+      loading: chatState.loading,
+      error: chatState.error,
       deleteChat: handleDeleteChat,
       refreshChats,
     }),
-    [open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, chats, loading, handleDeleteChat, refreshChats]
+    [
+      open,
+      setOpen,
+      isMobile,
+      openMobile,
+      setOpenMobile,
+      toggleSidebar,
+      chatState.chats,
+      chatState.loading,
+      chatState.error,
+      handleDeleteChat,
+      refreshChats,
+    ]
   );
 
   return (

@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useCallback, useMemo, useState } from "react";
 import type { ApiKeys } from "@/types/keys";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
 
@@ -14,28 +13,35 @@ interface KeyContextType {
 
 const KeyContext = createContext<KeyContextType | undefined>(undefined);
 
-export function KeyProvider({ children }: { children: React.ReactNode }) {
-  const [keys, setKeys] = useState<ApiKeys>({});
+// Initialize keys synchronously to prevent flickering
+const getInitialKeys = (): ApiKeys => {
+  if (typeof window === "undefined") return {};
+  return getStoredValue("nexus-api-keys", {} as ApiKeys) || {};
+};
 
-  useEffect(() => {
-    const savedKeys = getStoredValue("nexus-api-keys", {} as ApiKeys);
-    if (savedKeys) {
-      setKeys(savedKeys);
-    }
+export function KeyProvider({ children }: { children: React.ReactNode }) {
+  const [keys, setKeys] = useState<ApiKeys>(getInitialKeys);
+
+  const updateKeys = useCallback((newKeys: Partial<ApiKeys>) => {
+    setKeys((prevKeys) => {
+      const updatedKeys = { ...prevKeys, ...newKeys };
+      setStoredValue("nexus-api-keys", updatedKeys);
+      return updatedKeys;
+    });
   }, []);
 
-  const updateKeys = (newKeys: Partial<ApiKeys>) => {
-    const updatedKeys = { ...keys, ...newKeys };
-    setKeys(updatedKeys);
-    setStoredValue("nexus-api-keys", updatedKeys);
-  };
+  const hasAnyKeys = useMemo(
+    () => Object.values(keys).some((key) => key && key.trim() !== ""),
+    [keys]
+  );
 
-  const hasAnyKeys = Object.values(keys).some(
-    (key) => key && key.trim() !== "",
+  const contextValue = useMemo(
+    () => ({ keys, updateKeys, hasAnyKeys }),
+    [keys, updateKeys, hasAnyKeys]
   );
 
   return (
-    <KeyContext.Provider value={{ keys, updateKeys, hasAnyKeys }}>
+    <KeyContext.Provider value={contextValue}>
       {children}
     </KeyContext.Provider>
   );

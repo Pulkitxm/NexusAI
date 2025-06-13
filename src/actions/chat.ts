@@ -15,7 +15,6 @@ export async function createChat(title?: string) {
       },
     });
 
-    console.log("Chat created:", chat.id);
     revalidatePath("/");
     return { success: true, chat };
   } catch (error) {
@@ -28,8 +27,6 @@ export async function saveUserMessage(chatId: string, content: string, tempId?: 
   const session = await auth();
 
   try {
-    console.log("Saving user message to chat:", chatId);
-
     const message = await prisma.message.create({
       data: {
         chatId,
@@ -44,7 +41,6 @@ export async function saveUserMessage(chatId: string, content: string, tempId?: 
       data: { updatedAt: new Date() },
     });
 
-    console.log("User message saved:", message.id);
     revalidatePath(`/${chatId}`);
     return { success: true, message, tempId };
   } catch (error) {
@@ -57,8 +53,6 @@ export async function saveAssistantMessage(chatId: string, content: string) {
   const session = await auth();
 
   try {
-    console.log("Saving assistant message to chat:", chatId, "Content length:", content.length);
-
     const chatExists = await prisma.chat.findUnique({
       where: { id: chatId, isDeleted: false },
     });
@@ -82,7 +76,6 @@ export async function saveAssistantMessage(chatId: string, content: string) {
       data: { updatedAt: new Date() },
     });
 
-    console.log("Assistant message saved:", message.id);
     revalidatePath(`/${chatId}`);
     return { success: true, message };
   } catch (error) {
@@ -115,7 +108,6 @@ export async function getChatMessages(chatId: string) {
       return { success: false, error: "Chat not found" };
     }
 
-    console.log(`Loaded ${messages.length} messages for chat:`, chatId);
     return { success: true, messages };
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -145,7 +137,6 @@ export async function getChatWithMessages(chatId: string) {
       return { success: false, error: "Chat not found" };
     }
 
-    console.log(`Loaded chat with ${chat.messages.length} messages:`, chatId);
     return { success: true, chat };
   } catch (error) {
     console.error("Error fetching chat with messages:", error);

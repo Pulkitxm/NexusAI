@@ -139,10 +139,8 @@ export async function POST(req: Request) {
         onFinish: async ({ text }) => {
           if (chatId && text && text.trim()) {
             try {
-              console.log("Saving assistant message:", text.substring(0, 100) + "...")
               const saveResult = await saveAssistantMessage(chatId, text.trim())
               if (saveResult.success) {
-                console.log("Assistant message saved successfully")
               } else {
                 console.error("Failed to save assistant message:", saveResult.error)
               }
@@ -150,7 +148,6 @@ export async function POST(req: Request) {
               console.error("Error saving assistant message:", error)
             }
           } else {
-            console.log("Skipping save - missing chatId or text:", { chatId: !!chatId, hasText: !!text })
           }
         },
       })

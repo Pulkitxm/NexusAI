@@ -66,4 +66,66 @@ export async function getUserSettings() {
   })
 
   return settings
+}
+
+export async function getGlobalMemories() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Not authenticated')
+  }
+
+  const memories = await prisma.globalMemory.findMany({
+    where: {
+      userId: session.user.id,
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+
+  return memories
+}
+
+export async function addGlobalMemory(content: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Not authenticated')
+  }
+
+  await prisma.globalMemory.create({
+    data: {
+      userId: session.user.id,
+      content,
+    },
+  })
+
+  revalidatePath('/settings')
+  return { success: true }
+}
+
+export async function deleteGlobalMemory(memoryId: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error('Not authenticated')
+  }
+
+  await prisma.globalMemory.update({
+    where: {
+      id: memoryId,
+      userId: session.user.id,
+    },
+    data: {
+      isDeleted: true,
+    },
+  })
+
+  revalidatePath('/settings')
+  return { success: true }
 } 

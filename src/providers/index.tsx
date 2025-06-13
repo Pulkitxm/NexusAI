@@ -8,7 +8,8 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { SettingsModalProvider } from "./settings-modal-provider";
 import { ModelProvider } from "./model-provider";
 import { ChatProvider } from "./chat-provider";
-import { FontProvider } from './font-provider'
+import { FontProvider } from "./font-provider";
+import Syncer from "@/components/syncer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <ModelProvider>
                 <ChatProvider>
                   <FontProvider>
+                    <Syncer />
                     {children}
                   </FontProvider>
                 </ChatProvider>
