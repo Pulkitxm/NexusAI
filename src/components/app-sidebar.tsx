@@ -2,17 +2,8 @@
 
 import type React from "react";
 
-import { useState, useEffect, Fragment } from "react";
-import {
-  Search,
-  Plus,
-  MessageSquare,
-  Settings,
-  Trash2,
-  Key,
-  User,
-  LogIn,
-} from "lucide-react";
+import { useState, useEffect, Fragment, useRef } from "react";
+import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +31,16 @@ import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 import type { Chat } from "@/types/chat";
 
+// --- MANUAL VIRTUALIZATION: Configuration ---
+// The estimated height of a single chat item in pixels.
+// Adjust this if you change the item's padding or font size.
+const ITEM_HEIGHT = 68;
+// How many extra items to render above and below the visible area.
+// This makes scrolling feel smoother.
+const OVERSCAN_COUNT = 5;
+// The number of chats below which we won't virtualize for simplicity.
+const VIRTUALIZATION_THRESHOLD = 15;
+
 export function AppSidebar() {
   const { chats, deleteChat, loading } = useSidebar();
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,36 +52,99 @@ export function AppSidebar() {
   const user = session?.user;
   const { hasAnyKeys } = useKeys();
 
+  // --- MANUAL VIRTUALIZATION: Refs and State ---
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [visibleRange, setVisibleRange] = useState({
+    startIndex: 0,
+    endIndex: 0,
+  });
+
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredChats(chats);
-    } else {
-      const filtered = chats.filter(
-        (chat) =>
-          chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          chat.updatedAt
-            .toLocaleDateString()
-            .includes(searchQuery.toLowerCase()),
-      );
-      setFilteredChats(filtered);
-    }
+    const sorted = chats.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    const filtered =
+      searchQuery.trim() === ""
+        ? sorted
+        : sorted.filter(
+            (chat) =>
+              chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              chat.updatedAt.toLocaleDateString().includes(searchQuery.toLowerCase())
+          );
+    setFilteredChats(filtered);
   }, [searchQuery, chats]);
 
+  // --- MANUAL VIRTUALIZATION: Effect to handle scrolling ---
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || filteredChats.length < VIRTUALIZATION_THRESHOLD) return;
+
+    const handleScroll = () => {
+      const { scrollTop, clientHeight } = container;
+
+      const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - OVERSCAN_COUNT);
+      const endIndex = Math.min(
+        filteredChats.length,
+        Math.ceil((scrollTop + clientHeight) / ITEM_HEIGHT) + OVERSCAN_COUNT
+      );
+
+      setVisibleRange({ startIndex, endIndex });
+    };
+
+    // Run once on mount to set initial visible items
+    handleScroll();
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [filteredChats.length]); // Rerun if the number of chats changes
+
   const Wrapper = status === "authenticated" ? Link : Fragment;
+
+  const renderChatList = () => {
+    // --- LOGIC: If the list is short, render it normally ---
+    if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {
+      return filteredChats.map((chat) => <ChatItem key={chat.id} chat={chat} deleteChat={deleteChat} />);
+    }
+
+    // --- LOGIC: If the list is long, render the virtualized window ---
+    const visibleItems = filteredChats.slice(visibleRange.startIndex, visibleRange.endIndex);
+
+    return (
+      <div
+        style={{
+          height: `${filteredChats.length * ITEM_HEIGHT}px`,
+          position: "relative",
+        }}
+      >
+        {visibleItems.map((chat, index) => {
+          const actualIndex = visibleRange.startIndex + index;
+          return (
+            <div
+              key={chat.id}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: `${ITEM_HEIGHT}px`,
+                transform: `translateY(${actualIndex * ITEM_HEIGHT}px)`,
+              }}
+            >
+              <ChatItem chat={chat} deleteChat={deleteChat} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <>
       <Sidebar className="border-r border-border bg-background">
         <SidebarHeader className="p-3 border-b border-border/50">
+          {/* ... Header content is unchanged ... */}
           <div className="flex items-center justify-between mb-3">
             <Link href={"/"} className="flex items-center gap-2">
               <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -126,15 +190,12 @@ export function AppSidebar() {
           )}
         </SidebarHeader>
 
-        <SidebarContent className="px-2 bg-background">
+        <SidebarContent ref={scrollContainerRef} className="px-2 bg-background">
           <SidebarMenu>
             {loading ? (
               <div className="space-y-2 px-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-2 rounded-lg"
-                  >
+                  <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-1/2" />
@@ -146,63 +207,19 @@ export function AppSidebar() {
               <div className="text-center text-muted-foreground py-8">
                 <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm font-medium">No conversations yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Start a new chat to begin
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Start a new chat to begin</p>
               </div>
             ) : (
-              filteredChats
-                .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-                .map((chat) => (
-                  <SidebarMenuItem key={chat.id}>
-                    <Link href={`/${chat.id}`}>
-                      <SidebarMenuButton className="w-full justify-start p-2 h-auto hover:bg-accent/50 rounded-md transition-colors group">
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-sm truncate pr-2">
-                              {chat.title}
-                            </span>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="w-3 h-3 text-muted-foreground" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                <DropdownMenuItem
-                                  onClick={() => deleteChat(chat.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete Chat
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {chat.updatedAt.toLocaleDateString()}
-                          </p>
-                        </div>
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                ))
+              renderChatList()
             )}
           </SidebarMenu>
         </SidebarContent>
 
         <SidebarFooter className="p-3 border-t border-border/50">
+          {/* ... Footer content is unchanged ... */}
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={openModal}
-                className="hover:bg-accent/50 h-9"
-              >
+              <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">Manage API Keys</span>
               </SidebarMenuButton>
@@ -219,21 +236,14 @@ export function AppSidebar() {
                   ) : status === "authenticated" ? (
                     <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
                       {user?.avatar ? (
-                        <img
-                          src={user.avatar || "/placeholder.svg"}
-                          className="w-5 h-5 rounded-full"
-                          alt={user.name}
-                        />
+                        <img src={user.avatar || "/placeholder.svg"} className="w-5 h-5 rounded-full" alt={user.name} />
                       ) : (
                         <User className="w-4 h-4" />
                       )}
                       <span className="truncate text-sm">{user?.name}</span>
                     </SidebarMenuButton>
                   ) : (
-                    <SidebarMenuButton
-                      className="hover:bg-accent px-2 py-1.5"
-                      onClick={() => signIn("google")}
-                    >
+                    <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
                       <LogIn className="w-4 h-4" />
                       <span className="text-sm">Login</span>
                     </SidebarMenuButton>
@@ -245,5 +255,40 @@ export function AppSidebar() {
         </SidebarFooter>
       </Sidebar>
     </>
+  );
+}
+
+function ChatItem({ chat, deleteChat }: { chat: Chat; deleteChat: (id: string) => void }) {
+  return (
+    <SidebarMenuItem>
+      <Link href={`/${chat.id}`}>
+        <SidebarMenuButton className="w-full justify-start p-2 h-auto hover:bg-accent/50 rounded-md transition-colors group">
+          <div className="flex-1 text-left min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-sm truncate pr-2">{chat.title}</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="w-3 h-3 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Chat
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <p className="text-xs text-muted-foreground">{chat.updatedAt.toLocaleDateString()}</p>
+          </div>
+        </SidebarMenuButton>
+      </Link>
+    </SidebarMenuItem>
   );
 }

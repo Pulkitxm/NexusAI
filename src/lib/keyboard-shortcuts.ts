@@ -40,4 +40,9 @@ export const keyboardShortcuts: KeyboardShortcut[] = [
     description: "Save edited message",
     category: "messaging",
   },
+  {
+    keys: ["Cmd", "Shift", "m"],
+    description: "Mute/Unmute microphone",
+    category: "messaging",
+  },
 ];
