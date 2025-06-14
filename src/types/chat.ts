@@ -22,10 +22,9 @@ export const validateAttachment = z.array(
   z.object({
     id: z.string().min(1),
     size: z.number().min(1),
-    fileName: z.string().min(1),
+    name: z.string().min(1),
     url: z.string().min(1),
     uploaded: z.boolean(),
-    uploadProgress: z.number().min(0).max(100),
     uploadThingKey: z.string().min(1)
   })
 );

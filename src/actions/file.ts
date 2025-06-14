@@ -16,7 +16,7 @@ export const addFiles = async (
 
   const files = await prisma.attachment.createManyAndReturn({
     data: attachments.map((attachment) => ({
-      name: attachment.fileName,
+      name: attachment.name,
       url: attachment.url,
       size: attachment.size,
       userId: session.user.id,

@@ -210,7 +210,7 @@ export async function POST(req: Request) {
           if (chatId && text?.trim()) {
             try {
               await Promise.all([
-                saveAssistantMessage(chatId, text.trim(), attachments),
+                saveAssistantMessage(chatId, text.trim()),
                 (async () => {
                   try {
                     await analyzeAndStoreMemories(userId, lastUserMessage, text.trim(), apiKey, finalModel);

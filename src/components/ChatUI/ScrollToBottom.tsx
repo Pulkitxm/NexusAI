@@ -14,7 +14,7 @@ export function ScrollToBottomButton({ show, onClick }: ScrollToBottomButtonProp
   return (
     <div
       className={cn(
-        "fixed bottom-24 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300",
+        "pointer-events-none fixed bottom-24 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300",
         show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
       )}
     >

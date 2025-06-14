@@ -9,14 +9,12 @@ const f = createUploadthing();
 
 export const uploadRouter = {
   attachment: f({
-    image: {
-      maxFileSize: "16MB",
-      maxFileCount: 5
-    },
-    pdf: {
-      maxFileSize: "16MB",
-      maxFileCount: 5
-    }
+    image: { maxFileSize: "16MB", maxFileCount: 5 },
+    pdf: { maxFileSize: "16MB", maxFileCount: 5 },
+    text: { maxFileSize: "4MB", maxFileCount: 5 },
+    video: { maxFileSize: "16MB", maxFileCount: 5 },
+    audio: { maxFileSize: "16MB", maxFileCount: 5 },
+    blob: { maxFileSize: "16MB", maxFileCount: 5 }
   })
     .middleware(async () => {
       const user = (await auth())?.user;
@@ -24,8 +22,8 @@ export const uploadRouter = {
 
       return { userId: user.id };
     })
-    .onUploadComplete(() => {
-      console.log("Upload complete");
+    .onUploadComplete(({ metadata, file }) => {
+      console.log("Upload complete", { metadata, file });
     })
 } satisfies FileRouter;
 

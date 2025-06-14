@@ -24,7 +24,7 @@ export async function createChat(title?: string) {
   }
 }
 
-export async function saveUserMessage(chatId: string, content: string, tempId?: string) {
+export async function saveUserMessage(chatId: string, content: string, attachments?: { id: string }[]) {
   const session = await auth();
 
   try {
@@ -33,7 +33,10 @@ export async function saveUserMessage(chatId: string, content: string, tempId?: 
         chatId,
         role: "USER",
         content,
-        userId: session?.user?.id || null
+        userId: session?.user?.id || null,
+        attachments: {
+          connect: attachments
+        }
       }
     });
 
@@ -43,40 +46,20 @@ export async function saveUserMessage(chatId: string, content: string, tempId?: 
     });
 
     revalidatePath(`/${chatId}`);
-    return { success: true, message, tempId };
+    return { success: true, message };
   } catch (error) {
     console.error("Error saving user message:", error);
-    return { success: false, error: "Failed to save user message", tempId };
+    return { success: false, error: "Failed to save user message" };
   }
 }
 
-export async function saveAssistantMessage(chatId: string, content: string, attachments: string[]) {
+export async function saveAssistantMessage(chatId: string, content: string) {
   const session = await auth();
 
   try {
     const chatExists = await prisma.chat.findUnique({
-      where: { id: chatId, isDeleted: false },
-      select: {
-        messages: {
-          select: {
-            id: true
-          },
-          take: 1,
-          orderBy: {
-            createdAt: "desc"
-          }
-        }
-      }
+      where: { id: chatId, isDeleted: false }
     });
-
-    const lastMessageId = chatExists?.messages[0]?.id;
-
-    if (lastMessageId) {
-      await prisma.message.update({
-        where: { id: lastMessageId },
-        data: { attachments: { connect: attachments.map((attachment) => ({ id: attachment })) } }
-      });
-    }
 
     if (!chatExists) {
       console.error("Chat not found:", chatId);
@@ -95,10 +78,7 @@ export async function saveAssistantMessage(chatId: string, content: string, atta
     await prisma.chat.update({
       where: { id: chatId },
       data: {
-        updatedAt: new Date(),
-        attachments: {
-          connect: attachments.map((attachment) => ({ id: attachment }))
-        }
+        updatedAt: new Date()
       }
     });
 

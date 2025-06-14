@@ -9,7 +9,7 @@ import { CodeBlock } from "./code-block";
 
 const MemoizedMarkdown = memo(({ content, className }: { content: string; className?: string }) => {
   return (
-    <div className={cn("prose prose-sm max-w-none dark:prose-invert", className)}>
+    <div className={cn("prose prose-sm max-w-[500px] dark:prose-invert", className)}>
       <ReactMarkdown
         components={{
           code: ({ className, children, ...props }) => {

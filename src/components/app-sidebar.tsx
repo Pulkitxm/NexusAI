@@ -89,7 +89,7 @@ export function AppSidebar() {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [filteredChats.length]);
 
-  const Wrapper = status === "authenticated" ? Link : Fragment;
+  const Wrapper = status === "authenticated" ? Link : "div";
 
   const renderChatList = () => {
     if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {

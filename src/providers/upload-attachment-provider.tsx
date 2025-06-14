@@ -1,11 +1,12 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { createContext, useContext, useState, ReactNode, useEffect, useRef, useCallback } from "react";
 
 import { addFiles, deleteFile } from "@/actions/file";
 import { useToast } from "@/hooks/use-toast";
+import { codeExtensions } from "@/lib/extensions";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { useChat } from "@/providers/chat-provider";
 import { Attachment } from "@/types/chat";
@@ -16,6 +17,14 @@ interface UploadAttachmentContextType {
   deletingFiles: string[];
 }
 
+interface UploadState {
+  progress: number;
+  error: string | null;
+  isUploading: boolean;
+}
+
+const MAX_ATTACHMENTS = 1;
+
 const UploadAttachmentContext = createContext<UploadAttachmentContextType | undefined>(undefined);
 
 export function UploadAttachmentProvider({ children }: { children: ReactNode }) {
@@ -23,84 +32,169 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   const [open, setOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
+  const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>({});
   const { attachments, setAttachments } = useChat();
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { startUpload } = useUploadThing("attachment", {
     onUploadProgress: (progress) => {
+      setUploadStates((prev) => {
+        const newStates = { ...prev };
+        Object.keys(newStates).forEach((key) => {
+          if (newStates[key].isUploading) {
+            newStates[key] = { ...newStates[key], progress };
+          }
+        });
+        return newStates;
+      });
+
       setAttachments((prev: Attachment[]) =>
-        prev.map((attachment) => (!attachment.uploaded ? { ...attachment, uploadProgress: progress } : attachment))
+        prev.map((attachment) => {
+          if (!attachment.uploaded && uploadStates[attachment.id]?.isUploading) {
+            return { ...attachment, uploadProgress: progress };
+          }
+          return attachment;
+        })
       );
     },
     onClientUploadComplete: async (res) => {
       if (!res) return;
 
+      // Update upload states
+      setUploadStates((prev) => {
+        const newStates = { ...prev };
+        res.forEach((file) => {
+          const attachment = attachments.find((a) => a.name === file.name);
+          if (attachment && newStates[attachment.id]) {
+            newStates[attachment.id] = {
+              progress: 100,
+              error: null,
+              isUploading: false
+            };
+          }
+        });
+        return newStates;
+      });
+
       setAttachments((prev: Attachment[]) =>
         prev.map((attachment) => {
-          const matchingFile = res.find((file) => file.name === attachment.fileName);
-          return {
-            ...attachment,
-            uploaded: false,
-            uploadProgress: 0,
-            uploadThingKey: matchingFile?.key || "",
-            url: matchingFile?.url || ""
-          };
+          const matchingFile = res.find((file) => file.name === attachment.name);
+          if (matchingFile) {
+            return {
+              ...attachment,
+              uploaded: false,
+              uploadProgress: 0,
+              uploadThingKey: matchingFile.key,
+              url: matchingFile.url
+            };
+          }
+          return attachment;
         })
       );
 
-      const dbFiles = await addFiles(
-        res.map((file) => ({
-          fileName: file.name,
-          url: file.url,
-          size: file.size,
-          uploaded: true,
-          uploadProgress: 100,
-          id: file.fileHash,
-          uploadThingKey: file.key
-        }))
-      );
+      try {
+        const dbFiles = await addFiles(
+          res.map((file) => ({
+            name: file.name,
+            url: file.url,
+            size: file.size,
+            uploaded: true,
+            uploadProgress: 100,
+            id: file.fileHash,
+            uploadThingKey: file.key
+          }))
+        );
 
-      console.log("dbFiles:", dbFiles);
-
-      setAttachments((prev: Attachment[]) => {
-        console.log(
-          "Updated attachments:",
+        setAttachments((prev: Attachment[]) =>
           prev.map((attachment) => {
             const dbFile = dbFiles.find((file) => file.uploadThingKey === attachment.uploadThingKey);
             return dbFile ? { ...attachment, id: dbFile.id, uploaded: true, uploadProgress: 100 } : attachment;
           })
         );
-        return prev.map((attachment) => {
-          const dbFile = dbFiles.find((file) => file.uploadThingKey === attachment.uploadThingKey);
-          return dbFile ? { ...attachment, id: dbFile.id, uploaded: true, uploadProgress: 100 } : attachment;
+      } catch (error) {
+        console.error("Failed to save files to database:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to save files",
+          description: "There was an error saving your files. Please try again."
         });
-      });
+      }
     },
     onUploadError: (error) => {
       console.error("Upload error:", error);
 
+      // Update upload states with error
+      setUploadStates((prev) => {
+        const newStates = { ...prev };
+        Object.keys(newStates).forEach((key) => {
+          if (newStates[key].isUploading) {
+            newStates[key] = {
+              progress: 0,
+              error: "Upload failed",
+              isUploading: false
+            };
+          }
+        });
+        return newStates;
+      });
+
       setAttachments((prev: Attachment[]) => prev.filter((attachment) => attachment.uploaded));
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "There was an error uploading your files. Please try again."
+      });
     }
   });
 
   const handleFiles = useCallback(
     async (files: File[]) => {
+      if (files.length > MAX_ATTACHMENTS) {
+        toast({
+          variant: "destructive",
+          title: "You can only upload up to 5 files at a time",
+          description: "Please upload up to 5 files at a time"
+        });
+        return;
+      }
+
+      // Initialize upload states for new files
       const newAttachments: Attachment[] = files.map((file) => ({
         file,
-        fileName: file.name,
+        name: file.name,
         url: "",
         uploaded: false,
         uploadProgress: 0,
-        id: "",
+        id: crypto.randomUUID(), // Generate unique ID for each attachment
         size: file.size,
         uploadThingKey: ""
       }));
 
+      // Initialize upload states with the new IDs
+      const newUploadStates: Record<string, UploadState> = {};
+      newAttachments.forEach((attachment) => {
+        newUploadStates[attachment.id] = {
+          progress: 0,
+          error: null,
+          isUploading: true
+        };
+      });
+      setUploadStates((prev) => ({ ...prev, ...newUploadStates }));
+
       setAttachments((prev: Attachment[]) => [...prev, ...newAttachments]);
 
-      await startUpload(files);
+      try {
+        await startUpload(files);
+      } catch (error) {
+        console.error("Failed to start upload:", error);
+        toast({
+          variant: "destructive",
+          title: "Upload failed",
+          description: "Failed to start upload. Please try again."
+        });
+      }
     },
-    [startUpload, setAttachments]
+    [startUpload, setAttachments, toast]
   );
 
   const deleteAttachment = useCallback(
@@ -112,11 +206,17 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         if (!file) return;
 
         await deleteFile(file.id);
-        setAttachments((prev) => prev.filter((attachment) => attachment.url !== fileId));
+        setAttachments((prev) => prev.filter((attachment) => attachment.id !== fileId));
+        // Clean up upload state
+        setUploadStates((prev) => {
+          const newStates = { ...prev };
+          delete newStates[fileId];
+          return newStates;
+        });
       } catch (err) {
         console.error("Delete error:", err);
       } finally {
-        setDeletingFiles((prev) => prev.filter((name) => name !== fileId));
+        setDeletingFiles((prev) => prev.filter((id) => id !== fileId));
       }
     },
     [attachments, setAttachments]
@@ -157,26 +257,62 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
 
       if (status !== "authenticated") {
         return toast({
-          variant: "destructive",
-          title: "You must be logged in to upload files",
-          description: (
-            <>
-              Please{" "}
-              <span className="cursor-pointer font-bold underline" onClick={() => signIn("google")}>
-                sign in
-              </span>{" "}
-              to continue chatting.
-            </>
-          )
+          /* ... */
         });
       }
 
-      const files = Array.from(e.dataTransfer?.files ?? []);
-      const allowedFiles = files.filter((file) => file.type.startsWith("image/") || file.type === "application/pdf");
+      const files = Array.from(e.dataTransfer?.files || []); // convert FileList :contentReference[oaicite:5]{index=5}
+      const allowed = files.filter((file) => {
+        const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+        // Allow code files and configuration files
+        const isCodeFile = codeExtensions.includes(extension);
+        const isConfigFile = [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx",
+          ".json",
+          ".config.js",
+          ".config.ts",
+          ".config.json"
+        ].includes(extension);
+        const isTextFile =
+          file.type.startsWith("text/") || file.type === "application/json" || file.type === "application/javascript";
+        return isCodeFile || isConfigFile || isTextFile;
+      });
 
-      if (allowedFiles.length > 0) {
-        await handleFiles(allowedFiles);
+      if (allowed.length === 0) {
+        return toast({
+          variant: "destructive",
+          title: "No code files found",
+          description: "Please drop code files like .js, .ts, .py, etc."
+        });
       }
+
+      // Process text files
+      const processedFiles = await Promise.all(
+        allowed.map(async (file) => {
+          if (
+            file.type.startsWith("text/") ||
+            file.type === "application/json" ||
+            file.type === "application/javascript"
+          ) {
+            const content = await file.text();
+            return new File([content], file.name, { type: "text/plain" });
+          }
+          return file;
+        })
+      );
+
+      if (processedFiles.length > MAX_ATTACHMENTS - attachments.length) {
+        toast({
+          variant: "destructive",
+          title: `Upload max ${MAX_ATTACHMENTS - attachments.length} code files`,
+          description: ""
+        });
+      }
+
+      await handleFiles(processedFiles.slice(0, MAX_ATTACHMENTS - attachments.length));
     };
 
     document.addEventListener("dragenter", handleDragEnter);
@@ -190,7 +326,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("drop", handleDrop);
     };
-  }, [handleFiles, status, toast]);
+  }, [handleFiles, status, toast, attachments]);
 
   const handleClose = () => {
     setOpen(false);
