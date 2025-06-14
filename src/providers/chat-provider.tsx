@@ -1,6 +1,5 @@
 "use client";
 
-import { useChat as useChatAI } from "ai/react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -9,30 +8,30 @@ import {
   useState,
   useCallback,
   useRef,
-  useEffect,
-  SetStateAction,
-  Dispatch,
-  FormEventHandler,
-  RefObject,
-  ReactNode,
-  FormEvent
+  type SetStateAction,
+  type Dispatch,
+  type FormEventHandler,
+  type RefObject,
+  type ReactNode,
+  type FormEvent
 } from "react";
 
 import { createChat, saveUserMessage } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
 import { MESSAGE_LIMIT } from "@/lib/data";
-import { debugLog } from "@/lib/debug";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
-import { Attachment, validateAttachment } from "@/types/chat";
+import { type Attachment, validateAttachment } from "@/types/chat";
 
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
 import { useSettingsModal } from "./settings-modal-provider";
 
-import type { UIMessage } from "ai";
-
-export interface MessageWithAttachments extends UIMessage {
+export interface MessageWithAttachments {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  createdAt?: Date;
   attachments?: Attachment[];
 }
 
@@ -90,13 +89,15 @@ export function ChatProvider({
   const [micError, setMicError] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean | null>(null);
   const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [input, setInputState] = useState(() => getStoredValue("input", ""));
+  const [messages, setMessages] = useState<MessageWithAttachments[]>(initialMessages);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
   const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
   const [attachments, setAttachments] = useState<Attachment[]>(isValid.success ? localAttachments : []);
-  const [messagesWithAttachments, setMessagesWithAttachments] = useState<MessageWithAttachments[]>(initialMessages);
 
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
   const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
@@ -107,65 +108,18 @@ export function ChatProvider({
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
   const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
 
-  const onError = useCallback(
-    (error: Error) => {
-      console.error("AI Chat error:", error);
-      setError(error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message
+  const setInput = useCallback((value: string | ((prev: string) => string)) => {
+    if (typeof value === "function") {
+      setInputState((prev) => {
+        const newInput = value(prev);
+        setStoredValue("input", newInput);
+        return newInput;
       });
-    },
-    [toast]
-  );
-
-  const {
-    messages,
-    input,
-    handleSubmit: originalHandleSubmit,
-    isLoading,
-    setMessages,
-    setInput: originalSetInput
-  } = useChatAI({
-    api: "/api/chat",
-    body: {
-      model: selectedModel,
-      provider: selectedModelDetails?.provider,
-      apiKey,
-      chatId,
-      userId: session?.user?.id,
-      webSearch,
-      reasoning,
-      attachments: attachments.map((attachment) => attachment.id)
-    },
-    initialInput: getStoredValue("input", ""),
-    initialMessages,
-    onError,
-    onFinish: (message) => {
-      debugLog("Chat finished", {
-        messageId: message.id,
-        role: message.role,
-        contentLength: message.content.length
-      });
+    } else {
+      setInputState(value);
+      setStoredValue("input", value);
     }
-  });
-
-  const setInput = useCallback(
-    (value: string | ((prev: string) => string)) => {
-      if (typeof value === "function") {
-        originalSetInput((prev) => {
-          const newInput = value(prev);
-          setStoredValue("input", newInput);
-          return newInput;
-        });
-      } else {
-        originalSetInput(value);
-        setStoredValue("input", value);
-      }
-    },
-    [originalSetInput]
-  );
+  }, []);
 
   const setAttachmentsWithStorage = useCallback((value: SetStateAction<Attachment[]>) => {
     setAttachments((prev) => {
@@ -174,113 +128,6 @@ export function ChatProvider({
       return newAttachments;
     });
   }, []);
-
-  useEffect(() => {
-    if (!session) {
-      const userMessages = messages.filter((msg) => msg.role === "user");
-      const currentUserMessageCount = userMessages.length;
-
-      if (currentUserMessageCount > prevMessageLengthRef.current) {
-        const newUserMessages = currentUserMessageCount - prevMessageLengthRef.current;
-        setMessageCount((prev) => prev + newUserMessages);
-        prevMessageLengthRef.current = currentUserMessageCount;
-      }
-    }
-  }, [messages, session]);
-
-  useEffect(() => {
-    if (session) {
-      setMessageCount(0);
-      prevMessageLengthRef.current = messages.filter((msg) => msg.role === "user").length;
-    }
-  }, [session, messages]);
-
-  useEffect(() => {
-    setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, messageCount);
-  }, [messageCount]);
-
-  useEffect(() => {
-    const supportedReasoning = selectedModelDetails?.capabilities?.reasoning;
-    setReasoning(supportedReasoning ? "high" : null);
-
-    const supportedWebSearch = selectedModelDetails?.capabilities?.search;
-    setWebSearch(supportedWebSearch ? true : null);
-  }, [selectedModel, selectedModelDetails]);
-
-  useEffect(() => {
-    setStoredValue(STORAGE_KEYS.SHOW_WARNING, showWarning);
-  }, [showWarning]);
-
-  useEffect(() => {
-    setMessagesWithAttachments((prev) => {
-      const contentMap = new Map<string, MessageWithAttachments>();
-      const messageMap = new Map<string, MessageWithAttachments>();
-
-      prev.forEach((msg) => {
-        const contentKey = `${msg.role}:${msg.content}:${msg.createdAt?.getTime() || 0}`;
-        contentMap.set(contentKey, msg);
-        messageMap.set(msg.id, msg);
-      });
-
-      messages.forEach((message) => {
-        const contentKey = `${message.role}:${message.content}:${message.createdAt?.getTime() || 0}`;
-
-        const existingByContent = Array.from(contentMap.values()).find(
-          (existing) =>
-            existing.role === message.role &&
-            existing.content === message.content &&
-            Math.abs((existing.createdAt?.getTime() || 0) - (message.createdAt?.getTime() || 0)) < 2000
-        );
-
-        if (existingByContent && existingByContent.id !== message.id) {
-          const shouldKeepExisting =
-            (existingByContent.attachments?.length || 0) > 0 || existingByContent.id.length > message.id.length;
-
-          if (!shouldKeepExisting) {
-            messageMap.delete(existingByContent.id);
-            contentMap.delete(
-              `${existingByContent.role}:${existingByContent.content}:${existingByContent.createdAt?.getTime() || 0}`
-            );
-            messageMap.set(message.id, {
-              ...message,
-              attachments: message.role === "user" ? attachments : []
-            });
-            contentMap.set(contentKey, messageMap.get(message.id)!);
-          }
-        } else {
-          const existingMessage = messageMap.get(message.id);
-          if (existingMessage) {
-            const updatedMessage = {
-              ...existingMessage,
-              ...message,
-              attachments: existingMessage.attachments || (message.role === "user" ? attachments : [])
-            };
-            messageMap.set(message.id, updatedMessage);
-            contentMap.set(contentKey, updatedMessage);
-          } else {
-            const newMessage = {
-              ...message,
-              attachments: message.role === "user" ? attachments : []
-            };
-            messageMap.set(message.id, newMessage);
-            contentMap.set(contentKey, newMessage);
-          }
-        }
-      });
-
-      const result = Array.from(messageMap.values()).sort((a, b) => {
-        const aTime = a.createdAt?.getTime() || 0;
-        const bTime = b.createdAt?.getTime() || 0;
-        if (aTime !== bTime) return aTime - bTime;
-
-        const aIndex = messages.findIndex((m) => m.id === a.id);
-        const bIndex = messages.findIndex((m) => m.id === b.id);
-        return aIndex - bIndex;
-      });
-
-      return result;
-    });
-  }, [messages, attachments]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -316,19 +163,28 @@ export function ChatProvider({
       const currentInput = input.trim();
       if (!currentInput) return;
 
-      debugLog("Submitting message", { input: currentInput, chatId });
+      setIsLoading(true);
+      setError(null);
+
+      // Add user message immediately
+      const userMessage: MessageWithAttachments = {
+        id: Date.now().toString(),
+        role: "user",
+        content: currentInput,
+        createdAt: new Date(),
+        attachments: [...attachments]
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
 
       let currentChatId = chatId;
 
       if (!currentChatId) {
         try {
-          debugLog("Creating new chat");
           const result = await createChat();
           if (result.success && result.chat) {
             currentChatId = result.chat.id;
             setChatId(currentChatId);
-            debugLog("Chat created", { chatId: currentChatId });
-
             window.history.pushState({}, "", `/${currentChatId}`);
           } else {
             toast({
@@ -336,6 +192,7 @@ export function ChatProvider({
               title: "Error",
               description: "Failed to create chat. Please try again."
             });
+            setIsLoading(false);
             return;
           }
         } catch (error) {
@@ -345,38 +202,110 @@ export function ChatProvider({
             title: "Error",
             description: "Failed to create chat. Please try again."
           });
+          setIsLoading(false);
           return;
         }
       }
 
       if (currentChatId) {
         try {
-          debugLog("Saving user message", {
-            chatId: currentChatId,
-            content: currentInput
-          });
-          const result = await saveUserMessage(
+          await saveUserMessage(
             currentChatId,
             currentInput,
             attachments.map((a) => ({ id: a.id }))
           );
-          if (!result.success) {
-            console.error("Failed to save user message:", result.error);
-          } else {
-            debugLog("User message saved", { messageId: result.message?.id });
-          }
         } catch (error) {
           console.error("Error saving user message:", error);
         }
       }
 
-      debugLog("Submitting to AI");
-
+      // Clear input and attachments
       setAttachmentsWithStorage([]);
       setInput("");
       removeStoredValue("input");
       removeStoredValue("attachments");
-      originalHandleSubmit(e);
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage].map((msg) => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            model: selectedModel,
+            provider: selectedModelDetails?.provider,
+            apiKey,
+            chatId: currentChatId,
+            userId: session?.user?.id,
+            webSearch,
+            reasoning,
+            attachments: attachments.map((attachment) => attachment.id)
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("No response body");
+        }
+
+        const decoder = new TextDecoder();
+        let assistantMessage = "";
+        const assistantMessageId = (Date.now() + 1).toString();
+
+        // Add empty assistant message
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantMessageId,
+            role: "assistant",
+            content: "",
+            createdAt: new Date()
+          }
+        ]);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === "text") {
+                  assistantMessage += data.data;
+                  // Update the assistant message
+                  setMessages((prev) =>
+                    prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, content: assistantMessage } : msg))
+                  );
+                }
+              } catch (e) {
+                console.error("Error parsing SSE data:", e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Chat error:", error);
+        setError(error as Error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error instanceof Error ? error.message : "An error occurred"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     },
     [
       attachments,
@@ -385,17 +314,21 @@ export function ChatProvider({
       input,
       messageCount,
       openModal,
-      originalHandleSubmit,
       session,
       toast,
       setAttachmentsWithStorage,
-      setInput
+      setInput,
+      selectedModel,
+      selectedModelDetails,
+      apiKey,
+      webSearch,
+      reasoning,
+      messages
     ]
   );
 
   const clearChat = useCallback(() => {
     setMessages([]);
-    setMessagesWithAttachments([]);
     setMessageCount(0);
     setError(null);
     setMicError(null);
@@ -409,21 +342,20 @@ export function ChatProvider({
     removeStoredValue("input");
 
     router.push("/");
-  }, [setMessages, router, setAttachmentsWithStorage]);
+  }, [router, setAttachmentsWithStorage]);
 
   const resetChat = useCallback(() => {
     setMessages([]);
-    setMessagesWithAttachments([]);
     setMessageCount(0);
     setError(null);
     setMicError(null);
     prevMessageLengthRef.current = 0;
     setChatId(null);
     setAttachmentsWithStorage([]);
-  }, [setMessages, setAttachmentsWithStorage]);
+  }, [setAttachmentsWithStorage]);
 
   const contextValue: ChatContextType = {
-    messages: messagesWithAttachments,
+    messages,
     input,
     setInput,
     isLoading,
@@ -437,7 +369,7 @@ export function ChatProvider({
     clearChat,
     chatId,
     setChatId,
-    setMessages: setMessagesWithAttachments,
+    setMessages,
     resetChat,
     micError,
     setMicError,

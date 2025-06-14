@@ -1,11 +1,10 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateObject } from "ai";
 import { z } from "zod";
 
+import { AnthropicProvider } from "@/ai/providers/anthropic";
+import { OpenAIProvider } from "@/ai/providers/openai";
 import { prisma } from "@/lib/db";
 import { AI_MODELS } from "@/lib/models";
+import { Provider } from "@/types/models";
 
 const MemorySchema = z.object({
   memories: z.array(
@@ -32,26 +31,22 @@ export async function analyzeAndStoreMemories(
       return { success: false, error: "Model not found" };
     }
 
-    let aiModel;
+    let aiProvider;
     const provider = modelConfig.provider;
 
     try {
       switch (provider) {
-        case "OpenAI":
-          const openai = createOpenAI({ apiKey });
-          const analysisModel = modelId.includes("gpt-4o") ? "gpt-4o-mini" : modelId;
-          aiModel = openai(analysisModel);
+        case Provider.OpenAI:
+          aiProvider = new OpenAIProvider({ apiKey });
           break;
 
-        case "Anthropic":
-          const anthropic = createAnthropic({ apiKey });
-          aiModel = anthropic(modelId);
+        case Provider.Anthropic:
+          aiProvider = new AnthropicProvider({ apiKey });
           break;
 
-        case "Google":
-          const google = createGoogleGenerativeAI({ apiKey });
-          aiModel = google(modelId);
-          break;
+        // case Provider.Google:
+        //   aiProvider = new GoogleProvider({ apiKey });
+        //   break;
 
         default:
           console.error(`[Memory] Provider "${provider}" not supported for memory analysis`);
@@ -62,10 +57,13 @@ export async function analyzeAndStoreMemories(
       return { success: false, error: "Failed to initialize AI provider" };
     }
 
-    const result = await generateObject({
-      model: aiModel,
-      schema: MemorySchema,
-      prompt: `Analyze this conversation and extract important information that should be remembered about the user for future conversations.
+    const response = await aiProvider.chat({
+      messages: [
+        {
+          role: "system",
+          content: `You are a memory analyzer. Your task is to analyze conversations and extract important information about the user.
+
+Analyze this conversation and extract important information that should be remembered about the user for future conversations.
 
 User Message: "${userMessage}"
 Assistant Response: "${assistantResponse}"
@@ -83,44 +81,70 @@ Rate importance 1-10 where:
 - 7-8: Important personal/professional facts
 - 9-10: Critical identity or life-changing information
 
-Only extract genuinely useful information. Skip generic responses or temporary states.`,
+Only extract genuinely useful information. Skip generic responses or temporary states.
+
+You MUST respond with a valid JSON object in this exact format:
+{
+  "memories": [
+    {
+      "content": "string describing the memory",
+      "category": "personal" | "professional" | "preferences" | "knowledge" | "other",
+      "importance": number between 1 and 10,
+      "reasoning": "string explaining why this is important to remember"
+    }
+  ]
+}`
+        }
+      ],
+      model: modelId,
       temperature: 0.3
     });
 
-    if (result.object.memories.length === 0) {
-      return { success: true, memoriesStored: 0 };
+    if (!response || typeof response === "string") {
+      console.error("[Memory] Invalid response format:", response);
+      return { success: false, error: "Invalid response format" };
     }
 
-    const existingMemories = await prisma.globalMemory.findMany({
-      where: { userId, isDeleted: false },
-      select: { content: true }
-    });
+    try {
+      const result = MemorySchema.safeParse(response);
+      if (!result.success) {
+        return { success: true, memoriesStored: 0 };
+      }
 
-    const existingContents = new Set(existingMemories.map((m) => m.content.toLowerCase().trim()));
+      const memories = result.data.memories;
 
-    const newMemories = result.object.memories.filter(
-      (memory) => !existingContents.has(memory.content.toLowerCase().trim())
-    );
+      const existingMemories = await prisma.globalMemory.findMany({
+        where: { userId, isDeleted: false },
+        select: { content: true }
+      });
 
-    if (newMemories.length === 0) {
-      return { success: true, memoriesStored: 0 };
+      const existingContents = new Set(existingMemories.map((m) => m.content.toLowerCase().trim()));
+
+      const newMemories = memories.filter((memory) => !existingContents.has(memory.content.toLowerCase().trim()));
+
+      if (newMemories.length === 0) {
+        return { success: true, memoriesStored: 0 };
+      }
+
+      await prisma.globalMemory.createMany({
+        data: newMemories.map((memory) => ({
+          userId,
+          content: memory.content,
+          category: memory.category,
+          importance: memory.importance,
+          reasoning: memory.reasoning
+        }))
+      });
+
+      return {
+        success: true,
+        memoriesStored: newMemories.length,
+        memories: newMemories
+      };
+    } catch (error) {
+      console.error("[Memory] Error parsing response:", error);
+      return { success: false, error: "Failed to parse response" };
     }
-
-    await prisma.globalMemory.createMany({
-      data: newMemories.map((memory) => ({
-        userId,
-        content: memory.content,
-        category: memory.category,
-        importance: memory.importance,
-        reasoning: memory.reasoning
-      }))
-    });
-
-    return {
-      success: true,
-      memoriesStored: newMemories.length,
-      memories: newMemories
-    };
   } catch (error) {
     console.error("[Memory] Error analyzing memories:", error);
     return {

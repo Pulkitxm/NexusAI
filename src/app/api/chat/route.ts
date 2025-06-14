@@ -1,15 +1,13 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, convertToCoreMessages, CoreMessage } from "ai";
 import { cache } from "react";
 
 import { saveAssistantMessage } from "@/actions/chat";
+import { getAIProvider } from "@/ai/providers/factory";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
 import { analyzeAndStoreMemories } from "@/lib/memoryAnalyzer";
 import { AI_MODELS } from "@/lib/models";
-import { ReasoningHandler } from "@/lib/reasoningHandler";
+
+import type { ChatInput } from "@/ai/types";
 
 export const maxDuration = 30;
 
@@ -99,7 +97,7 @@ export async function POST(req: Request) {
     const dbAttachments = await prisma.attachment.findMany({
       where: {
         id: {
-          in: attachments
+          in: attachments || []
         }
       },
       select: {
@@ -115,53 +113,22 @@ export async function POST(req: Request) {
       throw new APIError(`Model "${model}" is not supported`, 400, "MODEL_NOT_FOUND");
     }
 
-    const finalModel = ReasoningHandler.shouldUseReasoningModel(reasoning, modelConfig, AI_MODELS);
+    // Get AI provider using your factory
+    const aiProvider = getAIProvider({
+      provider: modelConfig.provider || provider,
+      apiKey,
+      openRouter: false
+    });
 
-    const reasoningConfig = ReasoningHandler.getReasoningConfig(reasoning, modelConfig);
-
-    let aiModel;
-    const modelProvider = modelConfig.provider || provider;
-
-    try {
-      switch (modelProvider) {
-        case "OpenAI":
-          const openai = createOpenAI({ apiKey });
-          aiModel = openai(finalModel, {
-            structuredOutputs: true,
-            ...(reasoningConfig.enabled && reasoningConfig.config
-              ? {
-                  reasoningEffort: reasoningConfig.config.reasoningEffort as "high" | "medium" | "low"
-                }
-              : {})
-          });
-          break;
-
-        case "Anthropic":
-          const anthropic = createAnthropic({ apiKey });
-          aiModel = anthropic(finalModel, {
-            ...(reasoningConfig.enabled ? reasoningConfig.config : {})
-          });
-          break;
-
-        case "Google":
-          const google = createGoogleGenerativeAI({ apiKey });
-          aiModel = google(finalModel);
-          break;
-
-        default:
-          throw new APIError(`Provider "${modelProvider}" is not supported`, 400, "PROVIDER_NOT_SUPPORTED");
-      }
-    } catch (error) {
+    if (!aiProvider) {
       throw new APIError(
-        `Failed to initialize AI provider: ${error instanceof Error ? error.message : "Unknown error"}`,
-        500,
-        "PROVIDER_INIT_ERROR"
+        `Provider "${modelConfig.provider || provider}" is not supported`,
+        400,
+        "PROVIDER_NOT_SUPPORTED"
       );
     }
 
-    const coreMessages = convertToCoreMessages(messages);
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
-
+    // Build system message
     const systemMessageContent = [
       "You are a helpful AI assistant with access to the user's profile and memories.",
       `User Name: ${session?.user?.name}`,
@@ -186,47 +153,64 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .join("\n\n");
 
-    const systemMessage = convertToCoreMessages([{ role: "system", content: systemMessageContent }])[0];
+    // Prepare messages for your provider
+    const processedMessages = [{ role: "system" as const, content: systemMessageContent }, ...messages];
 
-    const processedMessages: CoreMessage[] = [
-      systemMessage,
-      ...coreMessages,
-      {
-        role: "user",
-        content: dbAttachments.map((attachment) => ({
-          type: "image",
-          image: new URL(attachment.url)
-        }))
-      }
-    ];
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+
+    const chatInput: ChatInput = {
+      messages: processedMessages,
+      stream: true,
+      temperature: 0.7,
+      maxTokens: 4000,
+      model
+    };
 
     try {
-      const result = streamText({
-        model: aiModel,
-        messages: processedMessages,
-        temperature: 0.7,
-        maxTokens: 4000,
-        onFinish: async ({ text }) => {
-          if (chatId && text?.trim()) {
+      let fullResponse = "";
+      const result = await aiProvider.chat(chatInput, {
+        onText: (text: string) => {
+          fullResponse += text;
+        },
+        onStop: async () => {
+          if (chatId && fullResponse.trim()) {
             try {
               await Promise.all([
-                saveAssistantMessage(chatId, text.trim()),
+                saveAssistantMessage(chatId, fullResponse.trim()),
                 (async () => {
                   try {
-                    await analyzeAndStoreMemories(userId, lastUserMessage, text.trim(), apiKey, finalModel);
+                    await analyzeAndStoreMemories(userId, lastUserMessage, fullResponse.trim(), apiKey, model);
                   } catch (error) {
                     console.error("[Chat API] Error in global memory analysis:", error);
                   }
                 })()
               ]);
             } catch (error) {
-              console.error("Error in onFinish:", error);
+              console.error("Error in onStop:", error);
             }
           }
         }
       });
 
-      return result.toDataStreamResponse();
+      // Return the stream response
+      if (result instanceof ReadableStream) {
+        return new Response(result, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive"
+          }
+        });
+      }
+
+      // Handle non-streaming response
+      if (typeof result === "object" && "content" in result) {
+        return new Response(JSON.stringify(result), {
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return result as Response;
     } catch (error) {
       console.error("Chat API Error:", error);
       throw new APIError("Failed to generate response", 500, "GENERATION_ERROR");
