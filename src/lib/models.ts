@@ -492,7 +492,7 @@ const providerConfigs = [
     name: "Google",
     description: "Gemini models for multimodal AI",
     icon: FaGoogle,
-    color: "bg-blue-500/90 dark:bg-blue-600/80",
+    color: "bg-purple-500/90 dark:bg-purple-600/80",
     link: "https://aistudio.google.com/app/apikey"
   }
 ];

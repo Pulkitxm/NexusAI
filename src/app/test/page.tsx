@@ -32,7 +32,7 @@ export default function Home() {
     <main className="min-h-screen p-8">
       <div className="mx-auto max-w-md space-y-6">
         <div className="flex flex-col items-center gap-4">
-          <label className="cursor-pointer rounded-lg bg-blue-500 px-6 py-3 text-white transition-colors hover:bg-blue-600">
+          <label className="cursor-pointer rounded-lg bg-purple-500 px-6 py-3 text-white transition-colors hover:bg-purple-600">
             <span>Upload Image</span>
             <input type="file" accept="image/*" className="hidden" multiple onChange={handleFileSelect} />
           </label>
@@ -41,7 +41,7 @@ export default function Home() {
             <div className="w-full">
               <div className="h-2 rounded-full bg-gray-200">
                 <div
-                  className="h-2 rounded-full bg-blue-500 transition-all duration-300"
+                  className="h-2 rounded-full bg-purple-500 transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>

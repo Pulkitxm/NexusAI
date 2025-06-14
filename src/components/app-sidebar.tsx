@@ -133,7 +133,7 @@ export function AppSidebar() {
         <SidebarHeader className="border-b border-border/50 p-3">
           <div className="mb-3 flex items-center justify-between">
             <Link href={"/"} className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-purple-600">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-purple-500 to-purple-600">
                 <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -143,7 +143,7 @@ export function AppSidebar() {
                   />
                 </svg>
               </div>
-              <h2 className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
+              <h2 className="bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
                 Nexus AI
               </h2>
             </Link>
@@ -154,7 +154,7 @@ export function AppSidebar() {
           </div>
 
           <Link href="/new">
-            <Button className="mb-3 h-9 w-full border-0 bg-gradient-to-r from-blue-500 to-purple-600 text-sm text-white hover:from-blue-600 hover:to-purple-700">
+            <Button className="mb-3 h-9 w-full border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white hover:from-purple-600 hover:to-purple-700">
               <Plus className="mr-2 h-4 w-4" />
               New Chat
             </Button>
@@ -174,7 +174,13 @@ export function AppSidebar() {
             <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-800/50 dark:bg-amber-950/50">
               <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
                 <Key className="h-3.5 w-3.5" />
-                <span>Add API keys to start chatting</span>
+                <span>
+                  Please{" "}
+                  <span className="cursor-pointer underline" onClick={() => openModal()}>
+                    Add API keys
+                  </span>{" "}
+                  to start chatting
+                </span>
               </div>
             </div>
           )}

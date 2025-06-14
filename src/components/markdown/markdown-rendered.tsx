@@ -75,7 +75,7 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
           ),
           blockquote: ({ children, ...props }) => (
             <blockquote
-              className="mb-4 rounded-r-lg border-l-4 border-blue-500 bg-slate-50 py-2 pl-4 italic text-slate-600 dark:border-blue-400 dark:bg-slate-800/50 dark:text-slate-400"
+              className="mb-4 rounded-r-lg border-l-4 border-purple-500 bg-slate-50 py-2 pl-4 italic text-slate-600 dark:border-purple-400 dark:bg-slate-800/50 dark:text-slate-400"
               {...props}
             >
               {children}
@@ -84,7 +84,7 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
           a: ({ children, href, ...props }) => (
             <a
               href={href}
-              className="text-blue-600 underline underline-offset-2 transition-all hover:text-blue-800 hover:underline-offset-4 dark:text-blue-400 dark:hover:text-blue-300"
+              className="text-purple-600 underline underline-offset-2 transition-all hover:text-purple-800 hover:underline-offset-4 dark:text-purple-400 dark:hover:text-purple-300"
               target="_blank"
               rel="noopener noreferrer"
               {...props}

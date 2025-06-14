@@ -146,7 +146,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ attachment, isUser }) => {
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
             isUser
-              ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+              ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
               : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
           )}
         >
@@ -256,7 +256,7 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
           className={cn(
             "relative rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200",
             isUser
-              ? "rounded-br-md border-blue-400/20 bg-gradient-to-br from-blue-500 to-purple-600 text-white"
+              ? "rounded-br-md border-purple-400/20 bg-gradient-to-br from-purple-500 to-purple-600 text-white"
               : "rounded-bl-md border-slate-200/60 bg-white/90 text-slate-800 dark:border-slate-700/60 dark:bg-slate-800/90 dark:text-slate-200"
           )}
         >
@@ -331,7 +331,7 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
             onClick={speakMessage}
             className="h-8 rounded-lg border border-slate-200 bg-white/90 px-3 text-xs shadow-md backdrop-blur-sm hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/90"
           >
-            <Volume2 className={cn("h-3 w-3", isSpeaking && "text-blue-500")} />
+            <Volume2 className={cn("h-3 w-3", isSpeaking && "text-purple-500")} />
           </Button>
           <Button
             variant="ghost"

@@ -16,7 +16,7 @@ interface ModelContextType {
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
 
 export function ModelProvider({ children }: { children: React.ReactNode }) {
-  const { keys } = useKeys();
+  const { keys, hasAnyKeys } = useKeys();
   const [selectedModel, setSelectedModel] = useState("");
   const availableModels = getAvailableModels(keys);
 
@@ -43,12 +43,16 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
     [availableModels, selectedModel, changeModel]
   );
 
+  useEffect(() => {
+    if (!hasAnyKeys) setSelectedModel("");
+  }, [hasAnyKeys]);
+
   return (
     <ModelContext.Provider
       value={{
         selectedModel,
         changeModel,
-        ModelSwitcher: Object.keys(keys).length > 0 ? ModelSwitcherComponent : null,
+        ModelSwitcher: ModelSwitcherComponent,
         setSelectedModel
       }}
     >

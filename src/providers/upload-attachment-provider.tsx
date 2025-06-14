@@ -264,7 +264,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       const files = Array.from(e.dataTransfer?.files || []); // convert FileList :contentReference[oaicite:5]{index=5}
       const allowed = files.filter((file) => {
         const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-        // Allow code files and configuration files
+        // Allow code files, configuration files, images and PDFs
         const isCodeFile = codeExtensions.includes(extension);
         const isConfigFile = [
           ".js",
@@ -278,18 +278,20 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         ].includes(extension);
         const isTextFile =
           file.type.startsWith("text/") || file.type === "application/json" || file.type === "application/javascript";
-        return isCodeFile || isConfigFile || isTextFile;
+        const isImage = file.type.startsWith("image/") && (file.type === "image/jpeg" || file.type === "image/png");
+        const isPDF = file.type === "application/pdf";
+        return isCodeFile || isConfigFile || isTextFile || isImage || isPDF;
       });
 
       if (allowed.length === 0) {
         return toast({
           variant: "destructive",
-          title: "No code files found",
-          description: "Please drop code files like .js, .ts, .py, etc."
+          title: "No valid files found",
+          description: "Please drop code files, images (JPG/PNG), or PDFs."
         });
       }
 
-      // Process text files
+      // Process text files and keep images/PDFs as is
       const processedFiles = await Promise.all(
         allowed.map(async (file) => {
           if (
