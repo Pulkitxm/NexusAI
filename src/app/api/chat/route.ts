@@ -1,7 +1,7 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, convertToCoreMessages } from "ai";
+import { streamText, convertToCoreMessages, CoreMessage } from "ai";
 import { cache } from "react";
 
 import { saveAssistantMessage } from "@/actions/chat";
@@ -90,11 +90,23 @@ export async function POST(req: Request) {
       throw new APIError("User not authenticated", 401, "UNAUTHORIZED");
     }
 
-    const { messages, model, provider, apiKey, webSearch, chatId, reasoning } = await req.json();
+    const { messages, model, provider, apiKey, webSearch, chatId, reasoning, attachments } = await req.json();
 
     if (!messages?.length || !model || !apiKey) {
       throw new APIError("Missing required fields", 400, "MISSING_FIELDS");
     }
+
+    const dbAttachments = await prisma.attachment.findMany({
+      where: {
+        id: {
+          in: attachments
+        }
+      },
+      select: {
+        url: true,
+        name: true
+      }
+    });
 
     const { userSettings, globalMemories } = await getUserData(userId);
 
@@ -176,7 +188,17 @@ export async function POST(req: Request) {
 
     const systemMessage = convertToCoreMessages([{ role: "system", content: systemMessageContent }])[0];
 
-    const processedMessages = [systemMessage, ...coreMessages];
+    const processedMessages: CoreMessage[] = [
+      systemMessage,
+      ...coreMessages,
+      {
+        role: "user",
+        content: dbAttachments.map((attachment) => ({
+          type: "image",
+          image: new URL(attachment.url)
+        }))
+      }
+    ];
 
     try {
       const result = streamText({
@@ -188,7 +210,7 @@ export async function POST(req: Request) {
           if (chatId && text?.trim()) {
             try {
               await Promise.all([
-                saveAssistantMessage(chatId, text.trim()),
+                saveAssistantMessage(chatId, text.trim(), attachments),
                 (async () => {
                   try {
                     await analyzeAndStoreMemories(userId, lastUserMessage, text.trim(), apiKey, finalModel);

@@ -32,8 +32,8 @@ export function FileUploadCards({ className }: FileUploadCardsProps) {
     return `${truncatedName}...${extension ? `.${extension}` : ""}`;
   };
 
-  const handleDelete = async (fileUrl: string) => {
-    await deleteAttachment(fileUrl);
+  const handleDelete = async (fileId: string) => {
+    await deleteAttachment(fileId);
   };
 
   if (!attachments?.length) return null;
@@ -69,7 +69,7 @@ export function FileUploadCards({ className }: FileUploadCardsProps) {
                 <Icon className="h-4 w-4 flex-shrink-0" />
               </div>
 
-              <div className="z-10 min-w-0 flex-1">
+              <div className="min-w-0 flex-1">
                 <div
                   className={cn(
                     "truncate text-sm font-medium",
@@ -104,7 +104,7 @@ export function FileUploadCards({ className }: FileUploadCardsProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleDelete(attachment.url);
+                  handleDelete(attachment.id);
                 }}
                 aria-label={`Remove ${attachment.fileName}`}
               >

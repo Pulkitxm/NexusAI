@@ -244,7 +244,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
         </div>
       )}
 
-      {/* File Upload Cards - positioned above the input */}
       <FileUploadCards />
 
       <div className="mx-auto max-w-4xl p-4 pt-2">
@@ -340,7 +339,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                     </div>
                   )}
 
-                  {/* Existing controls */}
                   <div className="flex items-center gap-2">
                     <div className="group relative">
                       <button

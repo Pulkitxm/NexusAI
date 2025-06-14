@@ -19,7 +19,7 @@ import { ScrollToBottomButton } from "./ScrollToBottom";
 
 export default function ChatUI({ id }: { id?: string }) {
   const { data: session } = useSession();
-  const { messages, isLoading, input, setInput, inputRef } = useChat();
+  const { messages, isLoading, input, setInput, inputRef, attachments } = useChat();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const { scrollAreaRef, showScrollButton, isAutoScrollEnabled, scrollToBottom, forceScrollToBottom } = useAutoScroll();
   const prevMessagesLength = useRef(messages.length);
@@ -77,12 +77,13 @@ export default function ChatUI({ id }: { id?: string }) {
   }, [scrollToBottom]);
 
   const hide = input || id;
+  const isChatEmpty = messages.length === 0 && !isLoading && attachments.length === 0;
 
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <ScrollArea ref={scrollAreaRef} className="mb-20 flex-1 px-4">
         <div className="mx-auto max-w-4xl py-6">
-          {messages.length === 0 && !isLoading ? (
+          {isChatEmpty ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, display: "none", pointerEvents: "none" }}

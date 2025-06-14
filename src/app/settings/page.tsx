@@ -85,6 +85,9 @@ export default async function SettingsPage() {
           <TabsTrigger value="memory" className="w-full justify-start px-4 py-2 text-base">
             Memory
           </TabsTrigger>
+          <TabsTrigger value="attachments" className="w-full justify-start px-4 py-2 text-base">
+            Attachments
+          </TabsTrigger>
         </TabsList>
 
         <div className="md:col-span-3">
@@ -113,6 +116,10 @@ export default async function SettingsPage() {
             >
               <SettingsForm initialData={settings} tab="memory" />
             </SettingsCard>
+          </TabsContent>
+
+          <TabsContent value="attachments">
+            <SettingsForm initialData={settings} tab="attachments" />
           </TabsContent>
         </div>
       </Tabs>

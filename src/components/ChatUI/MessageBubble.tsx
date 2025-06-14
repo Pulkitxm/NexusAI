@@ -1,22 +1,51 @@
 "use client";
 
-import { Copy, Check, Volume2 } from "lucide-react";
+import { Prisma } from "@prisma/client";
+import { Copy, Check, Volume2, FileText, Image, FileIcon } from "lucide-react";
+import Link from "next/link";
 import React, { useState, useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 
 import { MemoizedMarkdown } from "../markdown/markdown-rendered";
 
 import { UserMessage } from "./UserMessage";
 
 interface MessageBubbleProps {
-  message: { role: string; content: string; id: string };
+  message: Prisma.MessageGetPayload<{
+    select: {
+      id: true;
+      role: true;
+      content: true;
+      createdAt: true;
+      attachments: {
+        select: {
+          id: true;
+          url: true;
+          name: true;
+          size: true;
+        };
+      };
+    };
+  }>;
   isStreaming: boolean;
 }
 
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension || "")) {
+    return Image;
+  }
+  if (["pdf", "doc", "docx", "txt", "md"].includes(extension || "")) {
+    return FileText;
+  }
+  return FileIcon;
+};
+
 export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubbleProps) => {
-  const isUser = message.role === "user";
+  const isUser = message.role.toLowerCase() === "user";
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -54,7 +83,7 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
         isUser ? "justify-end" : "justify-start"
       )}
     >
-      <div className={cn("min-w-0 max-w-[85%]", isUser ? "items-end" : "items-start")}>
+      <div className={cn("flex min-w-0 max-w-[85%] flex-col", isUser ? "items-end" : "items-start")}>
         <div
           className={cn(
             "relative rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200",
@@ -82,6 +111,44 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
             )}
           </div>
         </div>
+
+        {message.attachments && message.attachments.length > 0 && (
+          <div className={cn("mt-2 flex w-full flex-col gap-2", isUser ? "items-end" : "items-start")}>
+            {message.attachments.map((attachment) => {
+              const FileIconComponent = getFileIcon(attachment.name);
+              return (
+                <Link
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  key={attachment.id}
+                  className={cn(
+                    "flex max-w-xs cursor-pointer items-center gap-3 rounded-lg border border-slate-200/60 bg-white/80 p-3 shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-white/90 hover:shadow-md",
+                    "dark:border-slate-700/60 dark:bg-slate-800/80 dark:hover:bg-slate-800/90",
+                    isUser ? "bg-white/90 dark:bg-slate-700/90" : ""
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-lg",
+                      isUser
+                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                    )}
+                  >
+                    <FileIconComponent className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {attachment.name}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{formatBytes(attachment.size)}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         <div
           className={cn(

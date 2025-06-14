@@ -1,7 +1,6 @@
 import { createUploadthing } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-import { addFile } from "@/actions/file";
 import { auth } from "@/lib/authOptions";
 
 import type { FileRouter } from "uploadthing/next";
@@ -25,13 +24,8 @@ export const uploadRouter = {
 
       return { userId: user.id };
     })
-    .onUploadComplete(async ({ file }) => {
-      await addFile({
-        fileName: file.name,
-        uploaded: true,
-        uploadProgress: 100,
-        url: file.url
-      });
+    .onUploadComplete(() => {
+      console.log("Upload complete");
     })
 } satisfies FileRouter;
 

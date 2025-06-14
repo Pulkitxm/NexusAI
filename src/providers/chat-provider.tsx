@@ -29,6 +29,7 @@ import { Attachment, validateAttachment } from "@/types/chat";
 
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
+import { useSettingsModal } from "./settings-modal-provider";
 
 import type { UIMessage } from "ai";
 
@@ -79,14 +80,15 @@ export function ChatProvider({
   initialChatId?: string | null;
 }) {
   const { selectedModel } = useModel();
-  const { keys } = useKeys();
+  const { keys, hasAnyKeys } = useKeys();
   const { toast } = useToast();
+  const { openModal } = useSettingsModal();
   const [error, setError] = useState<Error | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean | null>(null);
   const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
   const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
@@ -130,7 +132,8 @@ export function ChatProvider({
       chatId,
       userId: session?.user?.id,
       webSearch,
-      reasoning
+      reasoning,
+      attachments: attachments.map((attachment) => attachment.id)
     },
     initialInput: getStoredValue("input", ""),
     initialMessages,
@@ -184,6 +187,23 @@ export function ChatProvider({
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
+
+      if (!hasAnyKeys) {
+        toast({
+          variant: "destructive",
+          title: "No API Keys",
+          description: (
+            <>
+              Please{" "}
+              <span className="cursor-pointer font-bold underline" onClick={openModal}>
+                add an API key
+              </span>{" "}
+              to continue chatting.
+            </>
+          )
+        });
+        return;
+      }
 
       if (!session && messageCount >= MESSAGE_LIMIT) {
         toast({
@@ -250,9 +270,10 @@ export function ChatProvider({
 
       debugLog("Submitting to AI");
 
+      setAttachments([]);
       originalHandleSubmit(e);
     },
-    [session, messageCount, originalHandleSubmit, toast, chatId, input]
+    [session, messageCount, originalHandleSubmit, toast, chatId, input, hasAnyKeys, openModal]
   );
 
   const clearChat = useCallback(() => {
@@ -315,7 +336,7 @@ export function ChatProvider({
     setWebSearch,
     reasoning,
     setReasoning,
-    attachments,
+    attachments: status === "authenticated" ? attachments : [],
     setAttachments: (value: Attachment[] | ((prev: Attachment[]) => Attachment[])) => {
       if (typeof value === "function") {
         setAttachments((prev) => {

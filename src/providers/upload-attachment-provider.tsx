@@ -1,10 +1,11 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { createContext, useContext, useState, ReactNode, useEffect, useRef, useCallback } from "react";
 
-import { deleteFile } from "@/actions/file";
+import { addFiles, deleteFile } from "@/actions/file";
+import { useToast } from "@/hooks/use-toast";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { useChat } from "@/providers/chat-provider";
 import { Attachment } from "@/types/chat";
@@ -24,33 +25,55 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
   const { attachments, setAttachments } = useChat();
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const { toast } = useToast();
   const { startUpload } = useUploadThing("attachment", {
     onUploadProgress: (progress) => {
       setAttachments((prev: Attachment[]) =>
         prev.map((attachment) => (!attachment.uploaded ? { ...attachment, uploadProgress: progress } : attachment))
       );
     },
-    onClientUploadComplete: (res) => {
+    onClientUploadComplete: async (res) => {
       if (!res) return;
 
-      console.log(res);
+      setAttachments((prev: Attachment[]) =>
+        prev.map((attachment) => {
+          const matchingFile = res.find((file) => file.name === attachment.fileName);
+          return {
+            ...attachment,
+            uploaded: false,
+            uploadProgress: 0,
+            uploadThingKey: matchingFile?.key || "",
+            url: matchingFile?.url || ""
+          };
+        })
+      );
+
+      const dbFiles = await addFiles(
+        res.map((file) => ({
+          fileName: file.name,
+          url: file.url,
+          size: file.size,
+          uploaded: true,
+          uploadProgress: 100,
+          id: file.fileHash,
+          uploadThingKey: file.key
+        }))
+      );
+
+      console.log("dbFiles:", dbFiles);
 
       setAttachments((prev: Attachment[]) => {
-        const updatedAttachments = prev.map((attachment) => {
-          const uploadedFile = res.find((file) => file.name === attachment.fileName);
-          if (uploadedFile) {
-            return {
-              ...attachment,
-              uploaded: true,
-              url: uploadedFile.url,
-              uploadProgress: 100
-            };
-          }
-
-          return attachment;
+        console.log(
+          "Updated attachments:",
+          prev.map((attachment) => {
+            const dbFile = dbFiles.find((file) => file.uploadThingKey === attachment.uploadThingKey);
+            return dbFile ? { ...attachment, id: dbFile.id, uploaded: true, uploadProgress: 100 } : attachment;
+          })
+        );
+        return prev.map((attachment) => {
+          const dbFile = dbFiles.find((file) => file.uploadThingKey === attachment.uploadThingKey);
+          return dbFile ? { ...attachment, id: dbFile.id, uploaded: true, uploadProgress: 100 } : attachment;
         });
-        return updatedAttachments;
       });
     },
     onUploadError: (error) => {
@@ -67,7 +90,10 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         fileName: file.name,
         url: "",
         uploaded: false,
-        uploadProgress: 0
+        uploadProgress: 0,
+        id: "",
+        size: file.size,
+        uploadThingKey: ""
       }));
 
       setAttachments((prev: Attachment[]) => [...prev, ...newAttachments]);
@@ -78,19 +104,19 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   );
 
   const deleteAttachment = useCallback(
-    async (fileUrl: string) => {
-      setDeletingFiles((prev) => [...prev, fileUrl]);
+    async (fileId: string) => {
+      setDeletingFiles((prev) => [...prev, fileId]);
 
       try {
-        const fileName = attachments.find((attachment) => attachment.url === fileUrl)?.fileName;
-        if (!fileName) return;
+        const file = attachments.find((attachment) => attachment.id === fileId);
+        if (!file) return;
 
-        await deleteFile(fileName, fileUrl);
-        setAttachments((prev) => prev.filter((attachment) => attachment.url !== fileUrl));
+        await deleteFile(file.id);
+        setAttachments((prev) => prev.filter((attachment) => attachment.url !== fileId));
       } catch (err) {
         console.error("Delete error:", err);
       } finally {
-        setDeletingFiles((prev) => prev.filter((name) => name !== fileUrl));
+        setDeletingFiles((prev) => prev.filter((name) => name !== fileId));
       }
     },
     [attachments, setAttachments]
@@ -130,7 +156,19 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       setOpen(false);
 
       if (status !== "authenticated") {
-        return;
+        return toast({
+          variant: "destructive",
+          title: "You must be logged in to upload files",
+          description: (
+            <>
+              Please{" "}
+              <span className="cursor-pointer font-bold underline" onClick={() => signIn("google")}>
+                sign in
+              </span>{" "}
+              to continue chatting.
+            </>
+          )
+        });
       }
 
       const files = Array.from(e.dataTransfer?.files ?? []);
@@ -152,7 +190,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("drop", handleDrop);
     };
-  }, [handleFiles, status]);
+  }, [handleFiles, status, toast]);
 
   const handleClose = () => {
     setOpen(false);
@@ -166,22 +204,24 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   return (
     <UploadAttachmentContext.Provider value={{ openFileDialog, deleteAttachment, deletingFiles }}>
       {children}
-      {open && status === "authenticated" && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-purple-600 bg-opacity-90 transition-opacity duration-300 ${
-            isDragOver ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          aria-hidden={!open}
-          onClick={handleClose}
-        >
-          <div className="text-center text-white" onClick={(e) => e.stopPropagation()}>
-            <Upload className="mx-auto mb-8 h-24 w-24 animate-bounce" aria-hidden="true" />
-            <h2 className="mb-4 text-4xl font-bold">{isDragOver ? "Drop your files here" : "Drag files anywhere"}</h2>
-            <p className="mb-6 text-xl">
-              {isDragOver ? "Release anywhere to upload your files" : "Or click to browse files"}
-            </p>
+      {open && (
+        <>
+          <div
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-purple-600 bg-opacity-90 transition-opacity duration-300 ${
+              isDragOver ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+            aria-hidden={!open}
+            onClick={handleClose}
+          >
+            <div className="text-center text-white" onClick={(e) => e.stopPropagation()}>
+              <Upload className="mx-auto mb-8 h-24 w-24 animate-bounce" aria-hidden="true" />
+              <h2 className="mb-4 text-4xl font-bold">{isDragOver ? "Drop your files here" : "Drag files anywhere"}</h2>
+              <p className="mb-6 text-xl">
+                {isDragOver ? "Release anywhere to upload your files" : "Or click to browse files"}
+              </p>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </UploadAttachmentContext.Provider>
   );

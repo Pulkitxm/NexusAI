@@ -50,13 +50,33 @@ export async function saveUserMessage(chatId: string, content: string, tempId?: 
   }
 }
 
-export async function saveAssistantMessage(chatId: string, content: string) {
+export async function saveAssistantMessage(chatId: string, content: string, attachments: string[]) {
   const session = await auth();
 
   try {
     const chatExists = await prisma.chat.findUnique({
-      where: { id: chatId, isDeleted: false }
+      where: { id: chatId, isDeleted: false },
+      select: {
+        messages: {
+          select: {
+            id: true
+          },
+          take: 1,
+          orderBy: {
+            createdAt: "desc"
+          }
+        }
+      }
     });
+
+    const lastMessageId = chatExists?.messages[0]?.id;
+
+    if (lastMessageId) {
+      await prisma.message.update({
+        where: { id: lastMessageId },
+        data: { attachments: { connect: attachments.map((attachment) => ({ id: attachment })) } }
+      });
+    }
 
     if (!chatExists) {
       console.error("Chat not found:", chatId);
@@ -74,7 +94,12 @@ export async function saveAssistantMessage(chatId: string, content: string) {
 
     await prisma.chat.update({
       where: { id: chatId },
-      data: { updatedAt: new Date() }
+      data: {
+        updatedAt: new Date(),
+        attachments: {
+          connect: attachments.map((attachment) => ({ id: attachment }))
+        }
+      }
     });
 
     revalidatePath(`/${chatId}`);
@@ -101,7 +126,15 @@ export async function getChatMessages(chatId: string) {
         id: true,
         role: true,
         content: true,
-        createdAt: true
+        createdAt: true,
+        attachments: {
+          select: {
+            id: true,
+            url: true,
+            name: true,
+            size: true
+          }
+        }
       }
     });
 
