@@ -1,6 +1,7 @@
 import { Provider } from "@/types/models";
 
 import { AnthropicProvider } from "./anthropic";
+import { GoogleProvider } from "./google";
 import { OpenAIProvider } from "./openai";
 
 import type { BaseAIProvider } from "./base";
@@ -18,6 +19,8 @@ export const getAIProvider = ({
     return new OpenAIProvider({ apiKey, isOpenRouter: openRouter });
   } else if (provider === Provider.Anthropic) {
     return new AnthropicProvider({ apiKey, isOpenRouter: openRouter });
+  } else if (provider === Provider.Google) {
+    return new GoogleProvider({ apiKey });
   }
   return undefined;
 };

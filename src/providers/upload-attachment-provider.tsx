@@ -60,7 +60,6 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
     onClientUploadComplete: async (res) => {
       if (!res) return;
 
-      // Update upload states
       setUploadStates((prev) => {
         const newStates = { ...prev };
         res.forEach((file) => {
@@ -123,7 +122,6 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
     onUploadError: (error) => {
       console.error("Upload error:", error);
 
-      // Update upload states with error
       setUploadStates((prev) => {
         const newStates = { ...prev };
         Object.keys(newStates).forEach((key) => {
@@ -158,19 +156,17 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         return;
       }
 
-      // Initialize upload states for new files
       const newAttachments: Attachment[] = files.map((file) => ({
         file,
         name: file.name,
         url: "",
         uploaded: false,
         uploadProgress: 0,
-        id: crypto.randomUUID(), // Generate unique ID for each attachment
+        id: crypto.randomUUID(),
         size: file.size,
         uploadThingKey: ""
       }));
 
-      // Initialize upload states with the new IDs
       const newUploadStates: Record<string, UploadState> = {};
       newAttachments.forEach((attachment) => {
         newUploadStates[attachment.id] = {
@@ -207,7 +203,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
 
         await deleteFile(file.id);
         setAttachments((prev) => prev.filter((attachment) => attachment.id !== fileId));
-        // Clean up upload state
+
         setUploadStates((prev) => {
           const newStates = { ...prev };
           delete newStates[fileId];
@@ -261,10 +257,10 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         });
       }
 
-      const files = Array.from(e.dataTransfer?.files || []); // convert FileList :contentReference[oaicite:5]{index=5}
+      const files = Array.from(e.dataTransfer?.files || []);
       const allowed = files.filter((file) => {
         const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-        // Allow code files, configuration files, images and PDFs
+
         const isCodeFile = codeExtensions.includes(extension);
         const isConfigFile = [
           ".js",
@@ -291,7 +287,6 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         });
       }
 
-      // Process text files and keep images/PDFs as is
       const processedFiles = await Promise.all(
         allowed.map(async (file) => {
           if (

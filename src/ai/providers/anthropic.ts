@@ -4,7 +4,7 @@ import { OPENROUTER_BASE_URL } from "@/lib/data";
 
 import { BaseAIProvider } from "./base";
 
-import type { ChatInput, ChatResponse, StreamOptions } from "../types";
+import type { ChatInput, ChatResponse, StreamOptions } from "../../types/models";
 
 export class AnthropicProvider extends BaseAIProvider {
   protected apiKey: string;
@@ -20,10 +20,9 @@ export class AnthropicProvider extends BaseAIProvider {
     const { messages, stream, temperature = 0.7, maxTokens, model = "claude-3-opus-20240229" } = input;
 
     try {
-      // Convert messages to Anthropic format
       const anthropicMessages = messages.map((msg) => ({
         role: msg.role === "system" ? "user" : msg.role,
-        content: msg.content
+        content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
       }));
 
       if (stream) {
@@ -49,6 +48,7 @@ export class AnthropicProvider extends BaseAIProvider {
         id: response.id,
         content: response.content[0].type === "text" ? response.content[0].text : "",
         role: "assistant",
+        success: true,
         usage: {
           promptTokens: response.usage?.input_tokens || 0,
           completionTokens: response.usage?.output_tokens || 0,

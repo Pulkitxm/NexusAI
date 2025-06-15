@@ -7,33 +7,188 @@ import { prisma } from "@/lib/db";
 import { analyzeAndStoreMemories } from "@/lib/memoryAnalyzer";
 import { AI_MODELS } from "@/lib/models";
 
-import type { ChatInput } from "@/ai/types";
+import type {
+  ChatInput,
+  ChatMessage,
+  ChatRequestBody,
+  ProcessedAttachment,
+  UserData,
+  APIErrorResponse
+} from "@/types/models";
+import type { NextRequest } from "next/server";
 
 export const maxDuration = 30;
 
-const getUserData = cache(async (userId: string) => {
-  const [userSettings, globalMemories] = await Promise.all([
-    prisma.userSettings.findUnique({
-      where: { userId },
-      select: {
-        jobTitle: true,
-        occupation: true,
-        bio: true,
-        location: true,
-        company: true,
-        website: true
-      }
-    }),
-    prisma.globalMemory.findMany({
-      where: { userId, isDeleted: false },
-      select: { content: true, category: true, importance: true },
-      orderBy: [{ importance: "desc" }, { createdAt: "desc" }],
-      take: 8
-    })
-  ]);
+const getUserData = cache(async (userId: string): Promise<UserData> => {
+  try {
+    const [userSettings, globalMemories] = await Promise.all([
+      prisma.userSettings.findUnique({
+        where: { userId },
+        select: {
+          jobTitle: true,
+          occupation: true,
+          bio: true,
+          location: true,
+          company: true,
+          website: true
+        }
+      }),
+      prisma.globalMemory.findMany({
+        where: { userId, isDeleted: false },
+        select: { content: true, category: true, importance: true },
+        orderBy: [{ importance: "desc" }, { createdAt: "desc" }],
+        take: 8
+      })
+    ]);
 
-  return { userSettings, globalMemories };
+    return { userSettings, globalMemories };
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return { userSettings: null, globalMemories: [] };
+  }
 });
+
+const processAttachments = async (attachmentIds: string[]): Promise<ProcessedAttachment[]> => {
+  if (!attachmentIds?.length) return [];
+
+  try {
+    const dbAttachments = await prisma.attachment.findMany({
+      where: {
+        id: { in: attachmentIds },
+        isDeleted: false
+      },
+      select: {
+        id: true,
+        url: true,
+        name: true,
+        size: true,
+        uploadThingKey: true
+      }
+    });
+
+    const processedAttachments: ProcessedAttachment[] = [];
+
+    for (const attachment of dbAttachments) {
+      const processed: ProcessedAttachment = {
+        id: attachment.id,
+        name: attachment.name,
+        url: attachment.url,
+        type: attachment.name.split(".").pop()?.toLowerCase() || "",
+        size: attachment.size
+      };
+
+      if (isTextFile(processed.type)) {
+        try {
+          const response = await fetch(attachment.url);
+          if (response.ok) {
+            processed.content = await response.text();
+          }
+        } catch (error) {
+          console.error(`Error fetching text content for ${attachment.name}:`, error);
+        }
+      }
+
+      processedAttachments.push(processed);
+    }
+
+    return processedAttachments;
+  } catch (error) {
+    console.error("Error processing attachments:", error);
+    return [];
+  }
+};
+
+const isImageFile = (mimeType: string): boolean => {
+  return mimeType.startsWith("image/");
+};
+
+const isTextFile = (mimeType: string): boolean => {
+  return (
+    mimeType.startsWith("text/") ||
+    mimeType === "application/json" ||
+    mimeType === "application/javascript" ||
+    mimeType === "application/typescript" ||
+    mimeType === "application/xml" ||
+    mimeType === "application/sql" ||
+    mimeType === "text/csv" ||
+    mimeType === "text/markdown"
+  );
+};
+
+const isPDFFile = (mimeType: string): boolean => {
+  return mimeType === "application/pdf";
+};
+
+const isDocumentFile = (mimeType: string): boolean => {
+  return (
+    mimeType.includes("document") ||
+    mimeType.includes("spreadsheet") ||
+    mimeType.includes("presentation") ||
+    mimeType === "application/msword" ||
+    mimeType === "application/vnd.ms-excel" ||
+    mimeType === "application/vnd.ms-powerpoint"
+  );
+};
+
+const buildMessagesWithAttachments = (
+  messages: { role: string; content: string }[],
+  attachments: ProcessedAttachment[],
+  systemMessage: string
+): ChatMessage[] => {
+  const processedMessages: ChatMessage[] = [{ role: "system", content: systemMessage }];
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    const isLastUserMessage = i === messages.length - 1 && message.role === "user";
+
+    if (isLastUserMessage && attachments.length > 0) {
+      const contentParts: {
+        type: "text" | "image" | "file";
+        text?: string;
+        image_url?: { url: string };
+        file_url?: string;
+        mime_type?: string;
+      }[] = [{ type: "text", text: message.content }];
+
+      for (const attachment of attachments) {
+        if (isImageFile(attachment.type)) {
+          contentParts.push({
+            type: "image",
+            image_url: { url: attachment.url }
+          });
+        } else if (isTextFile(attachment.type) && attachment.content) {
+          contentParts.push({
+            type: "text",
+            text: `\n\n--- Content of ${attachment.name} ---\n${attachment.content}\n--- End of ${attachment.name} ---`
+          });
+        } else if (isPDFFile(attachment.type) || isDocumentFile(attachment.type)) {
+          contentParts.push({
+            type: "file",
+            file_url: attachment.url,
+            mime_type: attachment.type
+          });
+        } else {
+          contentParts.push({
+            type: "text",
+            text: `\n\n[Attached file: ${attachment.name} (${attachment.type.toUpperCase()}, ${Math.round(attachment.size / 1024)}KB)]`
+          });
+        }
+      }
+
+      processedMessages.push({
+        role: message.role as "user" | "assistant",
+        content: contentParts
+      });
+    } else {
+      processedMessages.push({
+        role: message.role as "system" | "user" | "assistant",
+        content: message.content
+      });
+    }
+  }
+
+  return processedMessages;
+};
 
 class APIError extends Error {
   constructor(
@@ -47,30 +202,33 @@ class APIError extends Error {
   }
 }
 
-function formatErrorResponse(error: unknown) {
+function formatErrorResponse(error: unknown): APIErrorResponse {
   if (error instanceof APIError) {
     return {
+      success: false,
       error: {
         message: error.message,
         code: error.code || "API_ERROR",
         status: error.statusCode,
-        details: error.details
+        details: process.env.NODE_ENV === "development" ? error.details : undefined
       }
     };
   }
 
   if (error instanceof Error) {
     return {
+      success: false,
       error: {
         message: error.message,
         code: "UNKNOWN_ERROR",
         status: 500,
-        details: error.stack
+        details: process.env.NODE_ENV === "development" ? error.stack : undefined
       }
     };
   }
 
   return {
+    success: false,
     error: {
       message: "An unexpected error occurred",
       code: "UNKNOWN_ERROR",
@@ -79,7 +237,49 @@ function formatErrorResponse(error: unknown) {
   };
 }
 
-export async function POST(req: Request) {
+function validateRequestBody(body: unknown): ChatRequestBody {
+  if (!body || typeof body !== "object") {
+    throw new APIError("Request body must be an object", 400, "INVALID_BODY");
+  }
+
+  const typedBody = body as Record<string, unknown>;
+
+  if (!Array.isArray(typedBody.messages) || typedBody.messages.length === 0) {
+    throw new APIError("Messages array is required and cannot be empty", 400, "MISSING_MESSAGES");
+  }
+
+  if (typeof typedBody.model !== "string" || !typedBody.model) {
+    throw new APIError("Model is required", 400, "MISSING_MODEL");
+  }
+
+  if (typeof typedBody.apiKey !== "string" || !typedBody.apiKey) {
+    throw new APIError("API key is required", 400, "MISSING_API_KEY");
+  }
+
+  for (const message of typedBody.messages) {
+    if (!message || typeof message !== "object") {
+      throw new APIError("Each message must be an object", 400, "INVALID_MESSAGE_FORMAT");
+    }
+    const typedMessage = message as Record<string, unknown>;
+    if (typeof typedMessage.role !== "string" || typeof typedMessage.content !== "string") {
+      throw new APIError("Each message must have role and content strings", 400, "INVALID_MESSAGE_FORMAT");
+    }
+  }
+
+  return {
+    messages: typedBody.messages as { role: string; content: string }[],
+    model: typedBody.model,
+    provider: typeof typedBody.provider === "string" ? typedBody.provider : undefined,
+    apiKey: typedBody.apiKey,
+    chatId: typeof typedBody.chatId === "string" ? typedBody.chatId : undefined,
+    reasoning: typeof typedBody.reasoning === "boolean" ? typedBody.reasoning : false,
+    attachments: Array.isArray(typedBody.attachments) ? (typedBody.attachments as string[]) : [],
+    temperature: typeof typedBody.temperature === "number" ? typedBody.temperature : 0.7,
+    maxTokens: typeof typedBody.maxTokens === "number" ? typedBody.maxTokens : 4000
+  };
+}
+
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const session = await auth();
     const userId = session?.user?.id;
@@ -88,24 +288,18 @@ export async function POST(req: Request) {
       throw new APIError("User not authenticated", 401, "UNAUTHORIZED");
     }
 
-    const { messages, model, provider, apiKey, webSearch, chatId, reasoning, attachments } = await req.json();
-
-    if (!messages?.length || !model || !apiKey) {
-      throw new APIError("Missing required fields", 400, "MISSING_FIELDS");
+    let requestBody: ChatRequestBody;
+    try {
+      const body = await req.json();
+      requestBody = validateRequestBody(body);
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      throw new APIError("Invalid JSON in request body", 400, "INVALID_JSON");
     }
 
-    const dbAttachments = await prisma.attachment.findMany({
-      where: {
-        id: {
-          in: attachments || []
-        }
-      },
-      select: {
-        url: true,
-        name: true
-      }
-    });
+    const { messages, model, provider, apiKey, chatId, reasoning, attachments, temperature, maxTokens } = requestBody;
 
+    const processedAttachments = await processAttachments(attachments);
     const { userSettings, globalMemories } = await getUserData(userId);
 
     const modelConfig = AI_MODELS.find((m) => m.id === model);
@@ -113,7 +307,6 @@ export async function POST(req: Request) {
       throw new APIError(`Model "${model}" is not supported`, 400, "MODEL_NOT_FOUND");
     }
 
-    // Get AI provider using your factory
     const aiProvider = getAIProvider({
       provider: modelConfig.provider || provider,
       apiKey,
@@ -128,52 +321,87 @@ export async function POST(req: Request) {
       );
     }
 
-    // Build system message
-    const systemMessageContent = [
+    const systemMessageParts: string[] = [
       "You are a helpful AI assistant with access to the user's profile and memories.",
-      `User Name: ${session?.user?.name}`,
-      userSettings
-        ? `User Profile:\n${Object.entries(userSettings)
-            .filter(([, value]) => value)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join("\n")}`
-        : "",
-      globalMemories.length > 0
-        ? `User Memories (organized by importance):\n${globalMemories
-            .map(
-              (memory) =>
-                `[${memory.category?.toUpperCase() || "GENERAL"}] ${memory.content} (Importance: ${memory.importance}/10)`
-            )
-            .join("\n")}`
-        : "",
-      webSearch && modelConfig.capabilities?.search
-        ? "You have access to current web information. Cite sources when using web data."
-        : ""
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+      `User Name: ${session?.user?.name || "User"}`
+    ];
 
-    // Prepare messages for your provider
-    const processedMessages = [{ role: "system" as const, content: systemMessageContent }, ...messages];
+    if (userSettings) {
+      const profileEntries = Object.entries(userSettings)
+        .filter(([, value]) => value)
+        .map(([key, value]) => `${key}: ${value}`);
 
+      if (profileEntries.length > 0) {
+        systemMessageParts.push(`User Profile:\n${profileEntries.join("\n")}`);
+      }
+    }
+
+    if (globalMemories.length > 0) {
+      const memoriesText = globalMemories
+        .map(
+          (memory) =>
+            `[${memory.category?.toUpperCase() || "GENERAL"}] ${memory.content} (Importance: ${memory.importance}/10)`
+        )
+        .join("\n");
+      systemMessageParts.push(`User Memories (organized by importance):\n${memoriesText}`);
+    }
+
+    if (processedAttachments.length > 0) {
+      const attachmentInfo = processedAttachments
+        .map((att) => {
+          const sizeKB = Math.round(att.size / 1024);
+          if (isImageFile(att.type)) {
+            return `- 🖼️ ${att.name} (Image, ${sizeKB}KB) - I can see and analyze this image`;
+          } else if (isTextFile(att.type)) {
+            return `- 📄 ${att.name} (Text file, ${sizeKB}KB) - Content has been loaded and I can reference it`;
+          } else if (isPDFFile(att.type)) {
+            return `- 📋 ${att.name} (PDF, ${sizeKB}KB) - I can read and analyze this document`;
+          } else if (isDocumentFile(att.type)) {
+            return `- 📊 ${att.name} (Document, ${sizeKB}KB) - I can process this document`;
+          } else {
+            return `- 📎 ${att.name} (${att.type.toUpperCase()}, ${sizeKB}KB) - File attached for reference`;
+          }
+        })
+        .join("\n");
+
+      systemMessageParts.push(
+        `Available Attachments:\n${attachmentInfo}\n\nI can analyze images, read text files, process PDFs and documents. Please ask me about any of these attachments.`
+      );
+    }
+
+    if (reasoning) {
+      systemMessageParts.push(
+        "Please think step by step and show your reasoning process when solving complex problems."
+      );
+    }
+
+    const systemMessageContent = systemMessageParts.filter(Boolean).join("\n\n");
+    const processedMessages = buildMessagesWithAttachments(messages, processedAttachments, systemMessageContent);
     const lastUserMessage = messages[messages.length - 1]?.content || "";
 
     const chatInput: ChatInput = {
       messages: processedMessages,
       stream: true,
-      temperature: 0.7,
-      maxTokens: 4000,
-      model
+      temperature,
+      maxTokens,
+      model,
+      attachments: processedAttachments
     };
 
+    let fullResponse = "";
+    let hasError = false;
+
     try {
-      let fullResponse = "";
       const result = await aiProvider.chat(chatInput, {
         onText: (text: string) => {
           fullResponse += text;
         },
+        onError: (error: Error) => {
+          console.error("[Chat API] Stream error:", error);
+          hasError = true;
+        },
         onStop: async () => {
-          if (chatId && fullResponse.trim()) {
+          if (chatId && fullResponse.trim() && !hasError) {
             try {
               await Promise.all([
                 saveAssistantMessage(chatId, fullResponse.trim()),
@@ -181,45 +409,52 @@ export async function POST(req: Request) {
                   try {
                     await analyzeAndStoreMemories(userId, lastUserMessage, fullResponse.trim(), apiKey, model);
                   } catch (error) {
-                    console.error("[Chat API] Error in global memory analysis:", error);
+                    console.error("[Chat API] Memory analysis error:", error);
                   }
                 })()
               ]);
             } catch (error) {
-              console.error("Error in onStop:", error);
+              console.error("[Chat API] onStop error:", error);
             }
           }
         }
       });
 
-      // Return the stream response
       if (result instanceof ReadableStream) {
         return new Response(result, {
           headers: {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
-            Connection: "keep-alive"
+            Connection: "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Headers": "Content-Type"
           }
         });
       }
 
-      // Handle non-streaming response
-      if (typeof result === "object" && "content" in result) {
-        return new Response(JSON.stringify(result), {
-          headers: { "Content-Type": "application/json" }
+      if (typeof result === "object" && result !== null && "content" in result) {
+        return Response.json({
+          success: true,
+          data: result
         });
       }
 
       return result as Response;
-    } catch (error) {
-      console.error("Chat API Error:", error);
-      throw new APIError("Failed to generate response", 500, "GENERATION_ERROR");
+    } catch (chatError) {
+      console.error("[Chat API] Generation error:", chatError);
+      throw new APIError(
+        "Failed to generate response from AI provider",
+        500,
+        "GENERATION_ERROR",
+        chatError instanceof Error ? chatError.message : String(chatError)
+      );
     }
   } catch (error) {
-    console.error("Chat API Error:", error);
+    console.error("[Chat API] Request error:", error);
     const errorResponse = formatErrorResponse(error);
 
-    return new Response(JSON.stringify(errorResponse), {
+    return Response.json(errorResponse, {
       status: errorResponse.error.status,
       headers: {
         "Content-Type": "application/json",
@@ -227,4 +462,12 @@ export async function POST(req: Request) {
       }
     });
   }
+}
+
+export async function GET(): Promise<Response> {
+  return Response.json({
+    success: true,
+    message: "Chat API is running",
+    timestamp: new Date().toISOString()
+  });
 }

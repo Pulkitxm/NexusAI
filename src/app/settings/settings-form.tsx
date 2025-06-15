@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { deleteFile, getFiles } from "@/actions/file";
+import { updateUserSettings, type UserSettings, getGlobalMemories, deleteGlobalMemory } from "@/actions/user";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +33,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { updateUserSettings, type UserSettings, getGlobalMemories, deleteGlobalMemory } from "@/lib/actions/user";
 import { formatBytes } from "@/lib/utils";
 import { useFont } from "@/providers/font-provider";
 

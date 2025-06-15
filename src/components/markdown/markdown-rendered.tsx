@@ -9,7 +9,7 @@ import { CodeBlock } from "./code-block";
 
 const MemoizedMarkdown = memo(({ content, className }: { content: string; className?: string }) => {
   return (
-    <div className={cn("prose prose-sm max-w-[500px] dark:prose-invert", className)}>
+    <div className={cn("prose prose-sm max-w-[700px] dark:prose-invert", className)}>
       <ReactMarkdown
         components={{
           code: ({ className, children, ...props }) => {
@@ -18,12 +18,12 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
             const codeContent = String(children).replace(/\n$/, "");
 
             if (language) {
-              return <CodeBlock code={codeContent} language={language} className={className} />;
+              return <CodeBlock code={codeContent} language={language} className={className} showLineNumbers />;
             }
 
             return (
               <code
-                className="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 font-mono text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                className="relative rounded-md bg-slate-100 px-2 py-1 font-mono text-sm text-slate-800 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700"
                 {...props}
               >
                 {codeContent}
@@ -37,45 +37,53 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
           ),
           h1: ({ children, ...props }) => (
             <h1
-              className="mb-4 border-b border-slate-200 pb-2 text-2xl font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100"
+              className="mb-6 border-b border-slate-200 pb-3 text-3xl font-bold tracking-tight text-slate-900 dark:border-slate-700 dark:text-slate-100"
               {...props}
             >
               {children}
             </h1>
           ),
           h2: ({ children, ...props }) => (
-            <h2 className="mb-3 mt-6 text-xl font-semibold text-slate-800 dark:text-slate-200" {...props}>
+            <h2
+              className="mb-4 mt-8 text-2xl font-semibold tracking-tight text-slate-800 dark:text-slate-200"
+              {...props}
+            >
               {children}
             </h2>
           ),
           h3: ({ children, ...props }) => (
-            <h3 className="mb-2 mt-4 text-lg font-medium text-slate-800 dark:text-slate-200" {...props}>
+            <h3 className="mb-3 mt-6 text-xl font-medium tracking-tight text-slate-800 dark:text-slate-200" {...props}>
               {children}
             </h3>
           ),
+          h4: ({ children, ...props }) => (
+            <h4 className="mb-2 mt-4 text-lg font-medium text-slate-800 dark:text-slate-200" {...props}>
+              {children}
+            </h4>
+          ),
           p: ({ children, ...props }) => (
-            <p className="mb-4 leading-relaxed text-slate-700 dark:text-slate-300" {...props}>
+            <p className="mb-4 leading-7 text-slate-700 dark:text-slate-300" {...props}>
               {children}
             </p>
           ),
           ul: ({ children, ...props }) => (
-            <ul className="mb-4 ml-4 list-inside list-disc space-y-2 text-slate-700 dark:text-slate-300" {...props}>
+            <ul className="mb-6 ml-6 list-disc space-y-2 text-slate-700 dark:text-slate-300" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }) => (
-            <ol className="mb-4 ml-4 list-inside list-decimal space-y-2 text-slate-700 dark:text-slate-300" {...props}>
+            <ol className="mb-6 ml-6 list-decimal space-y-2 text-slate-700 dark:text-slate-300" {...props}>
               {children}
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="text-slate-700 dark:text-slate-300" {...props}>
+            <li className="leading-7 text-slate-700 dark:text-slate-300" {...props}>
               {children}
             </li>
           ),
           blockquote: ({ children, ...props }) => (
             <blockquote
-              className="mb-4 rounded-r-lg border-l-4 border-purple-500 bg-slate-50 py-2 pl-4 italic text-slate-600 dark:border-purple-400 dark:bg-slate-800/50 dark:text-slate-400"
+              className="mb-6 border-l-4 border-blue-500 bg-blue-50/50 py-4 pl-6 italic text-slate-700 backdrop-blur-sm dark:border-blue-400 dark:bg-blue-950/20 dark:text-slate-300"
               {...props}
             >
               {children}
@@ -84,7 +92,7 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
           a: ({ children, href, ...props }) => (
             <a
               href={href}
-              className="text-purple-600 underline underline-offset-2 transition-all hover:text-purple-800 hover:underline-offset-4 dark:text-purple-400 dark:hover:text-purple-300"
+              className="font-medium text-blue-600 underline decoration-blue-600/30 underline-offset-4 transition-all hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-400/30 dark:hover:decoration-blue-400"
               target="_blank"
               rel="noopener noreferrer"
               {...props}
@@ -93,27 +101,42 @@ const MemoizedMarkdown = memo(({ content, className }: { content: string; classN
             </a>
           ),
           table: ({ children, ...props }) => (
-            <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-              <table className="min-w-full" {...props}>
-                {children}
-              </table>
+            <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 shadow-sm dark:border-slate-700">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props}>
+                  {children}
+                </table>
+              </div>
             </div>
+          ),
+          thead: ({ children, ...props }) => (
+            <thead className="bg-slate-50 dark:bg-slate-800" {...props}>
+              {children}
+            </thead>
           ),
           th: ({ children, ...props }) => (
             <th
-              className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
               {...props}
             >
               {children}
             </th>
           ),
           td: ({ children, ...props }) => (
-            <td
-              className="border-b border-slate-200 px-4 py-3 text-slate-700 dark:border-slate-700 dark:text-slate-300"
-              {...props}
-            >
+            <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700 dark:text-slate-300" {...props}>
               {children}
             </td>
+          ),
+          hr: ({ ...props }) => <hr className="my-8 border-slate-200 dark:border-slate-700" {...props} />,
+          strong: ({ children, ...props }) => (
+            <strong className="font-semibold text-slate-900 dark:text-slate-100" {...props}>
+              {children}
+            </strong>
+          ),
+          em: ({ children, ...props }) => (
+            <em className="italic text-slate-700 dark:text-slate-300" {...props}>
+              {children}
+            </em>
           )
         }}
       >

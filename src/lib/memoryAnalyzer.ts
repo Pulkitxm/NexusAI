@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AnthropicProvider } from "@/ai/providers/anthropic";
+import { GoogleProvider } from "@/ai/providers/google";
 import { OpenAIProvider } from "@/ai/providers/openai";
 import { prisma } from "@/lib/db";
 import { AI_MODELS } from "@/lib/models";
@@ -44,9 +45,9 @@ export async function analyzeAndStoreMemories(
           aiProvider = new AnthropicProvider({ apiKey });
           break;
 
-        // case Provider.Google:
-        //   aiProvider = new GoogleProvider({ apiKey });
-        //   break;
+        case Provider.Google:
+          aiProvider = new GoogleProvider({ apiKey });
+          break;
 
         default:
           console.error(`[Memory] Provider "${provider}" not supported for memory analysis`);

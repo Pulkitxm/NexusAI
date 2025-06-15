@@ -112,7 +112,6 @@ const FilePreview: React.FC<FilePreviewProps> = ({ attachment, isUser }) => {
       if (!response.ok) throw new Error("Failed to fetch file");
 
       const text = await response.text();
-      // Limit preview to first 1000 characters for performance
       setPreviewContent(text.slice(0, 1000) + (text.length > 1000 ? "\n..." : ""));
     } catch (err) {
       setError("Failed to load preview");

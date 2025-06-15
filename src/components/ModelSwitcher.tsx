@@ -381,10 +381,6 @@ const ProviderSection = memo<{
   index: number;
   availableModels: AIModel[];
 }>(({ provider, models, selectedModel, onModelSelect, searchQuery, index, availableModels }) => {
-  const availableCount = models.filter((model) =>
-    availableModels.some((available) => available.id === model.id)
-  ).length;
-
   return (
     <AnimatedWrapper show={true} delay={index * 100}>
       <div className="space-y-4">

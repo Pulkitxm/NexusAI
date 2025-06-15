@@ -4,7 +4,7 @@ import { OPENROUTER_BASE_URL } from "@/lib/data";
 
 import { BaseAIProvider } from "./base";
 
-import type { ChatInput, ChatResponse, StreamOptions } from "../types";
+import type { ChatInput, ChatResponse, StreamOptions } from "../../types/models";
 
 export class OpenAIProvider extends BaseAIProvider {
   protected apiKey: string;
@@ -21,11 +21,16 @@ export class OpenAIProvider extends BaseAIProvider {
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
     const { messages, stream, temperature = 0.7, maxTokens, model = "gpt-4-vision-preview" } = input;
 
+    const openAIMessages = messages.map((msg) => ({
+      role: msg.role,
+      content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
+    }));
+
     try {
       if (stream) {
         const stream = await this.client.chat.completions.create({
           model,
-          messages,
+          messages: openAIMessages,
           temperature,
           max_tokens: maxTokens,
           stream: true
@@ -36,7 +41,7 @@ export class OpenAIProvider extends BaseAIProvider {
 
       const response = await this.client.chat.completions.create({
         model,
-        messages,
+        messages: openAIMessages,
         temperature,
         max_tokens: maxTokens
       });
@@ -45,6 +50,7 @@ export class OpenAIProvider extends BaseAIProvider {
         id: response.id,
         content: response.choices[0].message.content || "",
         role: "assistant",
+        success: true,
         usage: {
           promptTokens: response.usage?.prompt_tokens || 0,
           completionTokens: response.usage?.completion_tokens || 0,

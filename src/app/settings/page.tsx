@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import React from "react";
 
+import { getUserSettings } from "@/actions/user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getUserSettings } from "@/lib/actions/user";
 import { auth } from "@/lib/authOptions";
 
 import { LogOut } from "./log-out";

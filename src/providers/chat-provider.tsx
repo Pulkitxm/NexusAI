@@ -166,7 +166,6 @@ export function ChatProvider({
       setIsLoading(true);
       setError(null);
 
-      // Add user message immediately
       const userMessage: MessageWithAttachments = {
         id: Date.now().toString(),
         role: "user",
@@ -219,7 +218,6 @@ export function ChatProvider({
         }
       }
 
-      // Clear input and attachments
       setAttachmentsWithStorage([]);
       setInput("");
       removeStoredValue("input");
@@ -260,7 +258,6 @@ export function ChatProvider({
         let assistantMessage = "";
         const assistantMessageId = (Date.now() + 1).toString();
 
-        // Add empty assistant message
         setMessages((prev) => [
           ...prev,
           {
@@ -284,7 +281,7 @@ export function ChatProvider({
                 const data = JSON.parse(line.slice(6));
                 if (data.type === "text") {
                   assistantMessage += data.data;
-                  // Update the assistant message
+
                   setMessages((prev) =>
                     prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, content: assistantMessage } : msg))
                   );
