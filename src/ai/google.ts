@@ -3,7 +3,7 @@ import { GoogleGenerativeAI, type Part } from "@google/generative-ai";
 import { BaseAIProvider } from "./base";
 import { OpenAIProvider } from "./openai";
 
-import type { ChatInput, ChatResponse, StreamOptions, ChatMessage } from "../../types/models";
+import type { ChatInput, ChatResponse, StreamOptions, ChatMessage } from "../types/models";
 
 export class GoogleProvider extends BaseAIProvider {
   protected apiKey: string;

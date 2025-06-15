@@ -8,13 +8,12 @@ import type { IconType } from "react-icons";
 
 export interface AIModel {
   id: string;
+  openRouterId?: string;
   name: string;
   provider: Provider;
-  category: "text" | "image" | "reasoning";
   icon: IconType;
   description: string;
-  requiresKey: keyof import("./keys").ApiKeys;
-  capabilities: Capabilities;
+  capabilities?: Capabilities;
 }
 
 export interface Chat {
@@ -27,9 +26,7 @@ export interface Chat {
 
 export interface Capabilities {
   reasoning?: boolean;
-  imageGeneration?: boolean;
-  imageUpload?: boolean;
-  pdfUpload?: boolean;
+  attachment?: boolean;
   search?: boolean;
 }
 

@@ -21,6 +21,8 @@ export const getAIProvider = ({
     return new AnthropicProvider({ apiKey, isOpenRouter: openRouter });
   } else if (provider === Provider.Google) {
     return new GoogleProvider({ apiKey, isOpenRouter: openRouter });
+  } else if (provider === Provider.OpenRouter) {
+    return new OpenAIProvider({ apiKey, isOpenRouter: openRouter });
   }
   return undefined;
 };

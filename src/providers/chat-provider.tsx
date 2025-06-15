@@ -17,9 +17,9 @@ import {
   useEffect
 } from "react";
 
+import { MESSAGE_LIMIT } from "@/lib/data";
 import { createChat, saveUserMessage } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
-import { MESSAGE_LIMIT } from "@/lib/data";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
 import { type Attachment, validateAttachment } from "@/types/chat";
@@ -124,7 +124,7 @@ export function ChatProvider({
     ? keys.openrouter
       ? keys.openrouter
       : undefined
-    : keys[selectedModelDetails?.requiresKey as keyof typeof keys];
+    : keys[selectedModelDetails?.provider.toString() as keyof typeof keys];
 
   const { refreshChats } = useSidebar();
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);

@@ -1,3 +1,4 @@
+import { DeepSeek, OpenRouter, Qwen } from "@lobehub/icons";
 import { FaGoogle } from "react-icons/fa";
 import { RiAnthropicFill } from "react-icons/ri";
 import { SiOpenai } from "react-icons/si";
@@ -5,23 +6,93 @@ import { SiOpenai } from "react-icons/si";
 import { ApiKeys } from "@/types/keys";
 import { Provider } from "@/types/providers";
 
-import { OPENROUTER_ICON } from "./data";
-
 import type { AIModel } from "@/types/models";
 
 export const AI_MODELS: AIModel[] = [
+  // OpenRouter Models
+  {
+    id: "deepseek/deepseek-r1",
+    openRouterId: "deepseek/deepseek-r1:free",
+    name: "DeepSeek R1",
+    provider: Provider.OpenRouter,
+    icon: DeepSeek,
+    capabilities: {
+      reasoning: true,
+      attachment: true
+    },
+    description: "The first reasoning model from DeepSeek"
+  },
+  {
+    id: "deepseek/deepseek-chat-v3-0324",
+    openRouterId: "deepseek/deepseek-chat-v3-0324",
+    name: "DeepSeek V3 0324",
+    provider: Provider.OpenRouter,
+    icon: DeepSeek,
+    description:
+      "A 685B-parameter mixture-of-experts model, successor to DeepSeek V3 with enhanced performance across diverse tasks"
+  },
+  {
+    id: "deepseek/deepseek-r1-0528",
+    openRouterId: "deepseek/deepseek-r1-0528",
+    name: "DeepSeek R1 0528",
+    provider: Provider.OpenRouter,
+    icon: DeepSeek,
+    capabilities: {
+      reasoning: true,
+      attachment: true
+    },
+    description:
+      "671B parameter open-source model with performance matching OpenAI o1. Features 37B active parameters per inference and fully open reasoning tokens."
+  },
+  {
+    id: "deepseek/deepseek-chat-v3-0324",
+    openRouterId: "deepseek/deepseek-chat-v3-0324",
+    name: "DeepSeek V3 0324",
+    provider: Provider.OpenRouter,
+    icon: DeepSeek,
+    capabilities: {
+      reasoning: true,
+      attachment: true
+    },
+    description:
+      "A 685B-parameter mixture-of-experts model, successor to DeepSeek V3 with enhanced performance across diverse tasks"
+  },
+  {
+    id: "qwen/qwen3-32b",
+    openRouterId: "qwen/qwen3-32b",
+    name: "Qwen3 32B",
+    provider: Provider.OpenRouter,
+    icon: Qwen,
+    capabilities: {
+      reasoning: true,
+      attachment: true
+    },
+    description:
+      "32.8B parameter model with dual-mode operation for complex reasoning and efficient dialogue. Features 32K context window, multilingual support, and strong performance in instruction-following, coding, and creative tasks"
+  },
+  {
+    id: "qwen/qwen-2.5-coder-32b-instruct",
+    openRouterId: "qwen/qwen-2.5-coder-32b-instruct",
+    name: "Qwen2.5 Coder 32B Instruct",
+    provider: Provider.OpenRouter,
+    icon: Qwen,
+    capabilities: {
+      reasoning: true,
+      attachment: true
+    },
+    description:
+      "Latest code-specialized model in the Qwen series, featuring enhanced code generation, reasoning, and debugging capabilities. Maintains strong performance in mathematics and general tasks while providing a robust foundation for code agent applications."
+  },
+
   // Google Models
   {
     id: "gemini-2.5-flash",
     name: "Gemini 2.5 Flash",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Latest Gemini model with multimodal capabilities",
-    requiresKey: "google",
     capabilities: {
-      imageUpload: true,
-      pdfUpload: true,
+      attachment: true,
       search: true
     }
   },
@@ -29,10 +100,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-2.5-pro",
     name: "Gemini 2.5 Pro",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Advanced reasoning and complex tasks",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -43,10 +112,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-2.5-flash-thinking",
     name: "Gemini 2.5 Flash (Thinking)",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Enhanced reasoning with thinking capabilities",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -58,10 +125,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-2.5-pro-thinking",
     name: "Gemini 2.5 Pro (Thinking)",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "State-of-the-art reasoning with thinking mode",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -73,10 +138,8 @@ export const AI_MODELS: AIModel[] = [
     id: "google/gemini-2.0-flash-001",
     name: "Gemini 2.0 Flash",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Fast and efficient multimodal model",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -87,10 +150,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-2.0-flash-lite",
     name: "Gemini 2.0 Flash Lite",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Lightweight version of Gemini 2.0 Flash",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -100,10 +161,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-1.5-pro",
     name: "Gemini 1.5 Pro",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Long context understanding and complex reasoning",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -114,10 +173,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-1.5-flash",
     name: "Gemini 1.5 Flash",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Fast multimodal model with efficient processing",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -128,10 +185,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-1.5-flash-8b",
     name: "Gemini 1.5 Flash-8B",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Compact 8B parameter model for efficiency",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -141,10 +196,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gemini-1.0-pro",
     name: "Gemini 1.0 Pro",
     provider: Provider.Google,
-    category: "text",
     icon: FaGoogle,
     description: "Original Gemini Pro model",
-    requiresKey: "google",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -156,10 +209,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4o",
     name: "GPT 4o",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Most capable GPT model with vision",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -168,10 +219,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4o-mini",
     name: "GPT 4o-mini",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Faster and more affordable GPT-4 level intelligence",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -180,10 +229,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4.1",
     name: "GPT 4.1",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Enhanced GPT-4 with improved coding and instruction following",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -192,10 +239,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4.1-mini",
     name: "GPT 4.1 Mini",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Compact version of GPT-4.1 with improved performance",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -204,10 +249,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4.1-nano",
     name: "GPT 4.1 Nano",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Ultra-lightweight GPT-4.1 variant",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -216,10 +259,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4.5",
     name: "GPT 4.5",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Next-generation GPT model with advanced capabilities",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -228,10 +269,8 @@ export const AI_MODELS: AIModel[] = [
     id: "o4-mini",
     name: "OpenAI o4-mini",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Optimized for fast, cost-efficient reasoning in math, coding, and visual tasks",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true,
       reasoning: true
@@ -241,10 +280,8 @@ export const AI_MODELS: AIModel[] = [
     id: "o3",
     name: "OpenAI o3",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Advanced reasoning model with omni-modal architecture",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true,
       reasoning: true
@@ -254,10 +291,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4-turbo",
     name: "GPT-4 Turbo",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Large multimodal model optimized for chat and accuracy",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -266,10 +301,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4-turbo-preview",
     name: "GPT-4 Turbo Preview",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Preview version of GPT-4 Turbo with latest features",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -278,10 +311,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-4",
     name: "GPT-4",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Original GPT-4 model with high capability",
-    requiresKey: "openai",
     capabilities: {
       imageUpload: true
     }
@@ -290,10 +321,8 @@ export const AI_MODELS: AIModel[] = [
     id: "gpt-3.5-turbo",
     name: "GPT-3.5 Turbo",
     provider: Provider.OpenAI,
-    category: "text",
     icon: SiOpenai,
     description: "Fast and cost-effective model for many tasks",
-    requiresKey: "openai",
     capabilities: {}
   },
 
@@ -302,10 +331,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-4-sonnet",
     name: "Claude 4 Sonnet",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Latest Claude model with advanced capabilities",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -315,10 +342,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-4-opus",
     name: "Claude 4 Opus",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Most capable Claude 4 model for complex tasks",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -328,10 +353,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-4-sonnet-reasoning",
     name: "Claude 4 Sonnet (Reasoning)",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Claude 4 with enhanced reasoning capabilities",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -342,10 +365,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3.7-sonnet",
     name: "Claude 3.7 Sonnet",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Enhanced Claude model with improved performance",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -355,10 +376,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3.7-sonnet-reasoning",
     name: "Claude 3.7 Sonnet (Reasoning)",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Claude 3.7 with advanced reasoning capabilities",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true,
@@ -369,10 +388,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3.5-sonnet-20241022",
     name: "Claude 3.5 Sonnet",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Most intelligent Claude 3.5 model",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -382,10 +399,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3.5-sonnet-20240620",
     name: "Claude 3.5 Sonnet (June)",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Earlier version of Claude 3.5 Sonnet",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -395,10 +410,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3-5-haiku-20241022",
     name: "Claude 3.5 Haiku",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Fastest Claude model for quick tasks",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -408,10 +421,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3-opus-20240229",
     name: "Claude 3 Opus",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Most capable Claude 3 model for complex tasks",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -421,10 +432,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3-sonnet-20240229",
     name: "Claude 3 Sonnet",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Balanced Claude 3 model for various tasks",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -434,10 +443,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-3-haiku-20240307",
     name: "Claude 3 Haiku",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Fastest Claude 3 model for simple tasks",
-    requiresKey: "anthropic",
     capabilities: {
       imageUpload: true,
       pdfUpload: true
@@ -447,10 +454,8 @@ export const AI_MODELS: AIModel[] = [
     id: "claude-2.1",
     name: "Claude 2.1",
     provider: Provider.Anthropic,
-    category: "text",
     icon: RiAnthropicFill,
     description: "Previous generation Claude model",
-    requiresKey: "anthropic",
     capabilities: {
       pdfUpload: true
     }
@@ -458,19 +463,15 @@ export const AI_MODELS: AIModel[] = [
 ];
 export const ALL_MODELS = AI_MODELS.map((model) => model.id);
 
-export const getModelsByCategory = (category?: string) => {
-  if (!category) return AI_MODELS;
-  return AI_MODELS.filter((model) => model.category === category);
-};
-
 export const getModelsByProvider = (provider: string) => {
   return AI_MODELS.filter((model) => model.provider === provider);
 };
 
 export const getAvailableModels = (keys: ApiKeys) => {
-  if (keys.openrouter) return AI_MODELS;
+  if (keys.openrouter)
+    return AI_MODELS.filter((model) => model.provider === Provider.OpenRouter || !!model.openRouterId);
   return AI_MODELS.filter((model) => {
-    const requiredKey = keys[model.requiresKey];
+    const requiredKey = keys[model.provider];
     return requiredKey && requiredKey.trim() !== "";
   });
 };
@@ -480,7 +481,7 @@ const providerConfigs = [
     key: Provider.OpenRouter,
     name: "OpenRouter",
     description: "Access multiple AI models through a single API key",
-    icon: OPENROUTER_ICON,
+    icon: OpenRouter,
     color: "bg-green-500/90 dark:bg-green-600/80",
     link: "https://openrouter.ai/api-keys"
   },

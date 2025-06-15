@@ -1,23 +1,36 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 
-import { OPENROUTER_BASE_URL } from "@/lib/data";
-
 import { BaseAIProvider } from "./base";
+import { OpenAIProvider } from "./openai";
 
 import type { ChatInput, ChatResponse, StreamOptions } from "../types/models";
 
 export class AnthropicProvider extends BaseAIProvider {
   protected apiKey: string;
-  private client: Anthropic;
+  private client: Anthropic | OpenAIProvider;
+  private isOpenRouter: boolean;
 
   constructor({ apiKey, isOpenRouter = false }: { apiKey: string; isOpenRouter?: boolean }) {
     super();
     this.apiKey = apiKey;
-    this.client = new Anthropic({ apiKey, baseURL: isOpenRouter ? OPENROUTER_BASE_URL : undefined });
+    this.isOpenRouter = isOpenRouter;
+    console.log(this.isOpenRouter);
+    this.client = this.isOpenRouter
+      ? new OpenAIProvider({ apiKey: this.apiKey, isOpenRouter: true })
+      : new Anthropic({ apiKey });
+    console.log(this.client instanceof Anthropic ? "Anthropic client" : "OpenAI client");
   }
 
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
-    const { messages, stream, temperature = 0.7, maxTokens, model = "claude-3-opus-20240229" } = input;
+    const { messages, stream, temperature = 0.7, maxTokens, model } = input;
+
+    if (this.isOpenRouter && this.client instanceof OpenAIProvider) {
+      return this.client.chat(input, options);
+    }
+
+    if (!(this.client instanceof AnthropicProvider)) {
+      throw new Error("Invalid client configuration for Google AI");
+    }
 
     try {
       const anthropicMessages = messages.map((msg) => ({

@@ -149,52 +149,6 @@ const SearchSuggestions = memo<{
 
 SearchSuggestions.displayName = "SearchSuggestions";
 
-const CapabilityBadges = memo<{
-  capabilities: AIModel["capabilities"];
-  size?: "sm" | "xs";
-  searchQuery?: string;
-}>(({ capabilities, size = "xs", searchQuery = "" }) => {
-  const badges = useMemo(() => {
-    return Object.entries(capabilities)
-      .filter(([, value]) => value)
-      .map(([key]) => {
-        const config = capabilityConfig[key];
-        if (!config) return null;
-
-        const CapIcon = config.icon;
-        const sizeClasses = size === "sm" ? "h-4 w-4" : "h-3 w-3";
-
-        const isHighlighted =
-          searchQuery &&
-          (config.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            config.searchTerms.some(
-              (term) =>
-                term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                searchQuery.toLowerCase().includes(term.toLowerCase())
-            ));
-
-        return (
-          <div
-            key={key}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition-all duration-300 ${
-              isHighlighted
-                ? "scale-105 bg-purple-100 ring-2 ring-purple-200 dark:bg-purple-900/30 dark:ring-purple-800"
-                : "bg-gray-100 dark:bg-gray-800"
-            } ${size === "sm" ? "text-sm" : "text-xs"} font-medium`}
-          >
-            <CapIcon className={`${sizeClasses} ${config.color} ${isHighlighted ? "animate-pulse" : ""}`} />
-            <span className="text-gray-700 dark:text-gray-300">{config.label}</span>
-          </div>
-        );
-      })
-      .filter(Boolean);
-  }, [capabilities, size, searchQuery]);
-
-  return <div className="flex flex-wrap gap-2">{badges}</div>;
-});
-
-CapabilityBadges.displayName = "CapabilityBadges";
-
 const HighlightedText = memo<{
   text: string;
   searchQuery: string;
@@ -280,12 +234,6 @@ const ModelCard = memo<{
                 searchQuery={searchQuery}
                 className="truncate text-sm font-semibold text-gray-900 transition-all duration-300 dark:text-gray-100 sm:text-base"
               />
-              <Badge
-                variant="outline"
-                className="flex-shrink-0 border-gray-200 bg-gray-50 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800"
-              >
-                {model.category}
-              </Badge>
             </div>
 
             <HighlightedText
@@ -293,8 +241,6 @@ const ModelCard = memo<{
               searchQuery={searchQuery}
               className="mb-3 line-clamp-2 text-xs leading-relaxed text-gray-600 dark:text-gray-300 sm:text-sm"
             />
-
-            <CapabilityBadges capabilities={model.capabilities} searchQuery={searchQuery} />
           </div>
         </div>
       </div>
@@ -309,35 +255,6 @@ const ModelSelectItem = memo<{
   searchQuery?: string;
 }>(({ model, searchQuery = "" }) => {
   const ModelIcon = model.icon;
-
-  const capabilityIcons = useMemo(() => {
-    return Object.entries(model.capabilities)
-      .filter(([, value]) => value)
-      .map(([key]) => {
-        const config = capabilityConfig[key];
-        if (!config) return null;
-
-        const CapIcon = config.icon;
-        const isHighlighted =
-          searchQuery &&
-          (config.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            config.searchTerms.some(
-              (term) =>
-                term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                searchQuery.toLowerCase().includes(term.toLowerCase())
-            ));
-
-        return (
-          <CapIcon
-            key={key}
-            className={`h-3 w-3 transition-all duration-300 ${config.color} ${isHighlighted ? "animate-pulse" : ""}`}
-            title={config.label}
-          />
-        );
-      })
-      .filter(Boolean);
-  }, [model.capabilities, searchQuery]);
-
   return (
     <SelectItem
       value={model.id}
@@ -355,15 +272,7 @@ const ModelSelectItem = memo<{
               searchQuery={searchQuery}
               className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
             />
-            <Badge
-              variant="secondary"
-              className="flex-shrink-0 border-0 bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-            >
-              {model.category}
-            </Badge>
           </div>
-
-          <div className="flex items-center gap-1.5">{capabilityIcons}</div>
         </div>
       </div>
     </SelectItem>
@@ -466,11 +375,9 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
 
       if (model.provider.toLowerCase().includes(lowerQuery)) score += 0.6;
 
-      if (model.category.toLowerCase().includes(lowerQuery)) score += 0.5;
-
       if (model.description.toLowerCase().includes(lowerQuery)) score += 0.4;
 
-      Object.entries(model.capabilities).forEach(([key, value]) => {
+      Object.entries(model.capabilities ?? {}).forEach(([key, value]) => {
         if (!value) return;
         const config = capabilityConfig[key];
         if (!config) return;

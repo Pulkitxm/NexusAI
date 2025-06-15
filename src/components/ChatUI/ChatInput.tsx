@@ -1,5 +1,5 @@
 "use client";
-
+import { OpenRouter } from "@lobehub/icons";
 import {
   SendHorizontal,
   Loader2,
@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MESSAGE_LIMIT, OPENROUTER_ICON } from "@/lib/data";
+import { MESSAGE_LIMIT } from "@/lib/data";
 import { AI_MODELS } from "@/lib/models";
 import { SpeechToTextService } from "@/lib/speech-to-text";
 import { cn } from "@/lib/utils";
@@ -60,6 +60,8 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     setUseOpenRouter
   } = useChat();
 
+  console.log(reasoning);
+
   const { selectedModel } = useModel();
   const selectedModelDetails = useMemo(() => {
     return AI_MODELS.find((m) => m.id === selectedModel);
@@ -68,6 +70,8 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const speechToTextServiceRef = useRef<SpeechToTextService | null>(null);
   const { status } = useSession();
+
+  const canUseReasoning = selectedModelDetails?.capabilities?.reasoning;
 
   useEffect(() => {
     if (inputRef.current) {
@@ -316,7 +320,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                               htmlFor="openrouter-toggle"
                               className="flex cursor-pointer items-center gap-1.5 text-xs"
                             >
-                              <OPENROUTER_ICON />
+                              <OpenRouter />
                               <span className="font-medium">OpenRouter</span>
                             </Label>
                             <Switch
@@ -370,40 +374,26 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                       </Tooltip>
                     )}
 
-                    {reasoning && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 text-black dark:text-white">
-                            <Label htmlFor="reasoning-select" className="flex items-center gap-1.5 text-xs">
-                              <Brain className="h-3.5 w-3.5" />
-                              <span className="font-medium">Reasoning</span>
-                            </Label>
-                            <Select
-                              value={reasoning || "none"}
-                              onValueChange={(value) => setReasoning(value === "none" ? null : (value as Reasoning))}
-                              disabled={!selectedModelDetails?.capabilities?.reasoning}
-                            >
-                              <SelectTrigger className="h-7 w-[90px] text-xs">
-                                <SelectValue placeholder="Level" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          className="border-slate-700 bg-slate-900 text-slate-100 dark:border-slate-300 dark:bg-slate-100 dark:text-slate-900"
+                    {canUseReasoning && (
+                      <div className="flex items-center gap-2 text-black dark:text-white">
+                        <Label htmlFor="reasoning-select" className="flex items-center gap-1.5 text-xs">
+                          <Brain className="h-3.5 w-3.5" />
+                        </Label>
+                        <Select
+                          value={reasoning || "none"}
+                          onValueChange={(value) => setReasoning(value === "none" ? null : (value as Reasoning))}
+                          disabled={!selectedModelDetails?.capabilities?.reasoning}
                         >
-                          <p className="text-sm">Control AI thinking depth</p>
-                          <p className="mt-1 text-xs text-slate-300 dark:text-slate-600">
-                            Low: Fast • Medium: Balanced • High: Deep
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                          <SelectTrigger className="h-7 w-[90px] text-xs">
+                            <SelectValue placeholder="Level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     )}
 
                     <div className="flex items-center gap-3">

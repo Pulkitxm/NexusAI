@@ -1,10 +1,10 @@
 import OpenAI from "openai";
 
-import { OPENROUTER_BASE_URL } from "@/lib/data";
-
 import { BaseAIProvider } from "./base";
 
 import type { ChatInput, ChatResponse, StreamOptions } from "../types/models";
+
+import { OPENROUTER_BASE_URL } from "@/lib/data";
 
 export class OpenAIProvider extends BaseAIProvider {
   protected apiKey: string;

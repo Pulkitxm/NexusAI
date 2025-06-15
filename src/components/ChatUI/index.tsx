@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAutoScroll } from "@/hooks/use-auto-scroll";
-import { SUGGESTED_PROMPTS } from "@/lib/data";
 import { useChat } from "@/providers/chat-provider";
 
 import { Button } from "../ui/button";
@@ -16,6 +15,8 @@ import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 import { LoadingMessage } from "./LoadingMessage";
 import { MessageBubble } from "./MessageBubble";
 import { ScrollToBottomButton } from "./ScrollToBottom";
+
+import { SUGGESTED_PROMPTS } from "@/lib/data";
 
 export default function ChatUI({ id }: { id?: string }) {
   const { data: session } = useSession();
