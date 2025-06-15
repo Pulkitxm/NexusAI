@@ -266,8 +266,24 @@ export async function POST(req: NextRequest): Promise<Response> {
       throw new APIError("Invalid JSON in request body", 400, "INVALID_JSON");
     }
 
-    const { messages, model, provider, apiKey, chatId, reasoning, attachments, temperature, maxTokens, openRouter } =
-      requestBody;
+    const {
+      messages,
+      model: modelUUId,
+      provider,
+      apiKey,
+      chatId,
+      reasoning,
+      attachments,
+      temperature,
+      maxTokens,
+      openRouter
+    } = requestBody;
+
+    const model = AI_MODELS.find((m) => m.uuid === modelUUId)?.id;
+
+    if (!model) {
+      throw new APIError(`Model "${modelUUId}" is not supported`, 400, "MODEL_NOT_FOUND");
+    }
 
     const processedAttachments = await processAttachments(attachments);
     const { userSettings, globalMemories } = await getUserData(userId);

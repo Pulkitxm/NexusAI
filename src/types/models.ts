@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ALL_MODELS } from "@/lib/models";
+import { AI_MODELS } from "@/lib/models";
 
 import { Provider, Reasoning } from "./providers";
 
@@ -8,6 +8,7 @@ import type { IconType } from "react-icons";
 
 export interface AIModel {
   id: string;
+  uuid: string;
   openRouterId?: string;
   name: string;
   provider: Provider;
@@ -102,7 +103,7 @@ export interface UserData {
 export const chatBodyValidator = z.object({
   messages: z.array(z.object({ role: z.string(), content: z.string() })).min(1),
   model: z.string().refine((model) => {
-    return ALL_MODELS.some((m) => m === model);
+    return AI_MODELS.some((m) => m.uuid === model);
   }, "Invalid model ID"),
   provider: z.nativeEnum(Provider),
   apiKey: z.string(),

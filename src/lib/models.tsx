@@ -13,6 +13,7 @@ export const AI_MODELS: AIModel[] = [
   // OpenRouter Models
   {
     id: "deepseek/deepseek-r1",
+    uuid: "79d8ba49-5c07-469c-b72f-3ea9037074d1",
     openRouterId: "deepseek/deepseek-r1:free",
     name: "DeepSeek R1",
     provider: Provider.OpenRouter,
@@ -25,8 +26,9 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "deepseek/deepseek-chat-v3-0324",
+    uuid: "aafbc193-1abe-47bb-a66c-27dfb7e38355",
     openRouterId: "deepseek/deepseek-chat-v3-0324",
-    name: "DeepSeek V3 0324",
+    name: "DeepSeek V3",
     provider: Provider.OpenRouter,
     icon: DEEPSEEK_ICON,
     description:
@@ -34,8 +36,9 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "deepseek/deepseek-r1-0528",
+    uuid: "2900b61c-ce9b-40b4-b7b5-d3ab65fa4248",
     openRouterId: "deepseek/deepseek-r1-0528",
-    name: "DeepSeek R1 0528",
+    name: "DeepSeek R1",
     provider: Provider.OpenRouter,
     icon: DEEPSEEK_ICON,
     capabilities: {
@@ -47,6 +50,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "qwen/qwen3-32b",
+    uuid: "823b8c69-ffd9-463f-9e3e-91a5060b2e97",
     openRouterId: "qwen/qwen3-32b",
     name: "Qwen3 32B",
     provider: Provider.OpenRouter,
@@ -60,6 +64,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "qwen/qwen-2.5-coder-32b-instruct",
+    uuid: "1d517c73-dd58-4de5-9a36-e881591fe8e8",
     openRouterId: "qwen/qwen-2.5-coder-32b-instruct",
     name: "Qwen2.5 Coder 32B Instruct",
     provider: Provider.OpenRouter,
@@ -73,6 +78,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "meta-llama/llama-4-maverick",
+    uuid: "eab6ed67-b847-4691-9073-f537ba22fa70",
     openRouterId: "meta-llama/llama-4-maverick",
     name: "Llama 4 Maverick",
     provider: Provider.OpenRouter,
@@ -86,6 +92,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "meta-llama/llama-4-scout",
+    uuid: "d2ebd5e7-0e64-43e8-9182-ccec7e0f7b01",
     openRouterId: "meta-llama/llama-4-scout",
     name: "Llama 4 Scout",
     provider: Provider.OpenRouter,
@@ -99,6 +106,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct",
+    uuid: "7f078395-b152-4a4f-bed1-c446b3a606c0",
     openRouterId: "meta-llama/llama-3.3-70b-instruct",
     name: "Llama 3.3 70B Instruct",
     provider: Provider.OpenRouter,
@@ -112,6 +120,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "x-ai/grok-3-beta",
+    uuid: "9d1fbac0-339d-4309-8d80-c3d970ea4be3",
     openRouterId: "x-ai/grok-3-beta",
     name: "Grok 3",
     provider: Provider.OpenRouter,
@@ -124,6 +133,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "x-ai/grok-3-mini-beta",
+    uuid: "dd6bb346-b56b-4ad7-ab12-5755c5833621",
     openRouterId: "x-ai/grok-3-mini-beta",
     name: "Grok 3 Mini",
     provider: Provider.OpenRouter,
@@ -138,6 +148,7 @@ export const AI_MODELS: AIModel[] = [
   // Google Models
   {
     id: "gemini-2.5-flash",
+    uuid: "e6f77b94-8775-42c1-87b1-e9303688873f",
     openRouterId: "google/gemini-2.5-flash-preview-05-20",
     name: "Gemini 2.5 Flash",
     provider: Provider.Google,
@@ -150,6 +161,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gemini-2.5-flash-thinking",
+    uuid: "42a37421-af28-4a3f-a254-7c1be96b8793",
     openRouterId: "google/gemini-2.5-flash-preview-05-20:thinking",
     name: "Gemini 2.5 Flash (Thinking)",
     provider: Provider.Google,
@@ -163,6 +175,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gemini-2.5-pro",
+    uuid: "69e147c3-aad5-4e33-b9c3-aafd13b6173d",
     openRouterId: "google/gemini-2.5-pro-preview",
     name: "Gemini 2.5 Pro",
     provider: Provider.Google,
@@ -176,6 +189,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "google/gemini-2.0-flash-001",
+    uuid: "99ec6607-8749-4e0c-b645-f5b797c5f7d3",
     openRouterId: "google/gemini-2.0-flash-001",
     name: "Gemini 2.0 Flash",
     provider: Provider.Google,
@@ -188,6 +202,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gemini-2.0-flash-lite",
+    uuid: "69362cce-4781-4525-9aec-5cfebec9ad8f",
     openRouterId: "google/gemini-2.0-flash-lite-001",
     name: "Gemini 2.0 Flash Lite",
     provider: Provider.Google,
@@ -201,6 +216,7 @@ export const AI_MODELS: AIModel[] = [
   // OpenAI Models
   {
     id: "gpt-4o",
+    uuid: "724c1fd7-c5ca-4487-9ef2-74bf0922c158",
     openRouterId: "openai/gpt-4o",
     name: "GPT 4o",
     provider: Provider.OpenAI,
@@ -212,6 +228,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gpt-4o-mini",
+    uuid: "d191669f-a0d2-4fbd-b91f-d51cf18e8296",
     openRouterId: "openai/gpt-4o-mini",
     name: "GPT 4o-mini",
     provider: Provider.OpenAI,
@@ -223,6 +240,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gpt-4.1",
+    uuid: "ae30551e-3285-4b23-81e2-eaf00298e23a",
     openRouterId: "openai/gpt-4.1",
     name: "GPT 4.1",
     provider: Provider.OpenAI,
@@ -234,6 +252,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gpt-4.1-mini",
+    uuid: "19055e3e-b064-4bb5-8cc0-df8cfecd9369",
     openRouterId: "openai/gpt-4.1-mini",
     name: "GPT 4.1 Mini",
     provider: Provider.OpenAI,
@@ -245,6 +264,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gpt-4.1-nano",
+    uuid: "6b95b751-e5b2-4f25-b282-889940f2757e",
     openRouterId: "openai/gpt-4.1-nano",
     name: "GPT 4.1 Nano",
     provider: Provider.OpenAI,
@@ -256,6 +276,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "gpt-4.5",
+    uuid: "920c1d39-a573-436e-b957-930f7d2fdc3f",
     openRouterId: "openai/gpt-4.5-preview",
     name: "GPT 4.5",
     provider: Provider.OpenAI,
@@ -267,6 +288,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "o4-mini",
+    uuid: "d3e48622-4358-424f-ab76-7da72a248d4d",
     openRouterId: "openai/o4-mini",
     name: "OpenAI o4-mini",
     provider: Provider.OpenAI,
@@ -279,6 +301,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "o3",
+    uuid: "0b8ab35e-996c-4665-80cb-aa41a6a8682e",
     openRouterId: "openai/o3",
     name: "OpenAI o3",
     provider: Provider.OpenAI,
@@ -291,6 +314,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "o3-mini",
+    uuid: "397cb217-502a-4e4f-a381-6f852028f769",
     openRouterId: "openai/o3-mini",
     name: "OpenAI o3-mini",
     provider: Provider.OpenAI,
@@ -302,6 +326,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "o3-pro",
+    uuid: "748fdf38-cd65-4c33-858a-e5a90a608858",
     openRouterId: "openai/o3-pro",
     name: "OpenAI o3-pro",
     provider: Provider.OpenAI,
@@ -316,6 +341,7 @@ export const AI_MODELS: AIModel[] = [
   // Anthropic Models
   {
     id: "claude-4-sonnet",
+    uuid: "8bcf7fbb-33c7-42e5-8adf-191a1a301f74",
     openRouterId: "anthropic/claude-sonnet-4",
     name: "Claude 4 Sonnet",
     provider: Provider.Anthropic,
@@ -327,6 +353,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "claude-4-opus",
+    uuid: "bd39104a-30c7-4bed-a201-894434872ec4",
     openRouterId: "anthropic/claude-opus-4",
     name: "Claude 4 Opus",
     provider: Provider.Anthropic,
@@ -338,6 +365,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "claude-4-sonnet-reasoning",
+    uuid: "6247eead-3436-4a73-8eef-6a558c52bd78",
     name: "Claude 4 Sonnet (Reasoning)",
     provider: Provider.Anthropic,
     icon: RiAnthropicFill,
@@ -349,6 +377,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "claude-3.7-sonnet",
+    uuid: "5e30d772-8932-4948-b78a-aa429f6b4dad",
     openRouterId: "anthropic/claude-3.7-sonnet",
     name: "Claude 3.7 Sonnet",
     provider: Provider.Anthropic,
@@ -360,6 +389,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "claude-3.7-sonnet-reasoning",
+    uuid: "e14bc460-2f1a-496c-a6b6-c71aba0445e3",
     openRouterId: "anthropic/claude-3.7-sonnet:thinking",
     name: "Claude 3.7 Sonnet (Reasoning)",
     provider: Provider.Anthropic,
@@ -372,6 +402,7 @@ export const AI_MODELS: AIModel[] = [
   },
   {
     id: "claude-3.5-sonnet-20241022",
+    uuid: "ba151fe5-c93c-4750-ad65-c9a6af781522",
     openRouterId: "anthropic/claude-3.5-sonnet",
     name: "Claude 3.5 Sonnet",
     provider: Provider.Anthropic,
@@ -382,20 +413,6 @@ export const AI_MODELS: AIModel[] = [
     }
   }
 ];
-export const ALL_MODELS = AI_MODELS.map((model) => model.id);
-
-export const getModelsByProvider = (provider: string) => {
-  return AI_MODELS.filter((model) => model.provider === provider);
-};
-
-export const getAvailableModels = (keys: ApiKeys) => {
-  if (keys.openrouter)
-    return AI_MODELS.filter((model) => model.provider === Provider.OpenRouter || !!model.openRouterId);
-  return AI_MODELS.filter((model) => {
-    const requiredKey = keys[model.provider];
-    return requiredKey && requiredKey.trim() !== "";
-  });
-};
 
 const providerConfigs = [
   {
@@ -431,5 +448,24 @@ const providerConfigs = [
     link: "https://aistudio.google.com/app/apikey"
   }
 ];
+
+export const ALL_MODELS = AI_MODELS.map((model) => model.id);
+
+export const getModelsByProvider = (provider: string) => {
+  return AI_MODELS.filter((model) => model.provider === provider);
+};
+
+export const getAvailableModels = (keys: ApiKeys) => {
+  if (keys.openrouter)
+    return AI_MODELS.filter((model) => model.provider === Provider.OpenRouter || !!model.openRouterId);
+  return AI_MODELS.filter((model) => {
+    const requiredKey = keys[model.provider];
+    return requiredKey && requiredKey.trim() !== "";
+  });
+};
+
+export const getProviderIcon = (provider: Provider) => {
+  return providerConfigs.find((config) => config.key === provider)?.icon;
+};
 
 export const keyConfigs = providerConfigs;

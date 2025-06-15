@@ -5,10 +5,16 @@ import type { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, apiKey, model, openRouter } = await req.json();
+    const { message, apiKey, model: modelUUId, openRouter } = await req.json();
 
-    if (!message || !apiKey || !model) {
+    if (!message || !apiKey || !modelUUId) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const model = AI_MODELS.find((m) => m.uuid === modelUUId)?.id;
+
+    if (!model) {
+      return Response.json({ error: "Model not found" }, { status: 400 });
     }
 
     const modelConfig = AI_MODELS.find((m) => m.id === model);

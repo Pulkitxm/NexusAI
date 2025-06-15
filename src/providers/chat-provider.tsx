@@ -152,7 +152,7 @@ export function ChatProvider({
   }, []);
 
   const generateChatTitle = useCallback(
-    async (userMessage: string, apiKey: string, model: string): Promise<string> => {
+    async (userMessage: string, apiKey: string): Promise<string> => {
       try {
         setGeneratingTitle(true);
         const response = await fetch("/api/chat/title", {
@@ -163,7 +163,7 @@ export function ChatProvider({
           body: JSON.stringify({
             message: userMessage,
             apiKey,
-            model,
+            model: selectedModelDetails?.uuid,
             openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
           })
         });
@@ -268,7 +268,7 @@ export function ChatProvider({
             setChatId(currentChatId);
             shouldUpdateUrl = true;
 
-            const title = await generateChatTitle(currentInput, apiKey, selectedModel);
+            const title = await generateChatTitle(currentInput, apiKey);
 
             try {
               await fetch("/api/chat/update-title", {
@@ -339,7 +339,7 @@ export function ChatProvider({
               role: msg.role,
               content: msg.content
             })),
-            model: selectedModel,
+            model: selectedModelDetails?.uuid,
             provider: selectedModelDetails?.provider,
             apiKey,
             chatId: currentChatId,
@@ -446,8 +446,7 @@ export function ChatProvider({
       openModal,
       reasoning,
       refreshChats,
-      selectedModel,
-      selectedModelDetails?.provider,
+      selectedModelDetails,
       session,
       setAttachmentsWithStorage,
       setInput,

@@ -40,7 +40,7 @@ interface EnhancedChatInputProps {
 }
 
 export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
-  const { canUseOpenRouter } = useKeys();
+  const { canUseOpenRouter, haveOnlyOpenRouterKey } = useKeys();
   const {
     input,
     handleSubmit,
@@ -309,33 +309,35 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                   </div>
 
                   <div className="flex items-center gap-6">
-                    {selectedModelDetails?.provider !== Provider.OpenRouter && canUseOpenRouter && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 text-black dark:text-white">
-                            <Label
-                              htmlFor="openrouter-toggle"
-                              className="flex cursor-pointer items-center gap-1.5 text-xs"
-                            >
-                              <OPENROUTER_ICON />
-                              <span className="font-medium">OpenRouter</span>
-                            </Label>
-                            <Switch
-                              id="openrouter-toggle"
-                              checked={useOpenRouter}
-                              onCheckedChange={(val) => setUseOpenRouter(val)}
-                              className="data-[state=checked]:bg-purple-500 data-[state=checked]:text-purple-500 dark:data-[state=checked]:bg-purple-400 dark:data-[state=checked]:text-purple-400"
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          className="border-slate-700 bg-slate-900 text-slate-100 dark:border-slate-300 dark:bg-slate-100 dark:text-slate-900"
-                        >
-                          <p className="text-sm">Use advanced OpenRouter models</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    {!haveOnlyOpenRouterKey &&
+                      selectedModelDetails?.provider !== Provider.OpenRouter &&
+                      canUseOpenRouter && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 text-black dark:text-white">
+                              <Label
+                                htmlFor="openrouter-toggle"
+                                className="flex cursor-pointer items-center gap-1.5 text-xs"
+                              >
+                                <OPENROUTER_ICON />
+                                <span className="font-medium">OpenRouter</span>
+                              </Label>
+                              <Switch
+                                id="openrouter-toggle"
+                                checked={useOpenRouter}
+                                onCheckedChange={(val) => setUseOpenRouter(val)}
+                                className="data-[state=checked]:bg-purple-500 data-[state=checked]:text-purple-500 dark:data-[state=checked]:bg-purple-400 dark:data-[state=checked]:text-purple-400"
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            className="border-slate-700 bg-slate-900 text-slate-100 dark:border-slate-300 dark:bg-slate-100 dark:text-slate-900"
+                          >
+                            <p className="text-sm">Use advanced OpenRouter models</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
 
                     {webSearch !== null && (
                       <Tooltip>

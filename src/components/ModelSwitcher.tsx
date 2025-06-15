@@ -13,7 +13,9 @@ import {
   X,
   Filter,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  Check
 } from "lucide-react";
 import { memo, useMemo, useState, useCallback, useRef, useEffect } from "react";
 
@@ -21,12 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AI_MODELS } from "@/lib/models";
-import { useKeys } from "@/providers/key-provider";
-import { useSettingsModal } from "@/providers/settings-modal-provider";
+import { AI_MODELS, getProviderIcon } from "@/lib/models";
 
-import type { AIModel } from "@/types/models";
+import type { AIModel, Capabilities } from "@/types/models";
+import type { Provider } from "@/types/providers";
 import type React from "react";
 import type { IconType } from "react-icons";
 
@@ -80,8 +80,8 @@ const AnimatedWrapper = memo<{
 }>(({ children, show, delay = 0 }) => {
   return (
     <div
-      className={`transition-all duration-500 ease-in-out ${
-        show ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-4 opacity-0"
+      className={`transition-all duration-300 ease-out ${
+        show ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
       }`}
       style={{
         transitionDelay: show ? `${delay}ms` : "0ms"
@@ -158,10 +158,11 @@ const HighlightedText = memo<{
 HighlightedText.displayName = "HighlightedText";
 
 const CapabilityBadges = memo<{
-  capabilities: Record<string, boolean> | undefined;
-  size?: "sm" | "xs";
+  capabilities?: Capabilities;
+  size?: "sm" | "xs" | "lg";
   showIcons?: boolean;
-}>(({ capabilities, size = "sm", showIcons = true }) => {
+  searchQuery?: string;
+}>(({ capabilities, size = "sm", showIcons = true, searchQuery = "" }) => {
   if (!capabilities) return null;
 
   const activeCapabilities = Object.entries(capabilities)
@@ -176,16 +177,35 @@ const CapabilityBadges = memo<{
       {activeCapabilities.map((capability) => {
         const config = capabilityConfig[capability];
         const CapabilityIcon = config.icon;
+        const isHighlighted =
+          searchQuery &&
+          config.searchTerms.some(
+            (term) =>
+              term.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              searchQuery.toLowerCase().includes(term.toLowerCase()) ||
+              config.label.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+
         return (
           <Badge
             key={capability}
             variant="secondary"
-            className={`flex items-center gap-1 ${
-              size === "xs" ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs"
-            } bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`}
+            className={`flex items-center gap-1 transition-all duration-200 ${
+              size === "xs" ? "px-1.5 py-0.5 text-xs" : size === "lg" ? "px-3 py-1.5 text-sm" : "px-2 py-1 text-xs"
+            } ${
+              isHighlighted
+                ? "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:ring-yellow-700"
+                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+            }`}
           >
-            {showIcons && <CapabilityIcon className={`${size === "xs" ? "h-2.5 w-2.5" : "h-3 w-3"} ${config.color}`} />}
-            <span className="font-medium">{config.label}</span>
+            {showIcons && (
+              <CapabilityIcon
+                className={`${size === "xs" ? "h-2.5 w-2.5" : size === "lg" ? "h-4 w-4" : "h-3 w-3"} ${config.color}`}
+              />
+            )}
+            <span className="font-medium">
+              <HighlightedText text={config.label} searchQuery={searchQuery} />
+            </span>
           </Badge>
         );
       })}
@@ -194,6 +214,177 @@ const CapabilityBadges = memo<{
 });
 
 CapabilityBadges.displayName = "CapabilityBadges";
+
+const CustomDropdown = memo<{
+  availableModels: AIModel[];
+  selectedModel: string;
+  onModelChange: (modelId: string) => void;
+}>(({ availableModels, selectedModel, onModelChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const selectedModelData = availableModels.find((m) => m.id === selectedModel);
+  const SelectedIcon = selectedModelData?.icon;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && searchRef.current) {
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const filteredModels = useMemo(() => {
+    if (!searchQuery.trim()) return availableModels;
+
+    return availableModels.filter((model) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        model.name.toLowerCase().includes(query) ||
+        model.provider.toLowerCase().includes(query) ||
+        model.description.toLowerCase().includes(query) ||
+        (model.capabilities &&
+          Object.entries(model.capabilities).some(([key, value]) => {
+            if (!value) return false;
+            const config = capabilityConfig[key];
+            return (
+              config &&
+              (config.label.toLowerCase().includes(query) ||
+                config.searchTerms.some((term) => term.toLowerCase().includes(query)))
+            );
+          }))
+      );
+    });
+  }, [availableModels, searchQuery]);
+
+  const handleModelSelect = (modelId: string) => {
+    onModelChange(modelId);
+    setIsOpen(false);
+    setSearchQuery("");
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-10 w-[180px] items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800 sm:w-[220px] lg:w-[260px]"
+      >
+        {selectedModelData ? (
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-purple-500 via-purple-500 to-pink-500 text-white shadow-sm sm:h-6 sm:w-6">
+              {SelectedIcon && <SelectedIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col items-start">
+              <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100 sm:text-base">
+                {selectedModelData.name}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-gray-500">Select AI Model</span>
+        )}
+        <ChevronDown
+          className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-full min-w-[320px] rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
+          <div className="border-b border-gray-100 p-3 dark:border-gray-800">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                ref={searchRef}
+                placeholder="Search models, capabilities..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 border-gray-200 bg-gray-50 pl-10 pr-10 text-sm dark:border-gray-700 dark:bg-gray-800"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="max-h-[400px] overflow-y-auto">
+            {filteredModels.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <Filter className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                <p className="font-medium">No models found</p>
+                <p className="mt-1 text-xs">Try different keywords</p>
+              </div>
+            ) : (
+              filteredModels.map((model) => {
+                const ModelIcon = model.icon;
+                const isSelected = model.id === selectedModel;
+
+                return (
+                  <button
+                    key={model.id}
+                    onClick={() => handleModelSelect(model.id)}
+                    className={`w-full px-3 py-3 text-left transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                      isSelected ? "bg-purple-50 dark:bg-purple-950/30" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
+                          isSelected
+                            ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white"
+                            : "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600"
+                        }`}
+                      >
+                        <ModelIcon
+                          className={`h-4 w-4 ${isSelected ? "text-white" : "text-gray-600 dark:text-gray-300"}`}
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <HighlightedText
+                            text={model.name}
+                            searchQuery={searchQuery}
+                            className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
+                          />
+                          {isSelected && <Check className="h-4 w-4 text-purple-600" />}
+                        </div>
+                        <CapabilityBadges
+                          capabilities={model.capabilities}
+                          size="xs"
+                          showIcons={true}
+                          searchQuery={searchQuery}
+                        />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+CustomDropdown.displayName = "CustomDropdown";
 
 const ModelCard = memo<{
   model: AIModel;
@@ -207,9 +398,9 @@ const ModelCard = memo<{
   const ModelIcon = model.icon;
 
   return (
-    <AnimatedWrapper show={true} delay={index * 50}>
+    <AnimatedWrapper show={true} delay={index * 30}>
       <div
-        className={`group relative transform ${isAvailable ? "cursor-pointer" : ""} rounded-xl border p-4 transition-all duration-300 sm:p-5 ${
+        className={`group relative transform ${isAvailable ? "cursor-pointer" : ""} rounded-xl border p-4 transition-all duration-200 sm:p-5 ${
           isSelected
             ? "border-purple-200 bg-gradient-to-br from-purple-50 via-purple-50 to-pink-50 shadow-lg ring-2 ring-purple-100 dark:border-purple-700 dark:from-purple-950/30 dark:via-purple-950/30 dark:to-pink-950/30 dark:ring-purple-900/50"
             : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600 dark:hover:bg-gray-800"
@@ -219,7 +410,7 @@ const ModelCard = memo<{
         onClick={isAvailable ? onClick : undefined}
       >
         {isSelected && (
-          <div className="absolute -right-2 -top-2 animate-bounce rounded-full bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 shadow-lg">
+          <div className="absolute -right-2 -top-2 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 shadow-lg">
             <Star className="h-3 w-3 fill-current text-white" />
           </div>
         )}
@@ -232,13 +423,13 @@ const ModelCard = memo<{
 
         <div className="flex items-start gap-3 sm:gap-4">
           <div
-            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-300 sm:h-12 sm:w-12 ${
+            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-200 sm:h-14 sm:w-14 ${
               isSelected
                 ? "bg-gradient-to-br from-purple-500 via-purple-500 to-pink-500 text-white shadow-lg"
                 : "bg-gray-100 text-gray-600 group-hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:group-hover:bg-gray-600"
             }`}
           >
-            <ModelIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+            <ModelIcon className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -246,7 +437,7 @@ const ModelCard = memo<{
               <HighlightedText
                 text={model.name}
                 searchQuery={searchQuery}
-                className="truncate text-sm font-semibold text-gray-900 transition-all duration-300 dark:text-gray-100 sm:text-base"
+                className="truncate text-sm font-semibold text-gray-900 transition-all duration-200 dark:text-gray-100 sm:text-base"
               />
             </div>
 
@@ -255,6 +446,8 @@ const ModelCard = memo<{
               searchQuery={searchQuery}
               className="mb-3 line-clamp-2 text-xs leading-relaxed text-gray-600 dark:text-gray-300 sm:text-sm"
             />
+
+            <CapabilityBadges capabilities={model.capabilities} size="lg" showIcons={true} searchQuery={searchQuery} />
           </div>
         </div>
       </div>
@@ -263,37 +456,6 @@ const ModelCard = memo<{
 });
 
 ModelCard.displayName = "ModelCard";
-
-const ModelSelectItem = memo<{
-  model: AIModel;
-  searchQuery?: string;
-}>(({ model, searchQuery = "" }) => {
-  const ModelIcon = model.icon;
-  return (
-    <SelectItem
-      value={model.id}
-      className="cursor-pointer px-3 py-3 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-    >
-      <div className="flex w-full items-center gap-3">
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600">
-          <ModelIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <HighlightedText
-              text={model.name}
-              searchQuery={searchQuery}
-              className="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
-            />
-          </div>
-        </div>
-      </div>
-    </SelectItem>
-  );
-});
-
-ModelSelectItem.displayName = "ModelSelectItem";
 
 const ProviderSection = memo<{
   provider: string;
@@ -304,18 +466,22 @@ const ProviderSection = memo<{
   index: number;
   availableModels: AIModel[];
 }>(({ provider, models, selectedModel, onModelSelect, searchQuery, index, availableModels }) => {
+  const ProviderIcon = getProviderIcon(provider as Provider) || Zap;
+
   return (
-    <AnimatedWrapper show={true} delay={index * 100}>
+    <AnimatedWrapper show={true} delay={index * 50}>
       <div className="space-y-4">
         <div className="sticky top-0 z-10 flex items-center gap-3 rounded-lg bg-white py-2 dark:bg-gray-900">
           <div className="rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 p-2 dark:from-gray-800 dark:to-gray-700">
-            <Zap className="h-4 w-4 text-gray-600 dark:text-gray-300 sm:h-5 sm:w-5" />
+            <ProviderIcon className="h-4 w-4 text-gray-600 dark:text-gray-300 sm:h-5 sm:w-5" />
           </div>
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
               <HighlightedText text={provider} searchQuery={searchQuery} />
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 sm:text-sm">{models.length} model</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
+              {models.length} model{models.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
 
@@ -340,13 +506,8 @@ const ProviderSection = memo<{
 ProviderSection.displayName = "ProviderSection";
 
 export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, selectedModel, onModelChange }) => {
-  const { hasAnyKeys } = useKeys();
-  const { openModal } = useSettingsModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dropdownSearch, setDropdownSearch] = useState("");
-  const dropdownSearchRef = useRef<HTMLInputElement>(null);
   const modalSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -354,17 +515,6 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
       modalSearchRef.current.focus();
     }
   }, [isModalOpen]);
-
-  useEffect(() => {
-    if (isDropdownOpen) {
-      const timer = setTimeout(() => {
-        if (dropdownSearchRef.current) {
-          dropdownSearchRef.current.focus();
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isDropdownOpen]);
 
   const groupedByProvider = useMemo(() => {
     const emptyRecord: Record<string, AIModel[]> = {};
@@ -391,18 +541,19 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
 
       if (model.description.toLowerCase().includes(lowerQuery)) score += 0.4;
 
-      Object.entries(model.capabilities ?? {}).forEach(([key, value]) => {
-        if (!value) return;
-        const config = capabilityConfig[key];
-        if (!config) return;
+      if (model.capabilities)
+        Object.entries(model.capabilities).forEach(([key, value]) => {
+          if (!value) return;
+          const config = capabilityConfig[key];
+          if (!config) return;
 
-        if (config.label.toLowerCase().includes(lowerQuery)) score += 0.7;
-        config.searchTerms.forEach((term) => {
-          if (term.toLowerCase().includes(lowerQuery) || lowerQuery.includes(term.toLowerCase())) {
-            score += 0.3;
-          }
+          if (config.label.toLowerCase().includes(lowerQuery)) score += 0.7;
+          config.searchTerms.forEach((term) => {
+            if (term.toLowerCase().includes(lowerQuery) || lowerQuery.includes(term.toLowerCase())) {
+              score += 0.3;
+            }
+          });
         });
-      });
 
       const isAvailable = availableModels.some((m) => m.id === model.id);
       if (lowerQuery === "available" && isAvailable) score += 0.9;
@@ -429,23 +580,6 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
     [calculateMatchScore]
   );
 
-  const filteredDropdownModels = useMemo(() => {
-    const emptyRecord: Record<string, AIModel[]> = {};
-    const filtered = filterModels(availableModels, dropdownSearch);
-    return filtered.reduce((acc, model) => {
-      if (!acc[model.provider]) {
-        acc[model.provider] = [];
-      }
-      acc[model.provider].push(model);
-      return acc;
-    }, emptyRecord);
-  }, [availableModels, dropdownSearch, filterModels]);
-
-  const selectedModelData = useMemo(
-    () => availableModels.find((m) => m.id === selectedModel),
-    [availableModels, selectedModel]
-  );
-
   const groupedFilteredForModal = useMemo(() => {
     const emptyRecord: Record<string, AIModel[]> = {};
     return Object.entries(groupedByProvider).reduce((acc, [provider, models]) => {
@@ -470,9 +604,6 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
   }, []);
 
   const clearSearchQuery = useCallback(() => setSearchQuery(""), []);
-  const clearDropdownSearch = useCallback(() => setDropdownSearch(""), []);
-
-  const SelectedIcon = selectedModelData?.icon;
 
   const totalResults = useMemo(() => {
     return Object.values(groupedFilteredForModal).reduce((sum, models) => sum + models.length, 0);
@@ -480,94 +611,7 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
 
   return (
     <div className="flex items-center gap-2">
-      <Select value={selectedModel} onValueChange={onModelChange} onOpenChange={setIsDropdownOpen}>
-        <SelectTrigger className="h-10 w-[180px] rounded-lg border border-gray-200 bg-white shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800 sm:w-[220px] lg:w-[260px]">
-          <SelectValue placeholder="Select AI Model">
-            {selectedModelData && (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-purple-500 via-purple-500 to-pink-500 text-white shadow-sm sm:h-6 sm:w-6">
-                  {SelectedIcon && <SelectedIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-                </div>
-                <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100 sm:text-base">
-                  {selectedModelData.name}
-                </span>
-              </div>
-            )}
-          </SelectValue>
-        </SelectTrigger>
-
-        <SelectContent className="max-h-[500px] w-[300px] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900 sm:w-[340px]">
-          <div
-            className="border-b border-gray-100 p-3 dark:border-gray-800"
-            onClick={(e) => e.stopPropagation()} // Prevent Select from closing when clicking in search area
-          >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-              <Input
-                key="dropdown-search" // Add stable key
-                placeholder="Search models, capabilities, availability..."
-                value={dropdownSearch}
-                ref={dropdownSearchRef}
-                onChange={(e) => {
-                  e.stopPropagation(); // Prevent event bubbling
-                  setDropdownSearch(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  e.stopPropagation(); // Prevent Select from handling key events
-                }}
-                onFocus={(e) => {
-                  e.stopPropagation(); // Prevent Select from handling focus events
-                }}
-                className="h-9 border-gray-200 bg-gray-50 pl-10 pr-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800"
-              />
-              {dropdownSearch && (
-                <button
-                  onClick={clearDropdownSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="max-h-[400px] overflow-y-auto">
-            {Object.keys(filteredDropdownModels).length === 0 ? (
-              <AnimatedWrapper show={true}>
-                <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                  <Filter className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                  <p className="font-medium">No available models found</p>
-                  {!hasAnyKeys ? (
-                    <p className="mt-1 text-xs">
-                      Please{" "}
-                      <span className="cursor-pointer text-purple-500 underline" onClick={() => openModal()}>
-                        add an API key
-                      </span>{" "}
-                      to your account to use this feature.
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs">Try different keywords</p>
-                  )}
-                </div>
-              </AnimatedWrapper>
-            ) : (
-              Object.entries(filteredDropdownModels).map(([provider, models]) => (
-                <div key={provider}>
-                  <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-300">
-                    <Zap className="h-3 w-3" />
-                    <HighlightedText text={provider} searchQuery={dropdownSearch} />
-                    <span className="text-xs text-gray-500">({models.length})</span>
-                  </div>
-
-                  {models.map((model) => (
-                    <ModelSelectItem key={model.id} model={model} searchQuery={dropdownSearch} />
-                  ))}
-                </div>
-              ))
-            )}
-          </div>
-        </SelectContent>
-      </Select>
+      <CustomDropdown availableModels={availableModels} selectedModel={selectedModel} onModelChange={onModelChange} />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogTrigger asChild>
@@ -603,7 +647,7 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
                   value={searchQuery}
                   ref={modalSearchRef}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10 border-gray-200 bg-gray-50 pl-10 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:focus:ring-purple-400"
+                  className="h-10 border-gray-200 bg-gray-50 pl-10 pr-10 transition-all duration-200"
                 />
                 {searchQuery && (
                   <button
