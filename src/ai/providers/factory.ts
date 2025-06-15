@@ -1,4 +1,4 @@
-import { Provider } from "@/types/models";
+import { Provider } from "@/types/providers";
 
 import { AnthropicProvider } from "./anthropic";
 import { GoogleProvider } from "./google";

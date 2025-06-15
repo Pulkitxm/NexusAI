@@ -15,13 +15,13 @@ import {
   useRef
 } from "react";
 
-import type { Chat } from "@/types/chat";
-import type React from "react";
-
 import { deleteChat, getUserChats } from "@/actions/chat";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+import type { Chat } from "@/types/chat";
+import type React from "react";
 
 export const SIDEBAR_STORAGE_KEY = "sidebar:state";
 export const SIDEBAR_WIDTH = "16rem";
@@ -203,20 +203,14 @@ export const SidebarProvider = forwardRef<
   }, []);
 
   const updateChatTitle = useCallback((chatId: string, title: string) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === chatId
-          ? { ...chat, title, updatedAt: new Date() }
-          : chat
-      )
-    );
+    setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, title, updatedAt: new Date() } : chat)));
   }, []);
 
   useEffect(() => {
     if (open && !initialized) {
       loadChats();
     }
-    
+
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();

@@ -5,7 +5,7 @@ import { GoogleProvider } from "@/ai/providers/google";
 import { OpenAIProvider } from "@/ai/providers/openai";
 import { prisma } from "@/lib/db";
 import { AI_MODELS } from "@/lib/models";
-import { Provider } from "@/types/models";
+import { Provider } from "@/types/providers";
 
 const MemorySchema = z.object({
   memories: z.array(

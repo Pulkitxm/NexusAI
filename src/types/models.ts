@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
-import type { IconType } from "react-icons";
+import { z } from "zod";
 
-export enum Provider {
-  OpenAI = "openai",
-  Anthropic = "anthropic",
-  Google = "google"
-}
+import { ALL_MODELS } from "@/lib/models";
+
+import { Provider } from "./providers";
+
+import type { IconType } from "react-icons";
 
 export interface AIModel {
   id: string;
@@ -103,17 +102,21 @@ export interface UserData {
   globalMemories: GlobalMemory[];
 }
 
-export interface ChatRequestBody {
-  messages: { role: string; content: string }[];
-  model: string;
-  provider?: string;
-  apiKey: string;
-  chatId?: string;
-  reasoning: boolean;
-  attachments: string[];
-  temperature: number;
-  maxTokens: number;
-}
+export const chatBodyValidator = z.object({
+  messages: z.array(z.object({ role: z.string(), content: z.string() })).min(1),
+  model: z.string().refine((model) => {
+    return ALL_MODELS.some((m) => m === model);
+  }, "Invalid model ID"),
+  provider: z.nativeEnum(Provider),
+  apiKey: z.string(),
+  chatId: z.string(),
+  reasoning: z.boolean().optional(),
+  attachments: z.array(z.string()),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  openRouter: z.boolean().optional()
+});
+export type ChatRequestBody = z.infer<typeof chatBodyValidator>;
 
 export interface ChatResponse {
   success: boolean;

@@ -288,7 +288,11 @@ function ChatItem({
   return (
     <SidebarMenuItem>
       <Link href={`/${chat.id}`}>
-        <SidebarMenuButton className="group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50 data-[active=true]:bg-accent">
+        <SidebarMenuButton
+          className={`group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50 ${
+            isActive ? "bg-accent" : ""
+          }`}
+        >
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex-shrink-0">
               {isLoading ? (

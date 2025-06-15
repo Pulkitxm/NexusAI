@@ -1,20 +1,29 @@
 import { GoogleGenerativeAI, type Part } from "@google/generative-ai";
 
 import { BaseAIProvider } from "./base";
+import { OpenAIProvider } from "./openai";
 
 import type { ChatInput, ChatResponse, StreamOptions, ChatMessage } from "../../types/models";
 
 export class GoogleProvider extends BaseAIProvider {
   protected apiKey: string;
-  private client: GoogleGenerativeAI;
+  private client: GoogleGenerativeAI | OpenAIProvider;
+  private isOpenRouter: boolean;
 
-  constructor({ apiKey }: { apiKey: string }) {
+  constructor({ apiKey, isOpenRouter = false }: { apiKey: string; isOpenRouter?: boolean }) {
     super();
     this.apiKey = apiKey;
-    this.client = new GoogleGenerativeAI(apiKey);
+    this.isOpenRouter = isOpenRouter;
+    this.client = this.isOpenRouter
+      ? new OpenAIProvider({ apiKey: this.apiKey, isOpenRouter: true })
+      : new GoogleGenerativeAI(apiKey);
   }
 
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
+    if (this.client instanceof OpenAIProvider) {
+      return this.client.chat(input, options);
+    }
+
     const { messages, stream, temperature = 0.7, maxTokens, model = "gemini-1.5-pro" } = input;
 
     try {

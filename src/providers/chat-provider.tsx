@@ -13,7 +13,8 @@ import {
   type FormEventHandler,
   type RefObject,
   type ReactNode,
-  type FormEvent
+  type FormEvent,
+  useEffect
 } from "react";
 
 import { createChat, saveUserMessage } from "@/actions/chat";
@@ -67,6 +68,8 @@ interface ChatContextType {
   loadingChatId: string | null;
   setLoadingChatId: Dispatch<SetStateAction<string | null>>;
   generatingTitle: boolean;
+  useOpenRouter: boolean;
+  setUseOpenRouter: Dispatch<SetStateAction<boolean>>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -89,13 +92,14 @@ export function ChatProvider({
   initialChatId?: string | null;
 }) {
   const { selectedModel } = useModel();
-  const { keys, hasAnyKeys } = useKeys();
+  const { keys, hasAnyKeys, haveOnlyOpenRouterKey } = useKeys();
   const { toast } = useToast();
   const { openModal } = useSettingsModal();
   const [error, setError] = useState<Error | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean | null>(null);
+  const [useOpenRouter, setUseOpenRouter] = useState(false);
   const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInputState] = useState(() => getStoredValue("input", ""));
@@ -115,7 +119,11 @@ export function ChatProvider({
 
   const availableModels = getAvailableModels(keys);
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
-  const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
+  const apiKey = useOpenRouter
+    ? keys.openrouter
+      ? keys.openrouter
+      : undefined
+    : keys[selectedModelDetails?.requiresKey as keyof typeof keys];
 
   const { refreshChats } = useSidebar();
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
@@ -442,6 +450,12 @@ export function ChatProvider({
     ]
   );
 
+  useEffect(() => {
+    if (haveOnlyOpenRouterKey) {
+      setUseOpenRouter(true);
+    }
+  }, [haveOnlyOpenRouterKey]);
+
   const clearChat = useCallback(() => {
     setMessages([]);
     setMessageCount(0);
@@ -503,7 +517,9 @@ export function ChatProvider({
     setConnectionError,
     loadingChatId,
     setLoadingChatId,
-    generatingTitle
+    generatingTitle,
+    useOpenRouter,
+    setUseOpenRouter
   };
 
   return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;

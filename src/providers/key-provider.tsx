@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, useMemo, useState } from "react";
 
 import { getStoredValue, setStoredValue } from "@/lib/utils";
+import { Provider } from "@/types/providers";
 
 import type { ApiKeys } from "@/types/keys";
 import type React from "react";
@@ -11,6 +12,8 @@ interface KeyContextType {
   keys: ApiKeys;
   updateKeys: (keys: Partial<ApiKeys>) => void;
   hasAnyKeys: boolean;
+  haveOnlyOpenRouterKey: boolean;
+  canUseOpenRouter: boolean;
 }
 
 const KeyContext = createContext<KeyContextType | undefined>(undefined);
@@ -35,7 +38,22 @@ export function KeyProvider({ children }: { children: React.ReactNode }) {
 
   const hasAnyKeys = useMemo(() => Object.values(keys).some((key) => key && key.trim() !== ""), [keys]);
 
-  const contextValue = useMemo(() => ({ keys, updateKeys, hasAnyKeys }), [keys, updateKeys, hasAnyKeys]);
+  const haveOnlyOpenRouterKey = useMemo(() => {
+    if (!hasAnyKeys || !keys.openrouter) return false;
+
+    for (const key in keys) {
+      if (key !== Provider.OpenRouter && keys[key as keyof ApiKeys]) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [hasAnyKeys, keys]);
+
+  const contextValue = useMemo(
+    () => ({ keys, updateKeys, hasAnyKeys, haveOnlyOpenRouterKey, canUseOpenRouter: !!keys.openrouter }),
+    [keys, updateKeys, hasAnyKeys, haveOnlyOpenRouterKey]
+  );
 
   return <KeyContext.Provider value={contextValue}>{children}</KeyContext.Provider>;
 }

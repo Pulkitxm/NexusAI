@@ -6,15 +6,16 @@ import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
 import { analyzeAndStoreMemories } from "@/lib/memoryAnalyzer";
 import { AI_MODELS } from "@/lib/models";
-
-import type {
-  ChatInput,
-  ChatMessage,
-  ChatRequestBody,
-  ProcessedAttachment,
-  UserData,
-  APIErrorResponse
+import {
+  type ChatInput,
+  type ChatMessage,
+  type ChatRequestBody,
+  type ProcessedAttachment,
+  type UserData,
+  type APIErrorResponse,
+  chatBodyValidator
 } from "@/types/models";
+
 import type { NextRequest } from "next/server";
 
 export const maxDuration = 30;
@@ -238,45 +239,13 @@ function formatErrorResponse(error: unknown): APIErrorResponse {
 }
 
 function validateRequestBody(body: unknown): ChatRequestBody {
-  if (!body || typeof body !== "object") {
-    throw new APIError("Request body must be an object", 400, "INVALID_BODY");
+  const result = chatBodyValidator.safeParse(body);
+
+  if (!result.success) {
+    throw new APIError("Invalid request body", 400, "INVALID_REQUEST_BODY", result.error);
   }
 
-  const typedBody = body as Record<string, unknown>;
-
-  if (!Array.isArray(typedBody.messages) || typedBody.messages.length === 0) {
-    throw new APIError("Messages array is required and cannot be empty", 400, "MISSING_MESSAGES");
-  }
-
-  if (typeof typedBody.model !== "string" || !typedBody.model) {
-    throw new APIError("Model is required", 400, "MISSING_MODEL");
-  }
-
-  if (typeof typedBody.apiKey !== "string" || !typedBody.apiKey) {
-    throw new APIError("API key is required", 400, "MISSING_API_KEY");
-  }
-
-  for (const message of typedBody.messages) {
-    if (!message || typeof message !== "object") {
-      throw new APIError("Each message must be an object", 400, "INVALID_MESSAGE_FORMAT");
-    }
-    const typedMessage = message as Record<string, unknown>;
-    if (typeof typedMessage.role !== "string" || typeof typedMessage.content !== "string") {
-      throw new APIError("Each message must have role and content strings", 400, "INVALID_MESSAGE_FORMAT");
-    }
-  }
-
-  return {
-    messages: typedBody.messages as { role: string; content: string }[],
-    model: typedBody.model,
-    provider: typeof typedBody.provider === "string" ? typedBody.provider : undefined,
-    apiKey: typedBody.apiKey,
-    chatId: typeof typedBody.chatId === "string" ? typedBody.chatId : undefined,
-    reasoning: typeof typedBody.reasoning === "boolean" ? typedBody.reasoning : false,
-    attachments: Array.isArray(typedBody.attachments) ? (typedBody.attachments as string[]) : [],
-    temperature: typeof typedBody.temperature === "number" ? typedBody.temperature : 0.7,
-    maxTokens: typeof typedBody.maxTokens === "number" ? typedBody.maxTokens : 4000
-  };
+  return result.data;
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -297,7 +266,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       throw new APIError("Invalid JSON in request body", 400, "INVALID_JSON");
     }
 
-    const { messages, model, provider, apiKey, chatId, reasoning, attachments, temperature, maxTokens } = requestBody;
+    const { messages, model, provider, apiKey, chatId, reasoning, attachments, temperature, maxTokens, openRouter } =
+      requestBody;
 
     const processedAttachments = await processAttachments(attachments);
     const { userSettings, globalMemories } = await getUserData(userId);
@@ -310,7 +280,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const aiProvider = getAIProvider({
       provider: modelConfig.provider || provider,
       apiKey,
-      openRouter: false
+      openRouter
     });
 
     if (!aiProvider) {
