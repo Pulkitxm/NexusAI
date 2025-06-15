@@ -1,25 +1,35 @@
 import OpenAI from "openai";
 
+import { OPENROUTER_BASE_URL } from "@/lib/data";
+import { AI_MODELS } from "@/lib/models";
+
 import { BaseAIProvider } from "./base";
 
 import type { ChatInput, ChatResponse, StreamOptions } from "../types/models";
-
-import { OPENROUTER_BASE_URL } from "@/lib/data";
 
 export class OpenAIProvider extends BaseAIProvider {
   protected apiKey: string;
   protected baseUrl?: string;
   private client: OpenAI;
+  private isOpenRouter: boolean;
 
   constructor({ apiKey, isOpenRouter = false }: { apiKey: string; isOpenRouter?: boolean }) {
     super();
     this.apiKey = apiKey;
-    this.baseUrl = isOpenRouter ? OPENROUTER_BASE_URL : undefined;
+    this.isOpenRouter = isOpenRouter;
+    this.baseUrl = this.isOpenRouter ? OPENROUTER_BASE_URL : undefined;
     this.client = new OpenAI({ apiKey, baseURL: this.baseUrl });
   }
 
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
-    const { messages, stream, temperature = 0.7, maxTokens, model = "gpt-4-vision-preview" } = input;
+    const { messages, stream, temperature = 0.7, maxTokens, model: modelInput } = input;
+
+    let model = modelInput;
+    const m = AI_MODELS.find((m) => m.id === modelInput);
+    if (!m || !m.openRouterId) {
+      throw new Error(`Model ${modelInput} not found`);
+    }
+    if (this.isOpenRouter) model = m.openRouterId!;
 
     const openAIMessages = messages.map((msg) => ({
       role: msg.role,
