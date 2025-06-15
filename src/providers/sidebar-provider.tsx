@@ -1,24 +1,27 @@
 "use client";
 
 import {
-  ComponentProps,
+  type ComponentProps,
   createContext,
-  Dispatch,
+  type Dispatch,
   forwardRef,
-  SetStateAction,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
   useMemo,
-  useReducer,
-  useRef,
-  useState
+  useState,
+  type ReactNode,
+  useRef
 } from "react";
+
+import type { Chat } from "@/types/chat";
+import type React from "react";
 
 import { deleteChat, getUserChats } from "@/actions/chat";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Chat } from "@/types/chat";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const SIDEBAR_STORAGE_KEY = "sidebar:state";
 export const SIDEBAR_WIDTH = "16rem";
@@ -39,9 +42,15 @@ export type SidebarContext = {
   error: string | null;
   deleteChat: (chatId: string) => void;
   refreshChats: () => void;
+  loadingChatId: string | null;
+  setLoadingChatId: Dispatch<SetStateAction<string | null>>;
+  addChat: (chat: Chat) => void;
+  updateChatTitle: (chatId: string, title: string) => void;
+  generatingTitleForChat: string | null;
+  setGeneratingTitleForChat: (chatId: string | null) => void;
 };
 
-export const SidebarContext = createContext<SidebarContext | null>(null);
+const SidebarContext = createContext<SidebarContext | null>(null);
 
 export function useSidebar() {
   const context = useContext(SidebarContext);
@@ -71,69 +80,25 @@ const setSidebarState = (open: boolean): void => {
   }
 };
 
-type ChatState = {
-  chats: Chat[];
-  loading: boolean;
-  error: string | null;
-  initialized: boolean;
-};
-
-type ChatAction =
-  | { type: "FETCH_START" }
-  | { type: "FETCH_SUCCESS"; payload: Chat[] }
-  | { type: "FETCH_ERROR"; payload: string }
-  | { type: "DELETE_CHAT"; payload: string }
-  | { type: "SET_CHATS"; payload: Chat[] };
-
-const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
-  switch (action.type) {
-    case "FETCH_START":
-      return { ...state, loading: true, error: null };
-    case "FETCH_SUCCESS":
-      return {
-        ...state,
-        loading: false,
-        chats: action.payload,
-        error: null,
-        initialized: true
-      };
-    case "FETCH_ERROR":
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-        initialized: true
-      };
-    case "DELETE_CHAT":
-      return {
-        ...state,
-        chats: state.chats.filter((chat) => chat.id !== action.payload)
-      };
-    case "SET_CHATS":
-      return { ...state, chats: action.payload };
-    default:
-      return state;
-  }
-};
-
 export const SidebarProvider = forwardRef<
   HTMLDivElement,
   ComponentProps<"div"> & {
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    children: ReactNode;
   }
 >(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, style, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
+  const [generatingTitleForChat, setGeneratingTitleForChatState] = useState<string | null>(null);
   const loadingRef = useRef(false);
-
-  const [chatState, dispatch] = useReducer(chatReducer, {
-    chats: [],
-    loading: false,
-    error: null,
-    initialized: false
-  });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const [_open, _setOpen] = useState(() => {
     if (defaultOpen !== undefined) return defaultOpen;
@@ -169,19 +134,25 @@ export const SidebarProvider = forwardRef<
 
   const loadChats = useCallback(async () => {
     if (loadingRef.current) return;
-    loadingRef.current = true;
 
-    dispatch({ type: "FETCH_START" });
+    // Cancel any ongoing requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    loadingRef.current = true;
+    setLoading(true);
+    setError(null);
 
     try {
       const userChats = await getUserChats();
 
       if (!userChats.success) {
         console.error("Error loading chats:", userChats.error);
-        dispatch({
-          type: "FETCH_ERROR",
-          payload: userChats.error || "Failed to load chats."
-        });
+        setError(userChats.error || "Failed to load chats.");
         return;
       }
 
@@ -191,40 +162,67 @@ export const SidebarProvider = forwardRef<
         updatedAt: chat.updatedAt
       }));
 
-      dispatch({ type: "FETCH_SUCCESS", payload: mappedChats || [] });
+      setChats(mappedChats || []);
+      setInitialized(true);
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
       console.error("Error loading chats:", error);
-      dispatch({
-        type: "FETCH_ERROR",
-        payload: (error as Error).message || "An unknown error occurred."
-      });
+      setError((error as Error).message || "An unknown error occurred.");
     } finally {
       loadingRef.current = false;
+      setLoading(false);
     }
   }, []);
 
+  const debouncedLoadChats = useDebounce(loadChats, 300);
+
   const refreshChats = useCallback(() => {
-    loadChats();
-  }, [loadChats]);
+    debouncedLoadChats();
+  }, [debouncedLoadChats]);
 
   const handleDeleteChat = useCallback(async (chatId: string) => {
+    setLoadingChatId(chatId);
     try {
       const res = await deleteChat(chatId);
       if (!res.success) {
         console.error("Error deleting chat:", res.error);
         return;
       }
-      dispatch({ type: "DELETE_CHAT", payload: chatId });
+      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
     } catch (error) {
       console.error("Error deleting chat:", error);
+    } finally {
+      setLoadingChatId(null);
     }
   }, []);
 
+  const addChat = useCallback((chat: Chat) => {
+    setChats((prev) => [chat, ...prev]);
+  }, []);
+
+  const updateChatTitle = useCallback((chatId: string, title: string) => {
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === chatId
+          ? { ...chat, title, updatedAt: new Date() }
+          : chat
+      )
+    );
+  }, []);
+
   useEffect(() => {
-    if (open && !chatState.initialized && !loadingRef.current) {
+    if (open && !initialized) {
       loadChats();
     }
-  }, [open, chatState.initialized, loadChats]);
+    
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [open, initialized, loadChats]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -247,11 +245,17 @@ export const SidebarProvider = forwardRef<
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      chats: chatState.chats,
-      loading: chatState.loading,
-      error: chatState.error,
+      chats,
+      loading,
+      error,
       deleteChat: handleDeleteChat,
-      refreshChats
+      refreshChats,
+      loadingChatId,
+      setLoadingChatId,
+      addChat,
+      updateChatTitle,
+      generatingTitleForChat,
+      setGeneratingTitleForChat: setGeneratingTitleForChatState
     }),
     [
       open,
@@ -260,15 +264,21 @@ export const SidebarProvider = forwardRef<
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      chatState.chats,
-      chatState.loading,
-      chatState.error,
+      chats,
+      loading,
+      error,
       handleDeleteChat,
-      refreshChats
+      refreshChats,
+      loadingChatId,
+      setLoadingChatId,
+      addChat,
+      updateChatTitle,
+      generatingTitleForChat,
+      setGeneratingTitleForChatState
     ]
   );
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const tooltipStyle: React.CSSProperties = {
     "--sidebar-width": SIDEBAR_WIDTH,
     "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,

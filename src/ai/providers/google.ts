@@ -63,18 +63,16 @@ export class GoogleProvider extends BaseAIProvider {
           conversationText += `System: ${message.content}\n\n`;
         }
       } else {
-        const rolePrefix = message.role === "user" ? "Human: " : "Assistant: ";
-
         if (typeof message.content === "string") {
-          conversationText += `${rolePrefix}${message.content}\n\n`;
+          conversationText += `${message.content}\n\n`;
         } else if (Array.isArray(message.content)) {
-          let messageText = rolePrefix;
+          let messageText = "";
 
           for (const contentPart of message.content) {
             if (contentPart.type === "text" && contentPart.text) {
               messageText += contentPart.text;
             } else if (contentPart.type === "image" && contentPart.image_url?.url) {
-              if (messageText.trim() !== rolePrefix) {
+              if (messageText.trim() !== "") {
                 conversationText += messageText + "\n\n";
                 messageText = "";
               }
@@ -103,7 +101,7 @@ export class GoogleProvider extends BaseAIProvider {
             }
           }
 
-          if (messageText.trim() !== rolePrefix && messageText.trim() !== "") {
+          if (messageText.trim() !== "") {
             conversationText += messageText + "\n\n";
           }
         }

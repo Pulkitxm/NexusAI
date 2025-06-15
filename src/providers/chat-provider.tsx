@@ -26,6 +26,7 @@ import { type Attachment, validateAttachment } from "@/types/chat";
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
 import { useSettingsModal } from "./settings-modal-provider";
+import { useSidebar } from "./sidebar-provider";
 
 export interface MessageWithAttachments {
   id: string;
@@ -60,6 +61,12 @@ interface ChatContextType {
   setReasoning: (level: "high" | "medium" | "low" | null) => void;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
+  retryLastMessage: () => void;
+  connectionError: string | null;
+  setConnectionError: Dispatch<SetStateAction<string | null>>;
+  loadingChatId: string | null;
+  setLoadingChatId: Dispatch<SetStateAction<string | null>>;
+  generatingTitle: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -87,6 +94,7 @@ export function ChatProvider({
   const { openModal } = useSettingsModal();
   const [error, setError] = useState<Error | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean | null>(null);
   const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +106,7 @@ export function ChatProvider({
   const params = useParams();
   const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
   const [attachments, setAttachments] = useState<Attachment[]>(isValid.success ? localAttachments : []);
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
 
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
   const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
@@ -107,6 +116,10 @@ export function ChatProvider({
   const availableModels = getAvailableModels(keys);
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
   const apiKey = keys[selectedModelDetails?.requiresKey as keyof typeof keys];
+
+  const { refreshChats } = useSidebar();
+  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
+  const [generatingTitle, setGeneratingTitle] = useState(false);
 
   const setInput = useCallback((value: string | ((prev: string) => string)) => {
     if (typeof value === "function") {
@@ -129,11 +142,51 @@ export function ChatProvider({
     });
   }, []);
 
+  const generateChatTitle = useCallback(async (userMessage: string, apiKey: string, model: string): Promise<string> => {
+    try {
+      setGeneratingTitle(true);
+      const response = await fetch("/api/chat/title", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          apiKey,
+          model
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate title");
+      }
+
+      const data = await response.json();
+      return data.title || `Chat about ${userMessage.slice(0, 30)}...`;
+    } catch (error) {
+      console.error("Error generating chat title:", error);
+      return `Chat about ${userMessage.slice(0, 30)}...`;
+    } finally {
+      setGeneratingTitle(false);
+    }
+  }, []);
+
+  const retryLastMessage = useCallback(() => {
+    if (lastFailedMessage) {
+      setInput(lastFailedMessage);
+      setLastFailedMessage(null);
+      setError(null);
+      setConnectionError(null);
+    }
+  }, [lastFailedMessage, setInput]);
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
 
-      if (!hasAnyKeys) {
+      if (isLoading) return;
+
+      if (!hasAnyKeys || !apiKey) {
         toast({
           variant: "destructive",
           title: "No API Keys",
@@ -163,8 +216,16 @@ export function ChatProvider({
       const currentInput = input.trim();
       if (!currentInput) return;
 
+      if (!navigator.onLine) {
+        setConnectionError("You're offline. Please check your internet connection.");
+        setLastFailedMessage(currentInput);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
+      setConnectionError(null);
+      setLastFailedMessage(null);
 
       const userMessage: MessageWithAttachments = {
         id: Date.now().toString(),
@@ -176,33 +237,62 @@ export function ChatProvider({
 
       setMessages((prev) => [...prev, userMessage]);
 
+      const currentAttachments = [...attachments];
+      setAttachmentsWithStorage([]);
+      setInput("");
+      removeStoredValue("input");
+      removeStoredValue("attachments");
+
       let currentChatId = chatId;
+      let shouldUpdateUrl = false;
 
       if (!currentChatId) {
         try {
+          setLoadingChatId("creating");
           const result = await createChat();
           if (result.success && result.chat) {
             currentChatId = result.chat.id;
             setChatId(currentChatId);
-            window.history.pushState({}, "", `/${currentChatId}`);
+            shouldUpdateUrl = true;
+
+            const title = await generateChatTitle(currentInput, apiKey, selectedModel);
+
+            try {
+              await fetch("/api/chat/update-title", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  chatId: currentChatId,
+                  title
+                })
+              });
+
+              refreshChats();
+            } catch (error) {
+              console.error("Error updating chat title:", error);
+            }
           } else {
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to create chat. Please try again."
-            });
-            setIsLoading(false);
-            return;
+            throw new Error("Failed to create chat");
           }
         } catch (error) {
           console.error("Error creating chat:", error);
+          setIsLoading(false);
+          setLoadingChatId(null);
+
+          setMessages((prev) => prev.slice(0, -1));
+          setInput(currentInput);
+          setAttachmentsWithStorage(currentAttachments);
+          setLastFailedMessage(currentInput);
           toast({
             variant: "destructive",
             title: "Error",
             description: "Failed to create chat. Please try again."
           });
-          setIsLoading(false);
           return;
+        } finally {
+          setLoadingChatId(null);
         }
       }
 
@@ -211,17 +301,19 @@ export function ChatProvider({
           await saveUserMessage(
             currentChatId,
             currentInput,
-            attachments.map((a) => ({ id: a.id }))
+            currentAttachments.map((a) => ({ id: a.id }))
           );
         } catch (error) {
           console.error("Error saving user message:", error);
         }
       }
 
-      setAttachmentsWithStorage([]);
-      setInput("");
-      removeStoredValue("input");
-      removeStoredValue("attachments");
+      if (shouldUpdateUrl && currentChatId) {
+        window.history.pushState({}, "", `/${currentChatId}`);
+      }
+
+      const assistantMessageId = (Date.now() + 1).toString();
+      let assistantMessage = "";
 
       try {
         const response = await fetch("/api/chat", {
@@ -241,12 +333,13 @@ export function ChatProvider({
             userId: session?.user?.id,
             webSearch,
             reasoning,
-            attachments: attachments.map((attachment) => attachment.id)
+            attachments: currentAttachments.map((attachment) => attachment.id)
           })
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
         }
 
         const reader = response.body?.getReader();
@@ -255,8 +348,6 @@ export function ChatProvider({
         }
 
         const decoder = new TextDecoder();
-        let assistantMessage = "";
-        const assistantMessageId = (Date.now() + 1).toString();
 
         setMessages((prev) => [
           ...prev,
@@ -267,6 +358,10 @@ export function ChatProvider({
             createdAt: new Date()
           }
         ]);
+
+        if (currentChatId) {
+          setLoadingChatId(currentChatId);
+        }
 
         while (true) {
           const { done, value } = await reader.read();
@@ -292,16 +387,36 @@ export function ChatProvider({
             }
           }
         }
+
+        if (!session) {
+          const newCount = messageCount + 1;
+          setMessageCount(newCount);
+          setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, newCount);
+
+          if (newCount >= MESSAGE_LIMIT - 2) {
+            setShowWarning(true);
+            setStoredValue(STORAGE_KEYS.SHOW_WARNING, true);
+          }
+        }
       } catch (error) {
         console.error("Chat error:", error);
         setError(error as Error);
+        setLastFailedMessage(currentInput);
+
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+
+        if (error instanceof TypeError && error.message.includes("fetch")) {
+          setConnectionError("Network error. Please check your connection and try again.");
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
-          description: error instanceof Error ? error.message : "An error occurred"
+          description: error instanceof Error ? error.message : "An error occurred while sending your message"
         });
       } finally {
         setIsLoading(false);
+        setLoadingChatId(null);
       }
     },
     [
@@ -320,7 +435,10 @@ export function ChatProvider({
       apiKey,
       webSearch,
       reasoning,
-      messages
+      messages,
+      isLoading,
+      generateChatTitle,
+      refreshChats
     ]
   );
 
@@ -329,6 +447,8 @@ export function ChatProvider({
     setMessageCount(0);
     setError(null);
     setMicError(null);
+    setConnectionError(null);
+    setLastFailedMessage(null);
     prevMessageLengthRef.current = 0;
     setChatId(null);
     setAttachmentsWithStorage([]);
@@ -346,6 +466,8 @@ export function ChatProvider({
     setMessageCount(0);
     setError(null);
     setMicError(null);
+    setConnectionError(null);
+    setLastFailedMessage(null);
     prevMessageLengthRef.current = 0;
     setChatId(null);
     setAttachmentsWithStorage([]);
@@ -375,7 +497,13 @@ export function ChatProvider({
     reasoning,
     setReasoning,
     attachments: status === "authenticated" ? attachments : [],
-    setAttachments: setAttachmentsWithStorage
+    setAttachments: setAttachmentsWithStorage,
+    retryLastMessage,
+    connectionError,
+    setConnectionError,
+    loadingChatId,
+    setLoadingChatId,
+    generatingTitle
   };
 
   return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;

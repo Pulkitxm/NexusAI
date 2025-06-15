@@ -1,21 +1,11 @@
 "use client";
 
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn } from "lucide-react";
+import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { useState, useEffect, Fragment, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar
-} from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,20 +15,32 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useChat } from "@/providers/chat-provider";
 import { useKeys } from "@/providers/key-provider";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
+import { useSidebar } from "@/providers/sidebar-provider";
 
-import { Skeleton } from "./ui/skeleton";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger
+} from "./sidebar";
 
 import type { Chat } from "@/types/chat";
-import type React from "react";
 
 const ITEM_HEIGHT = 68;
 const OVERSCAN_COUNT = 5;
 const VIRTUALIZATION_THRESHOLD = 15;
 
 export function AppSidebar() {
-  const { chats, deleteChat, loading } = useSidebar();
+  const { chats, deleteChat, loading, loadingChatId, generatingTitleForChat } = useSidebar();
+  const { loadingChatId: chatLoadingId } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
 
@@ -55,14 +57,14 @@ export function AppSidebar() {
   });
 
   useEffect(() => {
-    const sorted = chats.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    const sorted = chats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     const filtered =
       searchQuery.trim() === ""
         ? sorted
         : sorted.filter(
             (chat) =>
               chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              chat.updatedAt.toLocaleDateString().includes(searchQuery.toLowerCase())
+              new Date(chat.updatedAt).toLocaleDateString().includes(searchQuery.toLowerCase())
           );
     setFilteredChats(filtered);
   }, [searchQuery, chats]);
@@ -93,7 +95,15 @@ export function AppSidebar() {
 
   const renderChatList = () => {
     if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {
-      return filteredChats.map((chat) => <ChatItem key={chat.id} chat={chat} deleteChat={deleteChat} />);
+      return filteredChats.map((chat) => (
+        <ChatItem
+          key={chat.id}
+          chat={chat}
+          deleteChat={deleteChat}
+          isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+          isGeneratingTitle={generatingTitleForChat === chat.id}
+        />
+      ));
     }
 
     const visibleItems = filteredChats.slice(visibleRange.startIndex, visibleRange.endIndex);
@@ -119,7 +129,12 @@ export function AppSidebar() {
                 transform: `translateY(${actualIndex * ITEM_HEIGHT}px)`
               }}
             >
-              <ChatItem chat={chat} deleteChat={deleteChat} />
+              <ChatItem
+                chat={chat}
+                deleteChat={deleteChat}
+                isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+                isGeneratingTitle={generatingTitleForChat === chat.id}
+              />
             </div>
           );
         })}
@@ -192,6 +207,7 @@ export function AppSidebar() {
               <div className="space-y-2 px-2">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg p-2">
+                    <Skeleton className="h-4 w-4 rounded-full" />
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-3/4" />
                       <Skeleton className="h-3 w-1/2" />
@@ -220,32 +236,34 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {
-              <Wrapper href={"/settings"}>
-                <SidebarMenuItem>
-                  {status === "loading" ? (
-                    <div className="flex items-center gap-2 px-2 py-1.5">
-                      <Skeleton className="h-5 w-5 rounded-full" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                  ) : status === "authenticated" ? (
-                    <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
-                      {user?.avatar ? (
-                        <img src={user.avatar || "/placeholder.svg"} className="h-5 w-5 rounded-full" alt={user.name} />
-                      ) : (
-                        <User className="h-4 w-4" />
-                      )}
-                      <span className="truncate text-sm">{user?.name}</span>
-                    </SidebarMenuButton>
-                  ) : (
-                    <SidebarMenuButton className="px-2 py-1.5 hover:bg-accent" onClick={() => signIn("google")}>
-                      <LogIn className="h-4 w-4" />
-                      <span className="text-sm">Login</span>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              </Wrapper>
-            }
+            <Wrapper href={status === "authenticated" ? "/settings" : ""}>
+              <SidebarMenuItem>
+                {status === "loading" ? (
+                  <div className="flex items-center gap-2 px-2 py-1.5">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                ) : status === "authenticated" ? (
+                  <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar || "/placeholder.svg?height=20&width=20"}
+                        className="h-5 w-5 rounded-full"
+                        alt={user.name || "User"}
+                      />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
+                    <span className="truncate text-sm">{user?.name}</span>
+                  </SidebarMenuButton>
+                ) : (
+                  <SidebarMenuButton className="px-2 py-1.5 hover:bg-accent" onClick={() => signIn("google")}>
+                    <LogIn className="h-4 w-4" />
+                    <span className="text-sm">Login</span>
+                  </SidebarMenuButton>
+                )}
+              </SidebarMenuItem>
+            </Wrapper>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
@@ -253,34 +271,75 @@ export function AppSidebar() {
   );
 }
 
-function ChatItem({ chat, deleteChat }: { chat: Chat; deleteChat: (id: string) => void }) {
+function ChatItem({
+  chat,
+  deleteChat,
+  isLoading,
+  isGeneratingTitle
+}: {
+  chat: Chat;
+  deleteChat: (id: string) => void;
+  isLoading: boolean;
+  isGeneratingTitle: boolean;
+}) {
+  const params = useParams();
+  const isActive = params?.id === chat.id;
+
   return (
     <SidebarMenuItem>
       <Link href={`/${chat.id}`}>
-        <SidebarMenuButton className="group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50">
-          <div className="min-w-0 flex-1 text-left">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="truncate pr-2 text-sm font-medium">{chat.title}</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash2 className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Chat
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        <SidebarMenuButton className="group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50 data-[active=true]:bg-accent">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="flex-shrink-0">
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+              ) : (
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">{chat.updatedAt.toLocaleDateString()}</p>
+            <div className="min-w-0 flex-1 text-left">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="truncate pr-2 text-sm font-medium">
+                  {isGeneratingTitle ? (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Generating title...
+                    </span>
+                  ) : (
+                    chat.title
+                  )}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Chat
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <p className="text-xs text-muted-foreground">{new Date(chat.updatedAt).toLocaleDateString()}</p>
+            </div>
           </div>
         </SidebarMenuButton>
       </Link>
