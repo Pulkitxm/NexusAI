@@ -195,7 +195,7 @@ export function AppSidebar() {
             </div>
           </div>
 
-          <Link href="/new">
+          <Link href="/">
             <Button className="mb-3 h-9 w-full border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white hover:from-purple-600 hover:to-purple-700">
               <Plus className="mr-2 h-4 w-4" />
               New Chat

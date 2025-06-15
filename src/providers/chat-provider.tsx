@@ -17,7 +17,7 @@ import {
   useEffect
 } from "react";
 
-import { createChat, saveUserMessage } from "@/actions/chat";
+import { createChat, saveUserMessage, updateChatTitle } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
 import { MESSAGE_LIMIT } from "@/lib/data";
 import { getAvailableModels } from "@/lib/models";
@@ -271,16 +271,7 @@ export function ChatProvider({
             const title = await generateChatTitle(currentInput, apiKey);
 
             try {
-              await fetch("/api/chat/update-title", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                  chatId: currentChatId,
-                  title
-                })
-              });
+              await updateChatTitle(currentChatId, title);
 
               refreshChats();
             } catch (error) {
@@ -502,6 +493,36 @@ export function ChatProvider({
     setChatId(null);
     setAttachmentsWithStorage([]);
   }, [setAttachmentsWithStorage]);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      resetChat();
+    };
+
+    window.addEventListener("popstate", handleRouteChange);
+
+    window.addEventListener("hashchange", handleRouteChange);
+
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    window.history.pushState = function (...args: Parameters<typeof originalPushState>) {
+      originalPushState.apply(this, args);
+      handleRouteChange();
+    };
+
+    window.history.replaceState = function (...args: Parameters<typeof originalReplaceState>) {
+      originalReplaceState.apply(this, args);
+      handleRouteChange();
+    };
+
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+      window.removeEventListener("hashchange", handleRouteChange);
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+    };
+  }, [resetChat]);
 
   const contextValue: ChatContextType = {
     messages,

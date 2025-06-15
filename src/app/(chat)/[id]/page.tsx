@@ -1,6 +1,5 @@
-import { TriangleAlert } from "lucide-react";
-
 import { getChatMessages } from "@/actions/chat";
+import StateDisplay from "@/components/ui/state-display";
 
 import ChatDisplay from "./ChatDisplay";
 
@@ -11,16 +10,21 @@ export default async function page({ params }: { params: Promise<{ id: string }>
 
   if (!chatMessages.success) {
     return (
-      <div className="flex grow items-center justify-center">
-        <div className="flex items-center gap-2 rounded-md border border-red-500 bg-red-500/10 p-4">
-          <TriangleAlert className="h-4 w-4 text-red-500" />
-          <h1>{chatMessages.error}</h1>
-        </div>
-      </div>
+      <Error>
+        <StateDisplay
+          type="error"
+          title="Failed to Load Chat"
+          description={chatMessages.error || "There was a problem loading your chat. Please try again."}
+        />
+      </Error>
     );
   }
 
   const { messages } = chatMessages;
 
   return <ChatDisplay id={id} messages={messages || []} />;
+}
+
+function Error({ children }: { children: React.ReactNode }) {
+  return <div className="flex grow items-center justify-center">{children}</div>;
 }

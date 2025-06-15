@@ -99,30 +99,34 @@ export async function getChatMessages(chatId: string) {
   }
 
   try {
-    const messages = await prisma.message.findMany({
-      where: { chatId, userId, chat: { isDeleted: false } },
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        role: true,
-        content: true,
-        createdAt: true,
-        attachments: {
+    const chatMessgaes = await prisma.chat.findUnique({
+      where: { id: chatId, userId, isDeleted: false },
+      include: {
+        messages: {
+          orderBy: { createdAt: "asc" },
           select: {
             id: true,
-            url: true,
-            name: true,
-            size: true
+            role: true,
+            content: true,
+            createdAt: true,
+            attachments: {
+              select: {
+                id: true,
+                url: true,
+                name: true,
+                size: true
+              }
+            }
           }
         }
       }
     });
 
-    if (!messages) {
+    if (!chatMessgaes) {
       return { success: false, error: "Chat not found" };
     }
 
-    return { success: true, messages };
+    return { success: true, messages: chatMessgaes.messages || [] };
   } catch (error) {
     console.error("Error fetching messages:", error);
     return { success: false, error: "Failed to fetch messages" };
