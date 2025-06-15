@@ -6,3 +6,9 @@ export enum Provider {
   Google = "google",
   OpenRouter = "openrouter"
 }
+
+export enum Reasoning {
+  High = "high",
+  Medium = "medium",
+  Low = "low"
+}

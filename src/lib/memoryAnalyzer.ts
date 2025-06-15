@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-import { AnthropicProvider } from "@/ai/providers/anthropic";
-import { GoogleProvider } from "@/ai/providers/google";
-import { OpenAIProvider } from "@/ai/providers/openai";
+import { getAIProvider } from "@/ai/factory";
 import { prisma } from "@/lib/db";
 import { AI_MODELS } from "@/lib/models";
-import { Provider } from "@/types/providers";
 
 const MemorySchema = z.object({
   memories: z.array(
@@ -23,7 +20,8 @@ export async function analyzeAndStoreMemories(
   userMessage: string,
   assistantResponse: string,
   apiKey: string,
-  modelId: string
+  modelId: string,
+  openRouter: boolean
 ) {
   try {
     const modelConfig = AI_MODELS.find((m) => m.id === modelId);
@@ -32,30 +30,15 @@ export async function analyzeAndStoreMemories(
       return { success: false, error: "Model not found" };
     }
 
-    let aiProvider;
-    const provider = modelConfig.provider;
+    const aiProvider = getAIProvider({
+      provider: modelConfig.provider,
+      apiKey,
+      openRouter
+    });
 
-    try {
-      switch (provider) {
-        case Provider.OpenAI:
-          aiProvider = new OpenAIProvider({ apiKey });
-          break;
-
-        case Provider.Anthropic:
-          aiProvider = new AnthropicProvider({ apiKey });
-          break;
-
-        case Provider.Google:
-          aiProvider = new GoogleProvider({ apiKey });
-          break;
-
-        default:
-          console.error(`[Memory] Provider "${provider}" not supported for memory analysis`);
-          return { success: false, error: "Provider not supported" };
-      }
-    } catch (error) {
-      console.error("[Memory] Error initializing AI provider:", error);
-      return { success: false, error: "Failed to initialize AI provider" };
+    if (!aiProvider) {
+      console.error("[Memory] Invalid AI provider");
+      return { success: false, error: "Invalid AI provider" };
     }
 
     const response = await aiProvider.chat({
@@ -107,12 +90,20 @@ You MUST respond with a valid JSON object in this exact format:
     }
 
     try {
-      const result = MemorySchema.safeParse(response);
+      let parsedResponse;
+      if (typeof response === "object" && "content" in response) {
+        parsedResponse = typeof response.content === "string" ? JSON.parse(response.content) : response.content;
+      } else {
+        parsedResponse = response;
+      }
+
+      const result = MemorySchema.safeParse(parsedResponse);
       if (!result.success) {
         return { success: true, memoriesStored: 0 };
       }
 
       const memories = result.data.memories;
+      console.log("Memories:", memories);
 
       const existingMemories = await prisma.globalMemory.findMany({
         where: { userId, isDeleted: false },

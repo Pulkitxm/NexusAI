@@ -3,7 +3,7 @@ import { ForwardRefExoticComponent, RefAttributes } from "react";
 
 export const MESSAGE_LIMIT = 10;
 
-export const OPENROUTER_BASE_URL = "https://api.openrouter.ai/api/v1";
+export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 export const SUGGESTED_PROMPTS: {
   section: "Create" | "Explore" | "Code" | "Learn";

@@ -20,7 +20,7 @@ export const getAIProvider = ({
   } else if (provider === Provider.Anthropic) {
     return new AnthropicProvider({ apiKey, isOpenRouter: openRouter });
   } else if (provider === Provider.Google) {
-    return new GoogleProvider({ apiKey });
+    return new GoogleProvider({ apiKey, isOpenRouter: openRouter });
   }
   return undefined;
 };

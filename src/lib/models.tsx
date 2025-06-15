@@ -70,7 +70,7 @@ export const AI_MODELS: AIModel[] = [
     }
   },
   {
-    id: "gemini-2.0-flash",
+    id: "google/gemini-2.0-flash-001",
     name: "Gemini 2.0 Flash",
     provider: Provider.Google,
     category: "text",

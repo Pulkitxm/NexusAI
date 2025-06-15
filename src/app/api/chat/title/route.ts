@@ -1,4 +1,4 @@
-import { getAIProvider } from "@/ai/providers/factory";
+import { getAIProvider } from "@/ai/factory";
 import { AI_MODELS } from "@/lib/models";
 
 import type { NextRequest } from "next/server";

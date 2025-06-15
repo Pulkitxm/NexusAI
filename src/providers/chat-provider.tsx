@@ -23,6 +23,7 @@ import { MESSAGE_LIMIT } from "@/lib/data";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
 import { type Attachment, validateAttachment } from "@/types/chat";
+import { Reasoning } from "@/types/providers";
 
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
@@ -58,8 +59,8 @@ interface ChatContextType {
   setMicError: Dispatch<SetStateAction<string | null>>;
   webSearch: boolean | null;
   setWebSearch: (enabled: boolean | null) => void;
-  reasoning: "high" | "medium" | "low" | null;
-  setReasoning: (level: "high" | "medium" | "low" | null) => void;
+  reasoning: Reasoning | null;
+  setReasoning: (level: Reasoning | null) => void;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   retryLastMessage: () => void;
@@ -100,7 +101,7 @@ export function ChatProvider({
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [webSearch, setWebSearch] = useState<boolean | null>(null);
   const [useOpenRouter, setUseOpenRouter] = useState(false);
-  const [reasoning, setReasoning] = useState<"high" | "medium" | "low" | null>(null);
+  const [reasoning, setReasoning] = useState<Reasoning | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInputState] = useState(() => getStoredValue("input", ""));
   const [messages, setMessages] = useState<MessageWithAttachments[]>(initialMessages);
@@ -341,7 +342,8 @@ export function ChatProvider({
             userId: session?.user?.id,
             webSearch,
             reasoning,
-            attachments: currentAttachments.map((attachment) => attachment.id)
+            attachments: currentAttachments.map((attachment) => attachment.id),
+            openRouter: useOpenRouter
           })
         });
 
@@ -428,25 +430,26 @@ export function ChatProvider({
       }
     },
     [
+      apiKey,
       attachments,
       chatId,
+      generateChatTitle,
       hasAnyKeys,
       input,
+      isLoading,
       messageCount,
+      messages,
       openModal,
+      reasoning,
+      refreshChats,
+      selectedModel,
+      selectedModelDetails?.provider,
       session,
-      toast,
       setAttachmentsWithStorage,
       setInput,
-      selectedModel,
-      selectedModelDetails,
-      apiKey,
-      webSearch,
-      reasoning,
-      messages,
-      isLoading,
-      generateChatTitle,
-      refreshChats
+      toast,
+      useOpenRouter,
+      webSearch
     ]
   );
 
@@ -455,6 +458,16 @@ export function ChatProvider({
       setUseOpenRouter(true);
     }
   }, [haveOnlyOpenRouterKey]);
+
+  useEffect(() => {
+    if (selectedModelDetails && !useOpenRouter && keys) {
+      const provider = selectedModelDetails.provider;
+      const hasKey = keys[provider as keyof typeof keys];
+      if (!hasKey) {
+        setUseOpenRouter(true);
+      }
+    }
+  }, [keys, selectedModelDetails, useOpenRouter]);
 
   const clearChat = useCallback(() => {
     setMessages([]);

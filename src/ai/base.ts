@@ -1,4 +1,4 @@
-import type { ChatInput, ChatResponse, StreamOptions } from "../../types/models";
+import type { ChatInput, ChatResponse, StreamOptions } from "../types/models";
 
 export abstract class BaseAIProvider {
   protected abstract apiKey: string;

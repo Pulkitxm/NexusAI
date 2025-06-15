@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ALL_MODELS } from "@/lib/models";
 
-import { Provider } from "./providers";
+import { Provider, Reasoning } from "./providers";
 
 import type { IconType } from "react-icons";
 
@@ -110,11 +110,11 @@ export const chatBodyValidator = z.object({
   provider: z.nativeEnum(Provider),
   apiKey: z.string(),
   chatId: z.string(),
-  reasoning: z.boolean().optional(),
+  reasoning: z.nativeEnum(Reasoning).nullable().optional(),
   attachments: z.array(z.string()),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
-  openRouter: z.boolean().optional()
+  temperature: z.number().optional().default(0.7),
+  maxTokens: z.number().optional().default(1000),
+  openRouter: z.boolean().optional().default(false)
 });
 export type ChatRequestBody = z.infer<typeof chatBodyValidator>;
 

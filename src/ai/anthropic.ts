@@ -4,7 +4,7 @@ import { OPENROUTER_BASE_URL } from "@/lib/data";
 
 import { BaseAIProvider } from "./base";
 
-import type { ChatInput, ChatResponse, StreamOptions } from "../../types/models";
+import type { ChatInput, ChatResponse, StreamOptions } from "../types/models";
 
 export class AnthropicProvider extends BaseAIProvider {
   protected apiKey: string;

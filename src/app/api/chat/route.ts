@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import { saveAssistantMessage } from "@/actions/chat";
-import { getAIProvider } from "@/ai/providers/factory";
+import { getAIProvider } from "@/ai/factory";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
 import { analyzeAndStoreMemories } from "@/lib/memoryAnalyzer";
@@ -377,7 +377,14 @@ export async function POST(req: NextRequest): Promise<Response> {
                 saveAssistantMessage(chatId, fullResponse.trim()),
                 (async () => {
                   try {
-                    await analyzeAndStoreMemories(userId, lastUserMessage, fullResponse.trim(), apiKey, model);
+                    await analyzeAndStoreMemories(
+                      userId,
+                      lastUserMessage,
+                      fullResponse.trim(),
+                      apiKey,
+                      model,
+                      openRouter
+                    );
                   } catch (error) {
                     console.error("[Chat API] Memory analysis error:", error);
                   }

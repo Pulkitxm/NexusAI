@@ -20,8 +20,12 @@ export class GoogleProvider extends BaseAIProvider {
   }
 
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
-    if (this.client instanceof OpenAIProvider) {
+    if (this.isOpenRouter && this.client instanceof OpenAIProvider) {
       return this.client.chat(input, options);
+    }
+
+    if (!(this.client instanceof GoogleGenerativeAI)) {
+      throw new Error("Invalid client configuration for Google AI");
     }
 
     const { messages, stream, temperature = 0.7, maxTokens, model = "gemini-1.5-pro" } = input;
@@ -63,7 +67,6 @@ export class GoogleProvider extends BaseAIProvider {
 
   private async convertMessagesToGoogleFormat(messages: ChatMessage[]): Promise<Part[]> {
     const parts: Part[] = [];
-
     let conversationText = "";
 
     for (const message of messages) {
@@ -88,6 +91,10 @@ export class GoogleProvider extends BaseAIProvider {
 
               try {
                 const response = await fetch(contentPart.image_url.url);
+                if (!response.ok) {
+                  throw new Error(`Failed to fetch image: ${response.statusText}`);
+                }
+
                 const arrayBuffer = await response.arrayBuffer();
                 const base64 = Buffer.from(arrayBuffer).toString("base64");
                 const mimeType = response.headers.get("content-type") || "image/jpeg";
@@ -119,10 +126,6 @@ export class GoogleProvider extends BaseAIProvider {
 
     if (conversationText.trim()) {
       parts.push({ text: conversationText.trim() });
-    }
-
-    if (parts.length === 1 && parts[0].text) {
-      return parts;
     }
 
     if (parts.length === 0) {

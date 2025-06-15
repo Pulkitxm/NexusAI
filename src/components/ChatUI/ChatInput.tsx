@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat-provider";
 import { useKeys } from "@/providers/key-provider";
 import { useModel } from "@/providers/model-provider";
+import { Reasoning } from "@/types/providers";
 
 import type React from "react";
 
@@ -379,9 +380,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                             </Label>
                             <Select
                               value={reasoning || "none"}
-                              onValueChange={(value) =>
-                                setReasoning(value === "none" ? null : (value as "high" | "medium" | "low"))
-                              }
+                              onValueChange={(value) => setReasoning(value === "none" ? null : (value as Reasoning))}
                               disabled={!selectedModelDetails?.capabilities?.reasoning}
                             >
                               <SelectTrigger className="h-7 w-[90px] text-xs">
