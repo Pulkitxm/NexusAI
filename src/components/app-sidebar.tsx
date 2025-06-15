@@ -56,6 +56,37 @@ export function AppSidebar() {
     endIndex: 0
   });
 
+  const groupChatsByTimePeriod = (chats: Chat[]) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastWeek = new Date(today);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(today);
+    lastMonth.setDate(lastMonth.getDate() - 30);
+
+    const groups = {
+      today: [] as Chat[],
+      lastWeek: [] as Chat[],
+      lastMonth: [] as Chat[],
+      older: [] as Chat[]
+    };
+
+    chats.forEach((chat) => {
+      const chatDate = new Date(chat.updatedAt);
+      if (chatDate >= today) {
+        groups.today.push(chat);
+      } else if (chatDate >= lastWeek) {
+        groups.lastWeek.push(chat);
+      } else if (chatDate >= lastMonth) {
+        groups.lastMonth.push(chat);
+      } else {
+        groups.older.push(chat);
+      }
+    });
+
+    return groups;
+  };
+
   useEffect(() => {
     const sorted = chats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     const filtered =
@@ -92,16 +123,80 @@ export function AppSidebar() {
   }, [filteredChats.length]);
 
   const renderChatList = () => {
-    if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {
-      return filteredChats.map((chat) => (
-        <ChatItem
-          key={chat.id}
-          chat={chat}
-          deleteChat={deleteChat}
-          isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
-          isGeneratingTitle={generatingTitleForChat === chat.id}
-        />
-      ));
+    if (filteredChats.length === 0) {
+      return (
+        <div className="py-8 text-center text-muted-foreground">
+          <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-30" />
+          <p className="text-sm font-medium">No conversations yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">Start a new chat to begin</p>
+        </div>
+      );
+    }
+
+    const groupedChats = groupChatsByTimePeriod(filteredChats);
+    const totalChats = filteredChats.length;
+
+    if (totalChats < VIRTUALIZATION_THRESHOLD) {
+      return (
+        <div className="space-y-4">
+          {groupedChats.today.length > 0 && (
+            <div className="space-y-1">
+              <h3 className="px-2 text-xs font-medium text-muted-foreground">Today</h3>
+              {groupedChats.today.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  chat={chat}
+                  deleteChat={deleteChat}
+                  isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+                  isGeneratingTitle={generatingTitleForChat === chat.id}
+                />
+              ))}
+            </div>
+          )}
+          {groupedChats.lastWeek.length > 0 && (
+            <div className="space-y-1">
+              <h3 className="px-2 text-xs font-medium text-muted-foreground">Last 7 days</h3>
+              {groupedChats.lastWeek.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  chat={chat}
+                  deleteChat={deleteChat}
+                  isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+                  isGeneratingTitle={generatingTitleForChat === chat.id}
+                />
+              ))}
+            </div>
+          )}
+          {groupedChats.lastMonth.length > 0 && (
+            <div className="space-y-1">
+              <h3 className="px-2 text-xs font-medium text-muted-foreground">Last 30 days</h3>
+              {groupedChats.lastMonth.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  chat={chat}
+                  deleteChat={deleteChat}
+                  isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+                  isGeneratingTitle={generatingTitleForChat === chat.id}
+                />
+              ))}
+            </div>
+          )}
+          {groupedChats.older.length > 0 && (
+            <div className="space-y-1">
+              <h3 className="px-2 text-xs font-medium text-muted-foreground">Older</h3>
+              {groupedChats.older.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  chat={chat}
+                  deleteChat={deleteChat}
+                  isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
+                  isGeneratingTitle={generatingTitleForChat === chat.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      );
     }
 
     const visibleItems = filteredChats.slice(visibleRange.startIndex, visibleRange.endIndex);
@@ -109,7 +204,7 @@ export function AppSidebar() {
     return (
       <div
         style={{
-          height: `${filteredChats.length * ITEM_HEIGHT}px`,
+          height: `${totalChats * ITEM_HEIGHT}px`,
           position: "relative"
         }}
       >
@@ -242,12 +337,6 @@ export function AppSidebar() {
                   </div>
                 ))}
               </div>
-            ) : filteredChats.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-30" />
-                <p className="text-sm font-medium">No conversations yet</p>
-                <p className="mt-1 text-xs text-muted-foreground">Start a new chat to begin</p>
-              </div>
             ) : (
               renderChatList()
             )}
@@ -284,10 +373,44 @@ function ChatItem({
 }) {
   const params = useParams();
   const isActive = params?.id === chat.id;
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(chat.title || "");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { updateChatTitle } = useSidebar();
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsRenaming(false);
+    if (newTitle.trim() === chat.title) {
+      return;
+    }
+    try {
+      await updateChatTitle(chat.id, newTitle.trim());
+    } catch (error) {
+      console.error("Error updating chat title:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isRenaming]);
 
   return (
     <SidebarMenuItem>
-      <Link href={`/${chat.id}`}>
+      <Link
+        href={`/${chat.id}`}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+          setIsRenaming(true);
+          return false;
+        }}
+      >
         <SidebarMenuButton
           className={`group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50 ${
             isActive ? "bg-accent" : ""
@@ -301,18 +424,37 @@ function ChatItem({
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-            <div className="min-w-0 flex-1 text-left">
+            <div className="my-0.5 min-w-0 flex-1 py-1 text-left">
               <div className="mb-1 flex items-center justify-between">
-                <span className="truncate pr-2 text-sm font-medium">
-                  {isGeneratingTitle ? (
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Generating title...
-                    </span>
-                  ) : (
-                    chat.title
-                  )}
-                </span>
+                {isRenaming ? (
+                  <form onSubmit={handleRename} className="flex-1">
+                    <Input
+                      ref={inputRef}
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      onBlur={handleRename}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsRenaming(false);
+                          setNewTitle(chat.title || "");
+                        }
+                      }}
+                    />
+                  </form>
+                ) : (
+                  <span className="truncate pr-2 text-sm font-medium">
+                    {isGeneratingTitle ? (
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Generating title...
+                      </span>
+                    ) : (
+                      chat.title
+                    )}
+                  </span>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -342,7 +484,6 @@ function ChatItem({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <p className="text-xs text-muted-foreground">{new Date(chat.updatedAt).toLocaleDateString()}</p>
             </div>
           </div>
         </SidebarMenuButton>

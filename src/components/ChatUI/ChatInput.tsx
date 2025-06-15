@@ -11,7 +11,8 @@ import {
   MicOff,
   TriangleAlert,
   Search,
-  Brain
+  Brain,
+  Upload
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat-provider";
 import { useKeys } from "@/providers/key-provider";
 import { useModel } from "@/providers/model-provider";
+import { useUploadAttachment } from "@/providers/upload-attachment-provider";
 import { Provider, Reasoning } from "@/types/providers";
 
 import type React from "react";
@@ -67,6 +69,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const speechToTextServiceRef = useRef<SpeechToTextService | null>(null);
   const { status } = useSession();
+  const { UploadButton, isUploadSupported } = useUploadAttachment();
 
   const canUseReasoning = selectedModelDetails?.capabilities?.reasoning;
 
@@ -395,12 +398,28 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                       </div>
                     )}
 
+                    {isUploadSupported && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <UploadButton>
+                            <Upload className="h-3.5 w-3.5" />
+                            <span className="font-mono text-xs">upload</span>
+                          </UploadButton>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          className="border-slate-700 bg-slate-900 text-slate-100 dark:border-slate-300 dark:bg-slate-100 dark:text-slate-900"
+                        >
+                          <p className="text-sm">Upload files</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
                     <div className="flex items-center gap-3">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            onClick={toggleRecording}
                             disabled={!speechToTextServiceRef.current?.isSupported()}
                             className={cn(
                               "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-all duration-200",

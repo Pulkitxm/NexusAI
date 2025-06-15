@@ -15,7 +15,7 @@ import {
   useRef
 } from "react";
 
-import { deleteChat, getUserChats } from "@/actions/chat";
+import { deleteChat, getUserChats, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -202,8 +202,16 @@ export const SidebarProvider = forwardRef<
     setChats((prev) => [chat, ...prev]);
   }, []);
 
-  const updateChatTitle = useCallback((chatId: string, title: string) => {
-    setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, title, updatedAt: new Date() } : chat)));
+  const updateChatTitle = useCallback(async (chatId: string, title: string) => {
+    setLoadingChatId(chatId);
+    try {
+      await updateChatTitleAction(chatId, title);
+      setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, title, updatedAt: new Date() } : chat)));
+    } catch (error) {
+      console.error("Error updating chat title:", error);
+    } finally {
+      setLoadingChatId(null);
+    }
   }, []);
 
   useEffect(() => {

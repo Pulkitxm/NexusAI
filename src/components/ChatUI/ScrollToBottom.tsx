@@ -5,17 +5,21 @@ import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { useSidebar } from "../sidebar";
+
 interface ScrollToBottomButtonProps {
   show: boolean;
   onClick: () => void;
 }
 
 export function ScrollToBottomButton({ show, onClick }: ScrollToBottomButtonProps) {
+  const { open } = useSidebar();
   return (
     <div
       className={cn(
-        "pointer-events-none fixed bottom-24 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300",
-        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+        "fixed bottom-32 z-20 -translate-x-1/2 transform transition-all duration-300",
+        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0",
+        open ? "left-[57%]" : "left-1/2"
       )}
     >
       <Button

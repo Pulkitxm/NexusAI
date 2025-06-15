@@ -14,7 +14,7 @@ interface FileUploadCardsProps {
 
 export function FileUploadCards({ className }: FileUploadCardsProps) {
   const { attachments } = useChat();
-  const { deleteAttachment, deletingFiles } = useUploadAttachment();
+  const { deleteAttachment, deletingFiles, isUploadSupported } = useUploadAttachment();
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.toLowerCase().split(".").pop();
@@ -23,7 +23,7 @@ export function FileUploadCards({ className }: FileUploadCardsProps) {
     return File;
   };
 
-  if (!attachments?.length) return null;
+  if (!attachments?.length || !isUploadSupported) return null;
 
   return (
     <div className={cn("mx-auto max-w-4xl px-4", className)}>

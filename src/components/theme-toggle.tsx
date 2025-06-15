@@ -2,18 +2,31 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (theme === "system") {
       setTheme("dark");
     }
   }, [theme, setTheme]);
+
+  if (!mounted) {
+    return (
+      <button className="h-9 w-9 text-black">
+        <Sun className="h-[1.2rem] w-[1.2rem]" />
+      </button>
+    );
+  }
 
   return (
     <button

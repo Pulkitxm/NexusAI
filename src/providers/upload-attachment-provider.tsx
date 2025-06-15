@@ -2,19 +2,36 @@
 
 import { Upload } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { createContext, useContext, useState, ReactNode, useEffect, useRef, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useRef,
+  useCallback,
+  JSX,
+  DetailedHTMLProps,
+  ButtonHTMLAttributes
+} from "react";
 
 import { addFiles, deleteFile } from "@/actions/file";
 import { useToast } from "@/hooks/use-toast";
 import { codeExtensions } from "@/lib/extensions";
+import { getAvailableModels } from "@/lib/models";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { useChat } from "@/providers/chat-provider";
 import { Attachment } from "@/types/chat";
+
+import { useKeys } from "./key-provider";
+import { useModel } from "./model-provider";
 
 interface UploadAttachmentContextType {
   openFileDialog: () => void;
   deleteAttachment: (fileName: string) => Promise<void>;
   deletingFiles: string[];
+  isUploadSupported: boolean;
+  UploadButton: (props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>) => JSX.Element;
 }
 
 interface UploadState {
@@ -28,7 +45,10 @@ const MAX_ATTACHMENTS = 1;
 const UploadAttachmentContext = createContext<UploadAttachmentContextType | undefined>(undefined);
 
 export function UploadAttachmentProvider({ children }: { children: ReactNode }) {
+  const { keys } = useKeys();
   const { status } = useSession();
+  const { selectedModel } = useModel();
+  const availableModels = getAvailableModels(keys);
   const [open, setOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
@@ -36,6 +56,11 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   const { attachments, setAttachments } = useChat();
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
+
+  const isUploadSupported = selectedModelDetails?.capabilities?.attachment ?? false;
+
   const { startUpload } = useUploadThing("attachment", {
     onUploadProgress: (progress) => {
       setUploadStates((prev) => {
@@ -334,10 +359,29 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
     inputRef.current?.click();
   };
 
+  const UploadButton = (
+    props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
+  ): JSX.Element => {
+    return (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
+        <input type="file" ref={inputRef} className="hidden" />
+        <button type="submit" {...props}>
+          {props.children}
+        </button>
+      </form>
+    );
+  };
+
   return (
-    <UploadAttachmentContext.Provider value={{ openFileDialog, deleteAttachment, deletingFiles }}>
+    <UploadAttachmentContext.Provider
+      value={{ openFileDialog, deleteAttachment, deletingFiles, isUploadSupported, UploadButton }}
+    >
       {children}
-      {open && (
+      {open && isUploadSupported && (
         <>
           <div
             className={`fixed inset-0 z-50 flex items-center justify-center bg-purple-600 bg-opacity-90 transition-opacity duration-300 ${
