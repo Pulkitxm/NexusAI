@@ -45,19 +45,6 @@ export const AI_MODELS: AIModel[] = [
       "671B parameter open-source model with performance matching OpenAI o1. Features 37B active parameters per inference and fully open reasoning tokens."
   },
   {
-    id: "deepseek/deepseek-chat-v3-0324",
-    openRouterId: "deepseek/deepseek-chat-v3-0324",
-    name: "DeepSeek V3 0324",
-    provider: Provider.OpenRouter,
-    icon: DeepSeek,
-    capabilities: {
-      reasoning: true,
-      attachment: true
-    },
-    description:
-      "A 685B-parameter mixture-of-experts model, successor to DeepSeek V3 with enhanced performance across diverse tasks"
-  },
-  {
     id: "qwen/qwen3-32b",
     openRouterId: "qwen/qwen3-32b",
     name: "Qwen3 32B",
@@ -135,9 +122,9 @@ export const AI_MODELS: AIModel[] = [
       "xAI's flagship model optimized for enterprise tasks like data extraction and coding. Features deep domain expertise and superior benchmark performance. Available in base (default) and fast endpoints."
   },
   {
-    id: "x-ai/grok-3-beta",
-    openRouterId: "x-ai/grok-3-beta",
-    name: "Grok 3",
+    id: "x-ai/grok-3-mini-beta",
+    openRouterId: "x-ai/grok-3-mini-beta",
+    name: "Grok 3 Mini",
     provider: Provider.OpenRouter,
     icon: Grok,
     capabilities: {

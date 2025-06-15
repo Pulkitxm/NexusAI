@@ -91,8 +91,6 @@ export function AppSidebar() {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [filteredChats.length]);
 
-  const Wrapper = status === "authenticated" ? Link : "div";
-
   const renderChatList = () => {
     if (filteredChats.length < VIRTUALIZATION_THRESHOLD) {
       return filteredChats.map((chat) => (
@@ -141,6 +139,35 @@ export function AppSidebar() {
       </div>
     );
   };
+
+  const AuthOption = (
+    <SidebarMenuItem>
+      {status === "loading" ? (
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <Skeleton className="h-5 w-5 rounded-full" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ) : status === "authenticated" ? (
+        <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
+          {user?.avatar ? (
+            <img
+              src={user.avatar || "/placeholder.svg?height=20&width=20"}
+              className="h-5 w-5 rounded-full"
+              alt={user.name || "User"}
+            />
+          ) : (
+            <User className="h-4 w-4" />
+          )}
+          <span className="truncate text-sm">{user?.name}</span>
+        </SidebarMenuButton>
+      ) : (
+        <SidebarMenuButton className="px-2 py-1.5 hover:bg-accent" onClick={() => signIn("google")}>
+          <LogIn className="h-4 w-4" />
+          <span className="text-sm">Login</span>
+        </SidebarMenuButton>
+      )}
+    </SidebarMenuItem>
+  );
 
   return (
     <>
@@ -236,34 +263,7 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            <Wrapper href={status === "authenticated" ? "/settings" : ""}>
-              <SidebarMenuItem>
-                {status === "loading" ? (
-                  <div className="flex items-center gap-2 px-2 py-1.5">
-                    <Skeleton className="h-5 w-5 rounded-full" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                ) : status === "authenticated" ? (
-                  <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
-                    {user?.avatar ? (
-                      <img
-                        src={user.avatar || "/placeholder.svg?height=20&width=20"}
-                        className="h-5 w-5 rounded-full"
-                        alt={user.name || "User"}
-                      />
-                    ) : (
-                      <User className="h-4 w-4" />
-                    )}
-                    <span className="truncate text-sm">{user?.name}</span>
-                  </SidebarMenuButton>
-                ) : (
-                  <SidebarMenuButton className="px-2 py-1.5 hover:bg-accent" onClick={() => signIn("google")}>
-                    <LogIn className="h-4 w-4" />
-                    <span className="text-sm">Login</span>
-                  </SidebarMenuButton>
-                )}
-              </SidebarMenuItem>
-            </Wrapper>
+            {status === "authenticated" ? <Link href={"/settings"}>{AuthOption}</Link> : AuthOption}
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
