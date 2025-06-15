@@ -45,7 +45,7 @@ export type SidebarContext = {
   loadingChatId: string | null;
   setLoadingChatId: Dispatch<SetStateAction<string | null>>;
   addChat: (chat: Chat) => void;
-  updateChatTitle: (chatId: string, title: string) => void;
+  updateChatTitle: (chatId: string, title: string) => Promise<void>;
   generatingTitleForChat: string | null;
   setGeneratingTitleForChat: (chatId: string | null) => void;
 };

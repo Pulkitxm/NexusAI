@@ -1,10 +1,22 @@
 "use client";
 
-import { Search, Plus, MessageSquare, Settings, Trash2, Key, User, LogIn, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MessageSquare,
+  Settings,
+  Trash2,
+  Key,
+  User,
+  LogIn,
+  Loader2,
+  EllipsisVertical,
+  Pencil
+} from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -16,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat-provider";
 import { useKeys } from "@/providers/key-provider";
 import { useSettingsModal } from "@/providers/settings-modal-provider";
@@ -39,7 +52,7 @@ const OVERSCAN_COUNT = 5;
 const VIRTUALIZATION_THRESHOLD = 15;
 
 export function AppSidebar() {
-  const { chats, deleteChat, loading, loadingChatId, generatingTitleForChat } = useSidebar();
+  const { chats, loading, loadingChatId, generatingTitleForChat } = useSidebar();
   const { loadingChatId: chatLoadingId } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
@@ -146,7 +159,6 @@ export function AppSidebar() {
                 <ChatItem
                   key={chat.id}
                   chat={chat}
-                  deleteChat={deleteChat}
                   isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
                   isGeneratingTitle={generatingTitleForChat === chat.id}
                 />
@@ -160,7 +172,6 @@ export function AppSidebar() {
                 <ChatItem
                   key={chat.id}
                   chat={chat}
-                  deleteChat={deleteChat}
                   isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
                   isGeneratingTitle={generatingTitleForChat === chat.id}
                 />
@@ -174,7 +185,6 @@ export function AppSidebar() {
                 <ChatItem
                   key={chat.id}
                   chat={chat}
-                  deleteChat={deleteChat}
                   isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
                   isGeneratingTitle={generatingTitleForChat === chat.id}
                 />
@@ -188,7 +198,6 @@ export function AppSidebar() {
                 <ChatItem
                   key={chat.id}
                   chat={chat}
-                  deleteChat={deleteChat}
                   isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
                   isGeneratingTitle={generatingTitleForChat === chat.id}
                 />
@@ -224,7 +233,6 @@ export function AppSidebar() {
             >
               <ChatItem
                 chat={chat}
-                deleteChat={deleteChat}
                 isLoading={loadingChatId === chat.id || chatLoadingId === chat.id}
                 isGeneratingTitle={generatingTitleForChat === chat.id}
               />
@@ -362,12 +370,10 @@ export function AppSidebar() {
 
 function ChatItem({
   chat,
-  deleteChat,
   isLoading,
   isGeneratingTitle
 }: {
   chat: Chat;
-  deleteChat: (id: string) => void;
   isLoading: boolean;
   isGeneratingTitle: boolean;
 }) {
@@ -376,21 +382,41 @@ function ChatItem({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(chat.title || "");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { updateChatTitle } = useSidebar();
+  const { updateChatTitle, deleteChat, setLoadingChatId } = useSidebar();
 
-  const handleRename = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleRename = useCallback(async () => {
     setIsRenaming(false);
-    if (newTitle.trim() === chat.title) {
-      return;
-    }
+    if (newTitle.trim() === chat.title) return;
+
     try {
+      setLoadingChatId(chat.id);
       await updateChatTitle(chat.id, newTitle.trim());
     } catch (error) {
       console.error("Error updating chat title:", error);
+    } finally {
+      setLoadingChatId(null);
     }
-  };
+  }, [chat.id, chat.title, newTitle, setLoadingChatId, updateChatTitle]);
+
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+    setIsRenaming(true);
+  }, []);
+
+  const handleEscape = useCallback(() => {
+    setIsRenaming(false);
+    setNewTitle(chat.title || "");
+  }, [chat.title]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      handleRename();
+    },
+    [handleRename]
+  );
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -401,20 +427,12 @@ function ChatItem({
 
   return (
     <SidebarMenuItem>
-      <Link
-        href={`/${chat.id}`}
-        onDoubleClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          e.nativeEvent.stopImmediatePropagation();
-          setIsRenaming(true);
-          return false;
-        }}
-      >
+      <Link href={`/${chat.id}`} onDoubleClick={handleDoubleClick}>
         <SidebarMenuButton
-          className={`group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50 ${
-            isActive ? "bg-accent" : ""
-          }`}
+          className={cn(
+            "group h-auto w-full justify-start rounded-md p-2 transition-colors hover:bg-accent/50",
+            isActive && "bg-accent"
+          )}
         >
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex-shrink-0">
@@ -427,20 +445,14 @@ function ChatItem({
             <div className="my-0.5 min-w-0 flex-1 py-1 text-left">
               <div className="mb-1 flex items-center justify-between">
                 {isRenaming ? (
-                  <form onSubmit={handleRename} className="flex-1">
+                  <form onSubmit={handleSubmit} className="flex-1">
                     <Input
                       ref={inputRef}
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       onBlur={handleRename}
-                      onClick={(e) => e.stopPropagation()}
-                      className="h-6 text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setIsRenaming(false);
-                          setNewTitle(chat.title || "");
-                        }
-                      }}
+                      className="h-6 border-2 border-black text-sm dark:border-white"
+                      onKeyDown={(e) => e.key === "Escape" && handleEscape()}
                     />
                   </form>
                 ) : (
@@ -466,18 +478,15 @@ function ChatItem({
                         e.stopPropagation();
                       }}
                     >
-                      <Trash2 className="h-3 w-3 text-muted-foreground" />
+                      <EllipsisVertical className="h-3 w-3 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        deleteChat(chat.id);
-                      }}
-                      className="text-destructive"
-                    >
+                    <DropdownMenuItem onClick={() => setIsRenaming(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Rename Chat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Chat
                     </DropdownMenuItem>

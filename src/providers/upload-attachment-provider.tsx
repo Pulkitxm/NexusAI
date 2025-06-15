@@ -42,6 +42,22 @@ interface UploadState {
 
 const MAX_ATTACHMENTS = 1;
 
+export function validateAndFilterFiles(files: File[]): File[] {
+  return files.filter((file) => {
+    const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+
+    const isCodeFile = codeExtensions.includes(extension);
+    const isConfigFile = [".js", ".jsx", ".ts", ".tsx", ".json", ".config.js", ".config.ts", ".config.json"].includes(
+      extension
+    );
+    const isTextFile =
+      file.type.startsWith("text/") || file.type === "application/json" || file.type === "application/javascript";
+    const isImage = file.type.startsWith("image/") && (file.type === "image/jpeg" || file.type === "image/png");
+    const isPDF = file.type === "application/pdf";
+    return isCodeFile || isConfigFile || isTextFile || isImage || isPDF;
+  });
+}
+
 const UploadAttachmentContext = createContext<UploadAttachmentContextType | undefined>(undefined);
 
 export function UploadAttachmentProvider({ children }: { children: ReactNode }) {
@@ -283,26 +299,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       }
 
       const files = Array.from(e.dataTransfer?.files || []);
-      const allowed = files.filter((file) => {
-        const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-
-        const isCodeFile = codeExtensions.includes(extension);
-        const isConfigFile = [
-          ".js",
-          ".jsx",
-          ".ts",
-          ".tsx",
-          ".json",
-          ".config.js",
-          ".config.ts",
-          ".config.json"
-        ].includes(extension);
-        const isTextFile =
-          file.type.startsWith("text/") || file.type === "application/json" || file.type === "application/javascript";
-        const isImage = file.type.startsWith("image/") && (file.type === "image/jpeg" || file.type === "image/png");
-        const isPDF = file.type === "application/pdf";
-        return isCodeFile || isConfigFile || isTextFile || isImage || isPDF;
-      });
+      const allowed = validateAndFilterFiles(files);
 
       if (allowed.length === 0) {
         return toast({
@@ -359,6 +356,55 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
     inputRef.current?.click();
   };
 
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (status !== "authenticated") {
+      return toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please sign in to upload files."
+      });
+    }
+
+    const allowed = validateAndFilterFiles(files);
+
+    if (allowed.length === 0) {
+      return toast({
+        variant: "destructive",
+        title: "No valid files found",
+        description: "Please select code files, images (JPG/PNG), or PDFs."
+      });
+    }
+
+    const processedFiles = await Promise.all(
+      allowed.map(async (file) => {
+        if (
+          file.type.startsWith("text/") ||
+          file.type === "application/json" ||
+          file.type === "application/javascript"
+        ) {
+          const content = await file.text();
+          return new File([content], file.name, { type: "text/plain" });
+        }
+        return file;
+      })
+    );
+
+    if (processedFiles.length > MAX_ATTACHMENTS - attachments.length) {
+      toast({
+        variant: "destructive",
+        title: `Upload max ${MAX_ATTACHMENTS - attachments.length} files`,
+        description: ""
+      });
+    }
+
+    await handleFiles(processedFiles.slice(0, MAX_ATTACHMENTS - attachments.length));
+
+    e.target.value = "";
+  };
+
   const UploadButton = (
     props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
   ): JSX.Element => {
@@ -368,8 +414,15 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
           e.preventDefault();
         }}
       >
-        <input type="file" ref={inputRef} className="hidden" />
-        <button type="submit" {...props}>
+        <input
+          type="file"
+          ref={inputRef}
+          className="hidden"
+          multiple
+          accept=".js,.jsx,.ts,.tsx,.json,.py,.html,.css,.md,.txt,.jpg,.jpeg,.png,.pdf"
+          onChange={handleFileInputChange}
+        />
+        <button type="button" onClick={openFileDialog} {...props}>
           {props.children}
         </button>
       </form>

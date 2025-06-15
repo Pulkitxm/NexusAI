@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { AI_MODELS, getProviderIcon } from "@/lib/models";
+import { useSettingsModal } from "@/providers/settings-modal-provider";
 
 import type { AIModel, Capabilities } from "@/types/models";
 import type { Provider } from "@/types/providers";
@@ -220,6 +221,7 @@ const CustomDropdown = memo<{
   selectedModel: string;
   onModelChange: (modelId: string) => void;
 }>(({ availableModels, selectedModel, onModelChange }) => {
+  const { openModal } = useSettingsModal();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -328,7 +330,19 @@ const CustomDropdown = memo<{
               <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
                 <Filter className="mx-auto mb-2 h-8 w-8 opacity-50" />
                 <p className="font-medium">No models found</p>
-                <p className="mt-1 text-xs">Try different keywords</p>
+                {availableModels.length === 0 ? (
+                  <p className="mt-1 text-xs">
+                    <Button
+                      variant="link"
+                      onClick={() => openModal()}
+                      className="text-xs text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                      Add API key
+                    </Button>
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs">Try different keywords</p>
+                )}
               </div>
             ) : (
               filteredModels.map((model) => {
@@ -626,7 +640,7 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
         </DialogTrigger>
 
         <DialogContent className="flex h-[90vh] w-[95vw] max-w-6xl flex-col border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <DialogHeader className="flex-shrink-0 border-b border-gray-100 pb-4 dark:border-gray-800 sm:pb-6">
+          <DialogHeader className="mt-10 flex-shrink-0 border-b border-gray-100 pb-4 dark:border-gray-800 sm:pb-6">
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <DialogTitle className="flex items-center gap-3 text-lg font-semibold sm:text-xl">
                 <div className="rounded-xl bg-gradient-to-br from-purple-500 via-purple-500 to-pink-500 p-2 text-white shadow-lg sm:p-2.5">
@@ -641,18 +655,18 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
               </DialogTitle>
 
               <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 dark:text-gray-500" />
                 <Input
                   placeholder="Search models, capabilities, availability..."
                   value={searchQuery}
                   ref={modalSearchRef}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10 border-gray-200 bg-gray-50 pl-10 pr-10 transition-all duration-200"
+                  className="h-10 border-gray-200 bg-gray-50 pl-10 pr-10 transition-all duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400"
                 />
                 {searchQuery && (
                   <button
                     onClick={clearSearchQuery}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 transition-colors duration-200 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -667,7 +681,7 @@ export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, select
             currentQuery={searchQuery}
           />
 
-          <div className="min-h-0 flex-1 overflow-y-auto py-4 sm:py-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-4 sm:py-6">
             {Object.keys(groupedFilteredForModal).length === 0 ? (
               <AnimatedWrapper show={true}>
                 <div className="py-12 text-center">
