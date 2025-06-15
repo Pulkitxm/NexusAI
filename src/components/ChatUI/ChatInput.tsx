@@ -1,5 +1,5 @@
 "use client";
-import { OpenRouter } from "@lobehub/icons";
+
 import {
   SendHorizontal,
   Loader2,
@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MESSAGE_LIMIT } from "@/lib/data";
+import { MESSAGE_LIMIT, OPENROUTER_ICON } from "@/lib/data";
 import { AI_MODELS } from "@/lib/models";
 import { SpeechToTextService } from "@/lib/speech-to-text";
 import { cn } from "@/lib/utils";
@@ -317,7 +317,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                               htmlFor="openrouter-toggle"
                               className="flex cursor-pointer items-center gap-1.5 text-xs"
                             >
-                              <OpenRouter />
+                              <OPENROUTER_ICON />
                               <span className="font-medium">OpenRouter</span>
                             </Label>
                             <Switch

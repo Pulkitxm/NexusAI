@@ -105,7 +105,6 @@ You MUST respond with a valid JSON object in this exact format:
       }
 
       const memories = result.data.memories;
-      console.log("Memories:", memories);
 
       const existingMemories = await prisma.globalMemory.findMany({
         where: { userId, isDeleted: false },

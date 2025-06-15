@@ -155,14 +155,6 @@ export function ChatProvider({
     async (userMessage: string, apiKey: string, model: string): Promise<string> => {
       try {
         setGeneratingTitle(true);
-        console.log("Generating title:", {
-          userMessage,
-          apiKey,
-          model,
-          selectedModelDetails,
-          useOpenRouter,
-          openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
-        });
         const response = await fetch("/api/chat/title", {
           method: "POST",
           headers: {

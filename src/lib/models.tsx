@@ -1,10 +1,11 @@
-import { DeepSeek, Meta, OpenRouter, Qwen, Grok } from "@lobehub/icons";
 import { FaGoogle } from "react-icons/fa";
 import { RiAnthropicFill } from "react-icons/ri";
 import { SiOpenai } from "react-icons/si";
 
 import { ApiKeys } from "@/types/keys";
 import { Provider } from "@/types/providers";
+
+import { DEEPSEEK_ICON, GROK_ICON, META_ICON, OPENROUTER_ICON, QWEN_ICON } from "./data";
 
 import type { AIModel } from "@/types/models";
 
@@ -15,7 +16,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "deepseek/deepseek-r1:free",
     name: "DeepSeek R1",
     provider: Provider.OpenRouter,
-    icon: DeepSeek,
+    icon: DEEPSEEK_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -27,7 +28,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "deepseek/deepseek-chat-v3-0324",
     name: "DeepSeek V3 0324",
     provider: Provider.OpenRouter,
-    icon: DeepSeek,
+    icon: DEEPSEEK_ICON,
     description:
       "A 685B-parameter mixture-of-experts model, successor to DeepSeek V3 with enhanced performance across diverse tasks"
   },
@@ -36,7 +37,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "deepseek/deepseek-r1-0528",
     name: "DeepSeek R1 0528",
     provider: Provider.OpenRouter,
-    icon: DeepSeek,
+    icon: DEEPSEEK_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -49,7 +50,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "qwen/qwen3-32b",
     name: "Qwen3 32B",
     provider: Provider.OpenRouter,
-    icon: Qwen,
+    icon: QWEN_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -62,7 +63,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "qwen/qwen-2.5-coder-32b-instruct",
     name: "Qwen2.5 Coder 32B Instruct",
     provider: Provider.OpenRouter,
-    icon: Qwen,
+    icon: QWEN_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -75,7 +76,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "meta-llama/llama-4-maverick",
     name: "Llama 4 Maverick",
     provider: Provider.OpenRouter,
-    icon: Meta,
+    icon: META_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -88,7 +89,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "meta-llama/llama-4-scout",
     name: "Llama 4 Scout",
     provider: Provider.OpenRouter,
-    icon: Meta,
+    icon: META_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -101,7 +102,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "meta-llama/llama-3.3-70b-instruct",
     name: "Llama 3.3 70B Instruct",
     provider: Provider.OpenRouter,
-    icon: Meta,
+    icon: META_ICON,
     capabilities: {
       reasoning: true,
       attachment: true
@@ -114,7 +115,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "x-ai/grok-3-beta",
     name: "Grok 3",
     provider: Provider.OpenRouter,
-    icon: Grok,
+    icon: GROK_ICON,
     capabilities: {
       attachment: true
     },
@@ -126,7 +127,7 @@ export const AI_MODELS: AIModel[] = [
     openRouterId: "x-ai/grok-3-mini-beta",
     name: "Grok 3 Mini",
     provider: Provider.OpenRouter,
-    icon: Grok,
+    icon: GROK_ICON,
     capabilities: {
       attachment: true
     },
@@ -401,7 +402,7 @@ const providerConfigs = [
     key: Provider.OpenRouter,
     name: "OpenRouter",
     description: "Access multiple AI models through a single API key",
-    icon: OpenRouter,
+    icon: OPENROUTER_ICON,
     color: "bg-green-500/90 dark:bg-green-600/80",
     link: "https://openrouter.ai/api-keys"
   },

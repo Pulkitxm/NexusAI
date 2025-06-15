@@ -14,11 +14,9 @@ export class AnthropicProvider extends BaseAIProvider {
     super();
     this.apiKey = apiKey;
     this.isOpenRouter = isOpenRouter;
-    console.log(this.isOpenRouter);
     this.client = this.isOpenRouter
       ? new OpenAIProvider({ apiKey: this.apiKey, isOpenRouter: true })
       : new Anthropic({ apiKey });
-    console.log(this.client instanceof Anthropic ? "Anthropic client" : "OpenAI client");
   }
 
   async chat(input: ChatInput, options?: StreamOptions): Promise<ChatResponse | ReadableStream | Response> {
