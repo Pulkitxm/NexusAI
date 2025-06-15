@@ -23,7 +23,7 @@ import { MESSAGE_LIMIT } from "@/lib/data";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
 import { type Attachment, validateAttachment } from "@/types/chat";
-import { Reasoning } from "@/types/providers";
+import { Provider, Reasoning } from "@/types/providers";
 
 import { useKeys } from "./key-provider";
 import { useModel } from "./model-provider";
@@ -151,34 +151,46 @@ export function ChatProvider({
     });
   }, []);
 
-  const generateChatTitle = useCallback(async (userMessage: string, apiKey: string, model: string): Promise<string> => {
-    try {
-      setGeneratingTitle(true);
-      const response = await fetch("/api/chat/title", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: userMessage,
+  const generateChatTitle = useCallback(
+    async (userMessage: string, apiKey: string, model: string): Promise<string> => {
+      try {
+        setGeneratingTitle(true);
+        console.log("Generating title:", {
+          userMessage,
           apiKey,
-          model
-        })
-      });
+          model,
+          selectedModelDetails,
+          useOpenRouter,
+          openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
+        });
+        const response = await fetch("/api/chat/title", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            apiKey,
+            model,
+            openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate title");
+        if (!response.ok) {
+          throw new Error("Failed to generate title");
+        }
+
+        const data = await response.json();
+        return data.title || `Chat about ${userMessage.slice(0, 30)}...`;
+      } catch (error) {
+        console.error("Error generating chat title:", error);
+        return `Chat about ${userMessage.slice(0, 30)}...`;
+      } finally {
+        setGeneratingTitle(false);
       }
-
-      const data = await response.json();
-      return data.title || `Chat about ${userMessage.slice(0, 30)}...`;
-    } catch (error) {
-      console.error("Error generating chat title:", error);
-      return `Chat about ${userMessage.slice(0, 30)}...`;
-    } finally {
-      setGeneratingTitle(false);
-    }
-  }, []);
+    },
+    [selectedModelDetails, useOpenRouter]
+  );
 
   const retryLastMessage = useCallback(() => {
     if (lastFailedMessage) {
@@ -343,7 +355,7 @@ export function ChatProvider({
             webSearch,
             reasoning,
             attachments: currentAttachments.map((attachment) => attachment.id),
-            openRouter: useOpenRouter
+            openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
           })
         });
 

@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { useChat } from "@/providers/chat-provider";
 import { useKeys } from "@/providers/key-provider";
 import { useModel } from "@/providers/model-provider";
-import { Reasoning } from "@/types/providers";
+import { Provider, Reasoning } from "@/types/providers";
 
 import type React from "react";
 
@@ -59,9 +59,6 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     useOpenRouter,
     setUseOpenRouter
   } = useChat();
-
-  console.log(reasoning);
-
   const { selectedModel } = useModel();
   const selectedModelDetails = useMemo(() => {
     return AI_MODELS.find((m) => m.id === selectedModel);
@@ -312,7 +309,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                   </div>
 
                   <div className="flex items-center gap-6">
-                    {canUseOpenRouter && (
+                    {selectedModelDetails?.provider !== Provider.OpenRouter && canUseOpenRouter && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-2 text-black dark:text-white">

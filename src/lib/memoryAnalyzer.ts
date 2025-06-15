@@ -92,7 +92,9 @@ You MUST respond with a valid JSON object in this exact format:
     try {
       let parsedResponse;
       if (typeof response === "object" && "content" in response) {
-        parsedResponse = typeof response.content === "string" ? JSON.parse(response.content) : response.content;
+        const content = typeof response.content === "string" ? response.content : JSON.stringify(response.content);
+        const cleanedContent = content.replace(/```json\n?|\n?```/g, "").trim();
+        parsedResponse = JSON.parse(cleanedContent);
       } else {
         parsedResponse = response;
       }

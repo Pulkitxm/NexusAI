@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, apiKey, model } = await req.json();
+    const { message, apiKey, model, openRouter } = await req.json();
 
     if (!message || !apiKey || !model) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
@@ -19,14 +19,14 @@ export async function POST(req: NextRequest) {
     const aiProvider = getAIProvider({
       provider: modelConfig.provider,
       apiKey,
-      openRouter: false
+      openRouter
     });
 
     if (!aiProvider) {
       return Response.json({ error: "Provider not supported" }, { status: 400 });
     }
 
-    const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}". 
+    const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}". The title must be between 3-50 characters and must not be empty. It should be relevant to the user message.
 
 Rules:
 - Be specific and descriptive
@@ -62,10 +62,17 @@ Title:`;
 
     if (typeof result === "object" && "content" in result) {
       const title = result.content.trim().replace(/^["']|["']$/g, "");
+
+      if (!title || title === "\n" || title.length < 3) {
+        const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
+        return Response.json({ title: fallbackTitle });
+      }
+
       return Response.json({ title });
     }
 
-    return Response.json({ title: `Chat about ${message.slice(0, 30)}...` });
+    const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
+    return Response.json({ title: fallbackTitle });
   } catch (error) {
     console.error("Error generating chat title:", error);
     return Response.json({ error: "Failed to generate title" }, { status: 500 });
