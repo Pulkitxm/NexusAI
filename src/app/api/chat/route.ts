@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     const modelProvider = modelConfig.provider || provider;
     const aiModelResult = getAiProvider({
       apiKey,
-      finalModel,
+      finalModelId: finalModel,
       modelProvider,
       openRouter,
       reasoningConfig

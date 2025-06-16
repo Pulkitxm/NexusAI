@@ -24,22 +24,24 @@ export async function generateChatTitle({
       return { success: false, error: "Missing required fields" };
     }
 
-    const model = AI_MODELS.find((m) => m.uuid === modelUUId)?.id;
+    console.log({
+      apiKey,
+      message,
+      modelUUId,
+      openRouter
+    });
+
+    const model = AI_MODELS.find((m) => m.uuid === modelUUId);
 
     if (!model) {
       return { success: false, error: "Model not found" };
     }
 
-    const modelConfig = AI_MODELS.find((m) => m.id === model);
-    if (!modelConfig) {
-      return { success: false, error: "Model not found" };
-    }
-
     const aiProviderRes = getAiProvider({
-      modelProvider: modelConfig.provider,
+      modelProvider: model.provider,
       apiKey,
       openRouter,
-      finalModel: modelConfig.id
+      finalModelId: model.id
     });
 
     if (!aiProviderRes.success) {
@@ -62,7 +64,8 @@ export async function generateChatTitle({
   - "Explain quantum computing" → "Quantum Computing Fundamentals"
   - "Recipe for chocolate cake" → "Chocolate Cake Recipe"
   
-  Title:`;
+  IMPORTANT: Return ONLY valid JSON with a 'title' field like: {"title": "Your Generated Title"}
+  `;
 
     const result = await generateObject({
       model: aiProvider,
@@ -78,6 +81,20 @@ export async function generateChatTitle({
     return { success: false, error: "Failed to generate title" };
   } catch (error) {
     console.error("Error generating chat title:", error);
+    if (error instanceof Error && error.message.includes("JSON parsing failed")) {
+      try {
+        const errorMessage = error.toString();
+        const match = errorMessage.match(/Text: ([^@]+)/);
+        if (match && match[1]) {
+          const extractedTitle = match[1].trim();
+          if (extractedTitle) {
+            return { success: true, title: extractedTitle };
+          }
+        }
+      } catch (recoveryError) {
+        console.error("Failed to recover from JSON parsing error:", recoveryError);
+      }
+    }
     return { success: false, error: "Failed to generate title" };
   }
 }
