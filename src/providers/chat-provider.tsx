@@ -19,6 +19,7 @@ import {
 } from "react";
 
 import { createChatWithTitle, saveUserMessage } from "@/actions/chat";
+import { useCachedChatMessages, useCachedChatWithMessages } from "@/hooks/use-cached-chat";
 import { useToast } from "@/hooks/use-toast";
 import { MESSAGE_LIMIT } from "@/lib/data";
 import { debugLog } from "@/lib/debug";
@@ -264,6 +265,10 @@ export function ChatProvider({
     setAttachmentsWithStorage([]);
   }, [setMessages, setAttachmentsWithStorage]);
 
+  const { invalidateCache: invalidateChatMessages, refetch: refetchChatMessages } = useCachedChatMessages(chatId);
+  const { invalidateCache: invalidateChatWithMessages, refetch: refetchChatWithMessages } =
+    useCachedChatWithMessages(chatId);
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -308,8 +313,8 @@ export function ChatProvider({
       let currentChatId = chatId;
       let shouldUpdateUrl = false;
 
-      if (!currentChatId) {
-        try {
+      try {
+        if (!currentChatId) {
           setLoadingChatId("creating");
           const result = await createChatWithTitle({
             currentInput,
@@ -327,22 +332,9 @@ export function ChatProvider({
           } else {
             throw new Error("Failed to create chat");
           }
-        } catch (error) {
-          console.error("Error creating chat:", error);
-          setLastFailedMessage(currentInput);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to create chat. Please try again."
-          });
-          return;
-        } finally {
-          setLoadingChatId(null);
         }
-      }
 
-      if (currentChatId && messages.length > 0) {
-        try {
+        if (currentChatId && messages.length > 0) {
           debugLog("Saving user message", {
             chatId: currentChatId,
             content: currentInput
@@ -352,25 +344,38 @@ export function ChatProvider({
             console.error("Failed to save user message:", result.error);
           } else {
             debugLog("User message saved", { messageId: result.message?.id });
+
+            invalidateChatMessages();
+            refetchChatMessages();
+            invalidateChatWithMessages();
+            refetchChatWithMessages();
           }
-        } catch (error) {
-          console.error("Error saving user message:", error);
         }
-      }
 
-      if (shouldUpdateUrl && currentChatId) {
-        window.history.pushState({}, "", `/${currentChatId}`);
-      }
-
-      setAttachmentsWithStorage([]);
-      removeStoredValue(STORAGE_KEYS.ATTACHMENTS);
-      debugLog("Submitting to AI");
-
-      originalHandleSubmit(e, {
-        body: {
-          chatId: currentChatId
+        if (shouldUpdateUrl && currentChatId) {
+          window.history.pushState({}, "", `/${currentChatId}`);
         }
-      });
+
+        setAttachmentsWithStorage([]);
+        removeStoredValue(STORAGE_KEYS.ATTACHMENTS);
+        debugLog("Submitting to AI");
+
+        originalHandleSubmit(e, {
+          body: {
+            chatId: currentChatId
+          }
+        });
+      } catch (error) {
+        console.error("Error in handleSubmit:", error);
+        setLastFailedMessage(currentInput);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to process your message. Please try again."
+        });
+      } finally {
+        setLoadingChatId(null);
+      }
     },
     [
       addChat,
@@ -379,11 +384,15 @@ export function ChatProvider({
       chatId,
       hasAnyKeys,
       input,
+      invalidateChatMessages,
+      invalidateChatWithMessages,
       isLoading,
       messageCount,
       messages.length,
       openModal,
       originalHandleSubmit,
+      refetchChatMessages,
+      refetchChatWithMessages,
       selectedModelDetails?.provider,
       selectedModelDetails?.uuid,
       session,

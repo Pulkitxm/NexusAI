@@ -15,9 +15,10 @@ import {
   useRef
 } from "react";
 
-import { deleteChat, getUserChats, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
+import { deleteChat, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
 import { ShareModal } from "@/components/ChatUI/ShareModal";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCachedUserChats } from "@/hooks/use-cached-chat";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -136,6 +137,28 @@ export const SidebarProvider = forwardRef<
     }
   }, [isMobile, setOpen]);
 
+  const { chats: cachedChats, error: cachedChatsError, refetch: refetchCachedChats } = useCachedUserChats();
+
+  useEffect(() => {
+    if (cachedChats && cachedChats.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mappedChats = cachedChats.map((chat: any) => ({
+        id: chat.id,
+        title: chat.title || `Chat ${chat.id}`,
+        updatedAt: chat.updatedAt
+      }));
+
+      setChats(mappedChats);
+      setInitialized(true);
+      setLoading(false);
+      loadingRef.current = false;
+    }
+
+    if (cachedChatsError) {
+      setError(cachedChatsError);
+    }
+  }, [cachedChats, cachedChatsError]);
+
   const loadChats = useCallback(async () => {
     if (loadingRef.current) return;
 
@@ -150,22 +173,7 @@ export const SidebarProvider = forwardRef<
     setError(null);
 
     try {
-      const userChats = await getUserChats();
-
-      if (!userChats.success) {
-        console.error("Error loading chats:", userChats.error);
-        setError(userChats.error || "Failed to load chats.");
-        return;
-      }
-
-      const mappedChats = userChats.chats?.map((chat) => ({
-        id: chat.id,
-        title: chat.title || `Chat ${chat.id}`,
-        updatedAt: chat.updatedAt
-      }));
-
-      setChats(mappedChats || []);
-      setInitialized(true);
+      await refetchCachedChats();
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         return;
@@ -176,7 +184,7 @@ export const SidebarProvider = forwardRef<
       loadingRef.current = false;
       setLoading(false);
     }
-  }, []);
+  }, [refetchCachedChats]);
 
   const debouncedLoadChats = useDebounce(loadChats, 300);
 
