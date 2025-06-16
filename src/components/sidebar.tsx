@@ -51,7 +51,6 @@ const Sidebar = React.forwardRef<
   }
 
   if (isMobile) {
-    // eslint-disable-next-line
     const style: React.CSSProperties = {
       "--sidebar-width": SIDEBAR_WIDTH_MOBILE
     } as React.CSSProperties;
@@ -451,7 +450,6 @@ const SidebarMenuSkeleton = React.forwardRef<
     return `${Math.floor(Math.random() * 40) + 50}%`;
   }, []);
 
-  // eslint-disable-next-line
   const style: React.CSSProperties = {
     "--skeleton-width": width
   } as React.CSSProperties;

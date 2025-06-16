@@ -251,11 +251,10 @@ export const MessageBubble = memo(({ message, isStreaming }: MessageBubbleProps)
       className={cn(
         "group mb-6 flex will-change-transform",
         isUser ? "justify-end" : "justify-start",
-        // Use CSS for smoother animation instead of Tailwind's animate classes
         "opacity-100 transition-opacity duration-300"
       )}
       style={{
-        transform: "translateY(0)" // Start in final position for better performance
+        transform: "translateY(0)"
       }}
     >
       <div className={cn("flex min-w-0 max-w-[85%] flex-col", isUser ? "items-end" : "items-start")}>

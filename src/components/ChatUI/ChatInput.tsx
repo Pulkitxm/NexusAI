@@ -200,7 +200,6 @@ export function ChatInput(props: ChatInputProps) {
     reasoning
   ].filter(Boolean).length;
 
-  // If showForLoading is true, return just the UI without functionality
   if ("showForLoading" in props && props.showForLoading) {
     return (
       <TooltipProvider delayDuration={300}>

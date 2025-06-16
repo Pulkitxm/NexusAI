@@ -8,31 +8,31 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatar    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chats     Chat[]
-  messages  Message[]
-  settings  UserSettings?
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  avatar       String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  chats        Chat[]
+  messages     Message[]
+  settings     UserSettings?
   globalMemory GlobalMemory[]
   attachments  Attachment[]
 }
 
 model Chat {
-  id        String    @id @default(cuid())
-  title     String?
-  isShared  Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  Message[]
+  id          String       @id @default(cuid())
+  title       String?
+  isShared    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
   attachments Attachment[]
 
-  isDeleted Boolean   @default(false)
+  isDeleted Boolean @default(false)
 }
 
 enum Role {
@@ -41,56 +41,56 @@ enum Role {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  role      Role     @default(USER)
-  content   String
-  createdAt DateTime @default(now())
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  id          String       @id @default(cuid())
+  role        Role         @default(USER)
+  content     String
+  createdAt   DateTime     @default(now())
+  chatId      String
+  chat        Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
   attachments Attachment[]
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Attachment {
-  id        String   @id @default(cuid())
-  name      String
-  url       String
-  size      Int
-  uploadThingKey String @unique
-  isDeleted Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chatId    String?
-  messageId String?
-  userId    String
-  chat      Chat?     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  message   Message?     @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  name           String
+  url            String
+  size           Int
+  uploadThingKey String   @unique
+  isDeleted      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  chatId         String?
+  messageId      String?
+  userId         String
+  chat           Chat?    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message        Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSettings {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobTitle    String?
-  occupation  String?
-  bio         String?
-  location    String?
-  company     String?
-  website     String?
-  customFont  String?
-  theme       String   @default("system")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-} 
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle   String?
+  occupation String?
+  bio        String?
+  location   String?
+  company    String?
+  website    String?
+  customFont String?
+  theme      String   @default("system")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
 
 model GlobalMemory {
   id         String   @id @default(cuid())
   content    String
-  category   String?  // personal, professional, preferences, knowledge, other
-  importance Int      @default(5) // 1-10 scale
-  reasoning  String?  // Why this memory is important
+  category   String?
+  importance Int      @default(5)
+  reasoning  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   isDeleted  Boolean  @default(false)

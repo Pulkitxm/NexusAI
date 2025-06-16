@@ -139,12 +139,10 @@ export const SidebarProvider = forwardRef<
   const loadChats = useCallback(async () => {
     if (loadingRef.current) return;
 
-    // Cancel any ongoing requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
     abortControllerRef.current = new AbortController();
 
     loadingRef.current = true;
@@ -287,7 +285,6 @@ export const SidebarProvider = forwardRef<
     ]
   );
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const tooltipStyle: React.CSSProperties = {
     "--sidebar-width": SIDEBAR_WIDTH,
     "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,

@@ -29,15 +29,12 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
   );
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Improved scroll handling for new messages
   useEffect(() => {
     if (messages.length > prevMessagesLength.current && isAutoScrollEnabled) {
-      // Clear any existing timeout to prevent multiple scroll attempts
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      // Use a single timeout for smoother scrolling
       scrollTimeoutRef.current = setTimeout(() => {
         scrollToBottom(true);
         scrollTimeoutRef.current = null;
@@ -46,12 +43,10 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
     prevMessagesLength.current = messages.length;
   }, [messages.length, isAutoScrollEnabled, scrollToBottom]);
 
-  // Handle initial scroll when component mounts
   useEffect(() => {
     forceScrollToBottom();
   }, [forceScrollToBottom]);
 
-  // Improved loading state scroll handling
   useEffect(() => {
     if (isLoading && !prevIsLoading.current) {
       forceScrollToBottom();
@@ -59,12 +54,10 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
     prevIsLoading.current = isLoading;
   }, [isLoading, forceScrollToBottom]);
 
-  // Optimized streaming scroll behavior
   useEffect(() => {
     const scrollInterval: NodeJS.Timeout | null = null;
 
     if (isLoading && isAutoScrollEnabled) {
-      // Use requestAnimationFrame for smoother scrolling during streaming
       const smoothScroll = () => {
         scrollToBottom(false);
         if (isLoading && isAutoScrollEnabled) {
@@ -72,7 +65,6 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
         }
       };
 
-      // Start the smooth scroll animation
       requestAnimationFrame(smoothScroll);
     }
 

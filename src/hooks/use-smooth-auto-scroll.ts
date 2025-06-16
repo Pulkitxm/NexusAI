@@ -43,7 +43,6 @@ export function useSmoothAutoScroll({
           behavior: "smooth"
         });
 
-        // Reset flag after animation completes
         setTimeout(() => {
           isScrollingToBottom.current = false;
         }, smoothScrollDuration);
@@ -69,7 +68,6 @@ export function useSmoothAutoScroll({
 
     lastScrollTop.current = scrollTop;
 
-    // Update auto-scroll state based on user behavior
     if (scrollDirection === "up" && !isAtBottom) {
       setIsAutoScrollEnabled(false);
       setIsUserScrolling(true);
@@ -78,10 +76,8 @@ export function useSmoothAutoScroll({
       setIsUserScrolling(false);
     }
 
-    // Show/hide scroll button
     setShowScrollButton(!isNearBottom());
 
-    // Clear user scrolling flag after a delay
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
