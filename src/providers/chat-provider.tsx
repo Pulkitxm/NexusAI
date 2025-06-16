@@ -17,7 +17,7 @@ import {
   useEffect
 } from "react";
 
-import { createChat, saveUserMessage, updateChatTitle } from "@/actions/chat";
+import { createChatWithTitle, saveUserMessage } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
 import { MESSAGE_LIMIT } from "@/lib/data";
 import { getAvailableModels } from "@/lib/models";
@@ -68,7 +68,6 @@ interface ChatContextType {
   setConnectionError: Dispatch<SetStateAction<string | null>>;
   loadingChatId: string | null;
   setLoadingChatId: Dispatch<SetStateAction<string | null>>;
-  generatingTitle: boolean;
   useOpenRouter: boolean;
   setUseOpenRouter: Dispatch<SetStateAction<boolean>>;
 }
@@ -127,9 +126,8 @@ export function ChatProvider({
         : undefined
       : keys[selectedModelDetails?.provider.toString() as keyof typeof keys];
 
-  const { refreshChats } = useSidebar();
+  const { addChat } = useSidebar();
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
-  const [generatingTitle, setGeneratingTitle] = useState(false);
 
   const setInput = useCallback((value: string | ((prev: string) => string)) => {
     if (typeof value === "function") {
@@ -151,39 +149,6 @@ export function ChatProvider({
       return newAttachments;
     });
   }, []);
-
-  const generateChatTitle = useCallback(
-    async (userMessage: string, apiKey: string): Promise<string> => {
-      try {
-        setGeneratingTitle(true);
-        const response = await fetch("/api/chat/title", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: userMessage,
-            apiKey,
-            model: selectedModelDetails?.uuid,
-            openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to generate title");
-        }
-
-        const data = await response.json();
-        return data.title || `Chat about ${userMessage.slice(0, 30)}...`;
-      } catch (error) {
-        console.error("Error generating chat title:", error);
-        return `Chat about ${userMessage.slice(0, 30)}...`;
-      } finally {
-        setGeneratingTitle(false);
-      }
-    },
-    [selectedModelDetails, useOpenRouter]
-  );
 
   const retryLastMessage = useCallback(() => {
     if (lastFailedMessage) {
@@ -263,21 +228,18 @@ export function ChatProvider({
       if (!currentChatId) {
         try {
           setLoadingChatId("creating");
-          const result = await createChat();
+          const result = await createChatWithTitle({
+            currentInput,
+            apiKey,
+            modelUUId: selectedModelDetails?.uuid || "",
+            openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter,
+            attachments: currentAttachments.map((a) => ({ id: a.id }))
+          });
           if (result.success && result.chat) {
             currentChatId = result.chat.id;
             setChatId(currentChatId);
             shouldUpdateUrl = true;
-
-            const title = await generateChatTitle(currentInput, apiKey);
-
-            try {
-              await updateChatTitle(currentChatId, title);
-
-              refreshChats();
-            } catch (error) {
-              console.error("Error updating chat title:", error);
-            }
+            addChat(result.chat);
           } else {
             throw new Error("Failed to create chat");
           }
@@ -301,7 +263,7 @@ export function ChatProvider({
         }
       }
 
-      if (currentChatId) {
+      if (currentChatId && messages.length > 1) {
         try {
           await saveUserMessage(
             currentChatId,
@@ -346,6 +308,10 @@ export function ChatProvider({
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+        }
+
+        if (messages.filter((m) => m.role === "user").length === 0) {
+          setMessages((prev) => [...prev, userMessage]);
         }
 
         const reader = response.body?.getReader();
@@ -429,7 +395,6 @@ export function ChatProvider({
       apiKey,
       attachments,
       chatId,
-      generateChatTitle,
       hasAnyKeys,
       input,
       isLoading,
@@ -437,8 +402,9 @@ export function ChatProvider({
       messages,
       openModal,
       reasoning,
-      refreshChats,
-      selectedModelDetails,
+      addChat,
+      selectedModelDetails?.provider,
+      selectedModelDetails?.uuid,
       session,
       setAttachmentsWithStorage,
       setInput,
@@ -555,7 +521,6 @@ export function ChatProvider({
     setConnectionError,
     loadingChatId,
     setLoadingChatId,
-    generatingTitle,
     useOpenRouter,
     setUseOpenRouter
   };

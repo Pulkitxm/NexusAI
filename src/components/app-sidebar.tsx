@@ -19,6 +19,7 @@ import { useParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 
+import LogoIcon from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -279,16 +280,12 @@ export function AppSidebar() {
         <SidebarHeader className="border-b border-border/50 p-3">
           <div className="mb-3 flex items-center justify-between">
             <Link href={"/"} className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-purple-500 to-purple-600">
-                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-              </div>
+              <img
+                src={LogoIcon.src}
+                alt="Logo"
+                className="pointer-events-none h-8 w-8 object-contain"
+                draggable={false}
+              />
               <h2 className="bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
                 Nexus AI
               </h2>

@@ -1,25 +1,31 @@
 import { getAIProvider } from "@/ai/factory";
 import { AI_MODELS } from "@/lib/models";
 
-import type { NextRequest } from "next/server";
-
-export async function POST(req: NextRequest) {
+export async function generateChatTitle({
+  apiKey,
+  message,
+  modelUUId,
+  openRouter
+}: {
+  message: string;
+  apiKey: string;
+  modelUUId: string;
+  openRouter?: boolean;
+}) {
   try {
-    const { message, apiKey, model: modelUUId, openRouter } = await req.json();
-
     if (!message || !apiKey || !modelUUId) {
-      return Response.json({ error: "Missing required fields" }, { status: 400 });
+      return { success: false, error: "Missing required fields" };
     }
 
     const model = AI_MODELS.find((m) => m.uuid === modelUUId)?.id;
 
     if (!model) {
-      return Response.json({ error: "Model not found" }, { status: 400 });
+      return { success: false, error: "Model not found" };
     }
 
     const modelConfig = AI_MODELS.find((m) => m.id === model);
     if (!modelConfig) {
-      return Response.json({ error: "Model not found" }, { status: 400 });
+      return { success: false, error: "Model not found" };
     }
 
     const aiProvider = getAIProvider({
@@ -29,24 +35,24 @@ export async function POST(req: NextRequest) {
     });
 
     if (!aiProvider) {
-      return Response.json({ error: "Provider not supported" }, { status: 400 });
+      return { success: false, error: "Provider not supported" };
     }
 
     const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}". The title must be between 3-50 characters and must not be empty. It should be relevant to the user message.
-
-Rules:
-- Be specific and descriptive
-- Avoid generic words like "Chat", "Question", "Help"
-- Focus on the main topic or intent
-- Use title case
-- No quotes or special characters
-
-Examples:
-- "How to center a div in CSS" → "CSS Div Centering Techniques"
-- "Explain quantum computing" → "Quantum Computing Fundamentals"
-- "Recipe for chocolate cake" → "Chocolate Cake Recipe"
-
-Title:`;
+  
+  Rules:
+  - Be specific and descriptive
+  - Avoid generic words like "Chat", "Question", "Help"
+  - Focus on the main topic or intent
+  - Use title case
+  - No quotes or special characters
+  
+  Examples:
+  - "How to center a div in CSS" → "CSS Div Centering Techniques"
+  - "Explain quantum computing" → "Quantum Computing Fundamentals"
+  - "Recipe for chocolate cake" → "Chocolate Cake Recipe"
+  
+  Title:`;
 
     const result = await aiProvider.chat({
       messages: [
@@ -71,16 +77,17 @@ Title:`;
 
       if (!title || title === "\n" || title.length < 3) {
         const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
-        return Response.json({ title: fallbackTitle });
+        return { success: true, title: fallbackTitle };
       }
 
-      return Response.json({ title });
+      return { success: true, title };
     }
 
     const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
-    return Response.json({ title: fallbackTitle });
+
+    return { success: true, title: fallbackTitle };
   } catch (error) {
     console.error("Error generating chat title:", error);
-    return Response.json({ error: "Failed to generate title" }, { status: 500 });
+    return { success: false, error: "Failed to generate title" };
   }
 }

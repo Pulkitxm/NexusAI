@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -39,11 +40,16 @@ import { Provider, type Reasoning } from "@/types/providers";
 
 import type React from "react";
 
-interface EnhancedChatInputProps {
-  onShowShortcuts: () => void;
-}
+type ChatInputProps =
+  | {
+      onShowShortcuts: () => void;
+    }
+  | {
+      showForLoading: true;
+      onShowShortcuts?: never;
+    };
 
-export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
+export function ChatInput(props: ChatInputProps) {
   const { canUseOpenRouter, haveOnlyOpenRouterKey } = useKeys();
   const {
     input,
@@ -63,6 +69,8 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     useOpenRouter,
     setUseOpenRouter
   } = useChat();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const { selectedModel } = useModel();
   const selectedModelDetails = useMemo(() => {
     return AI_MODELS.find((m) => m.id === selectedModel);
@@ -177,7 +185,9 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
 
     if ((e.metaKey || e.ctrlKey) && e.key === "/") {
       e.preventDefault();
-      onShowShortcuts();
+      if ("onShowShortcuts" in props) {
+        props.onShowShortcuts?.();
+      }
     }
   };
 
@@ -189,6 +199,81 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
     webSearch,
     reasoning
   ].filter(Boolean).length;
+
+  // If showForLoading is true, return just the UI without functionality
+  if ("showForLoading" in props && props.showForLoading) {
+    return (
+      <TooltipProvider delayDuration={300}>
+        <div className="sticky bottom-0 z-10">
+          <div className="mx-auto max-w-4xl p-4 pb-0">
+            <div className="relative">
+              <div
+                className={cn(
+                  "relative rounded-t-2xl border bg-white shadow-sm transition-all duration-200 dark:bg-slate-900",
+                  "border-slate-200 dark:border-slate-700"
+                )}
+                style={{
+                  borderColor: isDark ? "transparent" : undefined
+                }}
+              >
+                <div className="flex items-end gap-3 p-4">
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder="Ask me anything..."
+                      className={cn(
+                        "max-h-[120px] min-h-[44px] resize-none border-0 bg-transparent p-0",
+                        "text-base leading-relaxed placeholder:text-slate-400",
+                        "focus-visible:ring-0 focus-visible:ring-offset-0"
+                      )}
+                      disabled={true}
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={true}
+                    className="h-9 w-9 shrink-0 rounded-xl bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
+                  >
+                    <SendHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 dark:border-slate-800">
+                  <div className="flex items-center gap-1">
+                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
+                      <Mic className="h-4 w-4" />
+                    </Button>
+
+                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
+                      <Upload className="h-4 w-4" />
+                    </Button>
+
+                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={true}
+                      className="h-6 px-2 text-xs opacity-50"
+                    >
+                      <Command className="mr-1 h-3 w-3" />
+                      Shortcuts
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -265,6 +350,9 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                 "border-slate-200 dark:border-slate-700",
                 isFocused && "border-slate-300 shadow-md dark:border-slate-600"
               )}
+              style={{
+                borderColor: isDark ? "transparent" : undefined
+              }}
             >
               <div className="flex items-end gap-3 p-4">
                 <div className="flex-1">
@@ -425,7 +513,7 @@ export function ChatInput({ onShowShortcuts }: EnhancedChatInputProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={onShowShortcuts}
+                    onClick={props.onShowShortcuts}
                     className="h-6 px-2 text-xs"
                   >
                     <Command className="mr-1 h-3 w-3" />

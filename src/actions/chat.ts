@@ -5,14 +5,34 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
 
-export async function createChat(title?: string) {
+import { generateChatTitle } from "./ai";
+
+export async function createChat({
+  attachments,
+  title,
+  messages
+}: {
+  title?: string;
+  attachments?: { id: string }[];
+  messages?: { role: "USER" | "ASSISTANT"; content: string }[];
+}) {
   const session = await auth();
 
   try {
     const chat = await prisma.chat.create({
       data: {
         title: title || "New Chat",
-        userId: session?.user?.id || null
+        userId: session?.user?.id || null,
+        attachments: attachments
+          ? {
+              connect: attachments
+            }
+          : undefined,
+        messages: messages
+          ? {
+              create: messages
+            }
+          : undefined
       }
     });
 
@@ -174,14 +194,10 @@ export async function getUserChats() {
     const chats = await prisma.chat.findMany({
       where: { userId, isDeleted: false },
       orderBy: { updatedAt: "desc" },
-      include: {
-        messages: {
-          take: 1,
-          orderBy: { createdAt: "desc" }
-        },
-        _count: {
-          select: { messages: true }
-        }
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true
       }
     });
 
@@ -268,3 +284,59 @@ export async function shareChat(chatId: string) {
     return { success: false, error: "Failed to share chat" };
   }
 }
+
+export const createChatWithTitle = async ({
+  currentInput,
+  apiKey,
+  openRouter,
+  modelUUId,
+  attachments
+}: {
+  currentInput: string;
+  apiKey: string;
+  openRouter?: boolean;
+  modelUUId: string;
+  attachments?: { id: string }[];
+}) => {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { success: false, error: "User not authenticated" };
+  }
+
+  const title = await generateChatTitle({
+    apiKey,
+    message: currentInput,
+    modelUUId,
+    openRouter
+  });
+
+  console.log("title", title);
+
+  if (!title.success) {
+    return { success: false, error: "Failed to generate title" };
+  }
+
+  const chat = await prisma.chat.create({
+    data: {
+      title: title.title,
+      userId,
+      attachments: { connect: attachments },
+      messages: {
+        create: [{ role: "USER", content: currentInput }]
+      }
+    },
+    select: {
+      id: true,
+      title: true,
+      updatedAt: true
+    }
+  });
+
+  if (!chat) {
+    return { success: false, error: "Failed to create chat" };
+  }
+
+  return { success: true, chat };
+};

@@ -419,7 +419,7 @@ const ModelCard = memo<{
             ? "border-purple-200 bg-gradient-to-br from-purple-50 via-purple-50 to-pink-50 shadow-lg ring-2 ring-purple-100 dark:border-purple-700 dark:from-purple-950/30 dark:via-purple-950/30 dark:to-pink-950/30 dark:ring-purple-900/50"
             : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-gray-600 dark:hover:bg-gray-800"
         } ${isAvailable ? "" : "cursor-not-allowed select-none opacity-50"} ${
-          matchScore > 0.8 ? "ring-2 ring-green-200 dark:ring-green-800" : ""
+          matchScore > 0.8 ? "ring-2 ring-purple-200 dark:ring-purple-800" : ""
         }`}
         onClick={isAvailable ? onClick : undefined}
       >
@@ -430,7 +430,7 @@ const ModelCard = memo<{
         )}
 
         {matchScore > 0.8 && searchQuery && (
-          <div className="absolute -left-2 -top-2 rounded-full bg-green-500 p-1.5 shadow-lg">
+          <div className="absolute -left-2 -top-2 rounded-full bg-purple-500 p-1.5 shadow-lg">
             <TrendingUp className="h-3 w-3 text-white" />
           </div>
         )}

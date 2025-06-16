@@ -27,36 +27,58 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
     SUGGESTED_PROMPTS[0].section
   );
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Improved scroll handling for new messages
   useEffect(() => {
     if (messages.length > prevMessagesLength.current && isAutoScrollEnabled) {
-      setTimeout(() => scrollToBottom(true), 100);
+      // Clear any existing timeout to prevent multiple scroll attempts
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Use a single timeout for smoother scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        scrollToBottom(true);
+        scrollTimeoutRef.current = null;
+      }, 50);
     }
     prevMessagesLength.current = messages.length;
   }, [messages.length, isAutoScrollEnabled, scrollToBottom]);
 
+  // Handle initial scroll when component mounts
   useEffect(() => {
     forceScrollToBottom();
   }, [forceScrollToBottom]);
 
+  // Improved loading state scroll handling
   useEffect(() => {
     if (isLoading && !prevIsLoading.current) {
-      setTimeout(() => {
-        forceScrollToBottom();
-        setTimeout(() => scrollToBottom(true), 50);
-      }, 10);
+      forceScrollToBottom();
     }
     prevIsLoading.current = isLoading;
-  }, [isLoading, forceScrollToBottom, scrollToBottom]);
+  }, [isLoading, forceScrollToBottom]);
 
+  // Optimized streaming scroll behavior
   useEffect(() => {
-    if (isLoading && isAutoScrollEnabled) {
-      const interval = setInterval(() => {
-        scrollToBottom(false);
-      }, 100);
+    const scrollInterval: NodeJS.Timeout | null = null;
 
-      return () => clearInterval(interval);
+    if (isLoading && isAutoScrollEnabled) {
+      // Use requestAnimationFrame for smoother scrolling during streaming
+      const smoothScroll = () => {
+        scrollToBottom(false);
+        if (isLoading && isAutoScrollEnabled) {
+          requestAnimationFrame(smoothScroll);
+        }
+      };
+
+      // Start the smooth scroll animation
+      requestAnimationFrame(smoothScroll);
     }
+
+    return () => {
+      if (scrollInterval) clearInterval(scrollInterval);
+    };
   }, [isLoading, isAutoScrollEnabled, scrollToBottom]);
 
   useEffect(() => {

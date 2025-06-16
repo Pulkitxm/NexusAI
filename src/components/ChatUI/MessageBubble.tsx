@@ -2,16 +2,17 @@
 
 import { Copy, Check, Volume2, FileText, ImageIcon, Download, Eye, EyeOff, Code, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes } from "@/lib/utils";
-import { MessageWithAttachments } from "@/providers/chat-provider";
-import { Attachment } from "@/types/chat";
 
 import { MemoizedMarkdown } from "../markdown/markdown-rendered";
 
 import { UserMessage } from "./UserMessage";
+
+import type { MessageWithAttachments } from "@/providers/chat-provider";
+import type { Attachment } from "@/types/chat";
 
 interface MessageBubbleProps {
   message: MessageWithAttachments;
@@ -95,7 +96,7 @@ interface FilePreviewProps {
   isUser: boolean;
 }
 
-const FilePreview: React.FC<FilePreviewProps> = ({ attachment, isUser }) => {
+const FilePreview = memo(({ attachment, isUser }: FilePreviewProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewContent, setPreviewContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -200,9 +201,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({ attachment, isUser }) => {
       )}
     </div>
   );
-};
+});
 
-export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubbleProps) => {
+FilePreview.displayName = "FilePreview";
+
+export const MessageBubble = memo(({ message, isStreaming }: MessageBubbleProps) => {
   const isUser = message.role.toLowerCase() === "user";
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -246,9 +249,14 @@ export const MessageBubble = React.memo(({ message, isStreaming }: MessageBubble
   return (
     <div
       className={cn(
-        "group mb-6 flex duration-500 animate-in fade-in-0 slide-in-from-bottom-2",
-        isUser ? "justify-end" : "justify-start"
+        "group mb-6 flex will-change-transform",
+        isUser ? "justify-end" : "justify-start",
+        // Use CSS for smoother animation instead of Tailwind's animate classes
+        "opacity-100 transition-opacity duration-300"
       )}
+      style={{
+        transform: "translateY(0)" // Start in final position for better performance
+      }}
     >
       <div className={cn("flex min-w-0 max-w-[85%] flex-col", isUser ? "items-end" : "items-start")}>
         <div

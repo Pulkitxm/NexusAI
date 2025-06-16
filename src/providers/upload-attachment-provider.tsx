@@ -31,7 +31,7 @@ interface UploadAttachmentContextType {
   deleteAttachment: (fileName: string) => Promise<void>;
   deletingFiles: string[];
   isUploadSupported: boolean;
-  UploadButton: (props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>) => JSX.Element;
+  UploadButton: (props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLDivElement>, HTMLDivElement>) => JSX.Element;
 }
 
 interface UploadState {
@@ -406,14 +406,10 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   };
 
   const UploadButton = (
-    props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>
+    props: DetailedHTMLProps<ButtonHTMLAttributes<HTMLDivElement>, HTMLDivElement>
   ): JSX.Element => {
     return (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
-      >
+      <>
         <input
           type="file"
           ref={inputRef}
@@ -422,10 +418,15 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
           accept=".js,.jsx,.ts,.tsx,.json,.py,.html,.css,.md,.txt,.jpg,.jpeg,.png,.pdf"
           onChange={handleFileInputChange}
         />
-        <button type="button" onClick={openFileDialog} {...props}>
+        <div
+          onClick={() => {
+            inputRef.current?.click();
+          }}
+          {...props}
+        >
           {props.children}
-        </button>
-      </form>
+        </div>
+      </>
     );
   };
 
