@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/lib/db";
 
-import { generateChatTitle } from "./ai";
+import { generateChatTitle } from "./ai/titleGenerator";
 
 export async function createChat({
   attachments,

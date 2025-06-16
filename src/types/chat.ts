@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import { AI_MODELS } from "@/lib/models";
+
+import { Provider, Reasoning } from "./providers";
+
 export type Chat = Prisma.ChatGetPayload<{
   select: {
     id: true;
@@ -29,3 +33,26 @@ export const validateAttachment = z.array(
   })
 );
 export type Attachment = z.infer<typeof validateAttachment>[number];
+
+export const validateChatStreamBody = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant", "system"]),
+        content: z.string()
+      })
+    )
+    .min(1),
+  provider: z.nativeEnum(Provider),
+  model: z.string().refine((model) => {
+    return AI_MODELS.some((m) => m.uuid === model);
+  }, "Invalid model ID"),
+  apiKey: z.string(),
+  chatId: z.string(),
+  reasoning: z.nativeEnum(Reasoning).nullable(),
+  attachments: z.array(z.string()),
+  webSearch: z.boolean().nullable(),
+  temperature: z.number().nullable(),
+  maxTokens: z.number().nullable(),
+  openRouter: z.boolean().default(false)
+});

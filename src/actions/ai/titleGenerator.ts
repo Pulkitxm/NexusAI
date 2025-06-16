@@ -1,5 +1,12 @@
-import { getAIProvider } from "@/ai/factory";
+import { generateObject } from "ai";
+import { z } from "zod";
+
+import { getAiProvider } from "@/lib/ai-helper";
 import { AI_MODELS } from "@/lib/models";
+
+const TitleSchema = z.object({
+  title: z.string().min(1)
+});
 
 export async function generateChatTitle({
   apiKey,
@@ -28,15 +35,18 @@ export async function generateChatTitle({
       return { success: false, error: "Model not found" };
     }
 
-    const aiProvider = getAIProvider({
-      provider: modelConfig.provider,
+    const aiProviderRes = getAiProvider({
+      modelProvider: modelConfig.provider,
       apiKey,
-      openRouter
+      openRouter,
+      finalModel: modelConfig.id
     });
 
-    if (!aiProvider) {
+    if (!aiProviderRes.success) {
       return { success: false, error: "Provider not supported" };
     }
+
+    const aiProvider = aiProviderRes.aiModel;
 
     const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}". The title must be between 3-50 characters and must not be empty. It should be relevant to the user message.
   
@@ -54,38 +64,18 @@ export async function generateChatTitle({
   
   Title:`;
 
-    const result = await aiProvider.chat({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a helpful assistant that generates concise, descriptive titles for chat conversations. Respond with only the title, nothing else."
-        },
-        {
-          role: "user",
-          content: titlePrompt
-        }
-      ],
-      stream: false,
-      temperature: 0.3,
-      maxTokens: 20,
-      model
+    const result = await generateObject({
+      model: aiProvider,
+      schema: TitleSchema,
+      prompt: titlePrompt,
+      temperature: 0.3
     });
 
-    if (typeof result === "object" && "content" in result) {
-      const title = result.content.trim().replace(/^["']|["']$/g, "");
-
-      if (!title || title === "\n" || title.length < 3) {
-        const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
-        return { success: true, title: fallbackTitle };
-      }
-
-      return { success: true, title };
+    if (result.object.title && result.object.title.trim() !== "") {
+      return { success: true, title: result.object.title.trim() };
     }
 
-    const fallbackTitle = message.split(/\s+/).slice(0, 5).join(" ").slice(0, 50);
-
-    return { success: true, title: fallbackTitle };
+    return { success: false, error: "Failed to generate title" };
   } catch (error) {
     console.error("Error generating chat title:", error);
     return { success: false, error: "Failed to generate title" };
