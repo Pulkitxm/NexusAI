@@ -96,14 +96,6 @@ const eslintConfig = [
         }
       ],
 
-      "@typescript-eslint/consistent-type-assertions": [
-        "error",
-        {
-          assertionStyle: "as",
-          objectLiteralTypeAssertions: "never"
-        }
-      ],
-
       "react/jsx-fragments": ["error", "syntax"],
 
       "react/jsx-filename-extension": [

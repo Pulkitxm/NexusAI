@@ -19,7 +19,7 @@ import { ScrollToBottomButton } from "./ScrollToBottom";
 
 export default function ChatUI({ id, share }: { id?: string; share?: boolean }) {
   const { data: session } = useSession();
-  const { messages, isLoading, input, setInput, inputRef, attachments } = useChat();
+  const { messages, isLoading, input, setInput, inputRef } = useChat();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const { scrollAreaRef, showScrollButton, isAutoScrollEnabled, scrollToBottom, forceScrollToBottom } = useAutoScroll();
   const prevMessagesLength = useRef(messages.length);
@@ -27,18 +27,10 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
     SUGGESTED_PROMPTS[0].section
   );
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (messages.length > prevMessagesLength.current && isAutoScrollEnabled) {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      scrollTimeoutRef.current = setTimeout(() => {
-        scrollToBottom(true);
-        scrollTimeoutRef.current = null;
-      }, 50);
+      setTimeout(() => scrollToBottom(true), 100);
     }
     prevMessagesLength.current = messages.length;
   }, [messages.length, isAutoScrollEnabled, scrollToBottom]);
@@ -49,28 +41,22 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
 
   useEffect(() => {
     if (isLoading && !prevIsLoading.current) {
-      forceScrollToBottom();
+      setTimeout(() => {
+        forceScrollToBottom();
+        setTimeout(() => scrollToBottom(true), 50);
+      }, 10);
     }
     prevIsLoading.current = isLoading;
-  }, [isLoading, forceScrollToBottom]);
+  }, [isLoading, forceScrollToBottom, scrollToBottom]);
 
   useEffect(() => {
-    const scrollInterval: NodeJS.Timeout | null = null;
-
     if (isLoading && isAutoScrollEnabled) {
-      const smoothScroll = () => {
+      const interval = setInterval(() => {
         scrollToBottom(false);
-        if (isLoading && isAutoScrollEnabled) {
-          requestAnimationFrame(smoothScroll);
-        }
-      };
+      }, 100);
 
-      requestAnimationFrame(smoothScroll);
+      return () => clearInterval(interval);
     }
-
-    return () => {
-      if (scrollInterval) clearInterval(scrollInterval);
-    };
   }, [isLoading, isAutoScrollEnabled, scrollToBottom]);
 
   useEffect(() => {
@@ -91,13 +77,12 @@ export default function ChatUI({ id, share }: { id?: string; share?: boolean }) 
   }, [scrollToBottom]);
 
   const hide = input || id;
-  const isChatEmpty = messages.length === 0 && !isLoading && attachments.length === 0;
 
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <ScrollArea ref={scrollAreaRef} className="mb-20 flex-1 px-4">
         <div className="mx-auto max-w-4xl py-6">
-          {isChatEmpty ? (
+          {messages.length === 0 && !isLoading ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, display: "none", pointerEvents: "none" }}

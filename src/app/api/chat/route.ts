@@ -178,24 +178,24 @@ export async function POST(req: Request) {
         onFinish: async ({ text }) => {
           if (chatId && text?.trim()) {
             try {
-              await Promise.all([
-                saveAssistantMessage(chatId, text.trim()),
+              await saveAssistantMessage({
+                chatId,
+                content: text.trim(),
+                modelUsed: model
+              });
 
-                (async () => {
-                  try {
-                    await analyzeAndStoreMemories({
-                      apiKey,
-                      assistantResponse: text.trim(),
-                      modelId: model,
-                      userId,
-                      userMessage: lastUserMessage,
-                      openRouter
-                    });
-                  } catch (error) {
-                    console.error("[Chat API] Error in global memory analysis:", error);
-                  }
-                })()
-              ]);
+              try {
+                await analyzeAndStoreMemories({
+                  apiKey,
+                  assistantResponse: text.trim(),
+                  modelId: model,
+                  userId,
+                  userMessage: lastUserMessage,
+                  openRouter
+                });
+              } catch (error) {
+                console.error("[Chat API] Error in global memory analysis:", error);
+              }
             } catch (error) {
               console.error("Error in onFinish:", error);
             }

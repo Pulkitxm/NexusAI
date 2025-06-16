@@ -14,7 +14,7 @@ export async function createChat({
 }: {
   title?: string;
   attachments?: { id: string }[];
-  messages?: { role: "USER" | "ASSISTANT"; content: string }[];
+  messages?: ({ role: "USER"; content: string } | { role: "ASSISTANT"; content: string; modelUsed: string })[];
 }) {
   const session = await auth();
 
@@ -73,7 +73,15 @@ export async function saveUserMessage(chatId: string, content: string, attachmen
   }
 }
 
-export async function saveAssistantMessage(chatId: string, content: string) {
+export async function saveAssistantMessage({
+  chatId,
+  content,
+  modelUsed
+}: {
+  chatId: string;
+  content: string;
+  modelUsed: string;
+}) {
   const session = await auth();
 
   try {
@@ -91,7 +99,8 @@ export async function saveAssistantMessage(chatId: string, content: string) {
         chatId,
         role: "ASSISTANT",
         content,
-        userId: session?.user?.id || null
+        userId: session?.user?.id || null,
+        modelUsed
       }
     });
 
@@ -311,8 +320,6 @@ export const createChatWithTitle = async ({
     modelUUId,
     openRouter
   });
-
-  console.log("title", title);
 
   if (!title.success) {
     return { success: false, error: "Failed to generate title" };

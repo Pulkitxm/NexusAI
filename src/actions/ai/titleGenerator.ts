@@ -24,13 +24,6 @@ export async function generateChatTitle({
       return { success: false, error: "Missing required fields" };
     }
 
-    console.log({
-      apiKey,
-      message,
-      modelUUId,
-      openRouter
-    });
-
     const model = AI_MODELS.find((m) => m.uuid === modelUUId);
 
     if (!model) {
@@ -50,19 +43,21 @@ export async function generateChatTitle({
 
     const aiProvider = aiProviderRes.aiModel;
 
-    const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}". The title must be between 3-50 characters and must not be empty. It should be relevant to the user message.
-  
+    const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}".
+    
   Rules:
-  - Be specific and descriptive
-  - Avoid generic words like "Chat", "Question", "Help"
-  - Focus on the main topic or intent
-  - Use title case
-  - No quotes or special characters
+  - Create a specific, descriptive title between 3-50 characters
+  - Capture the main topic or intent of the conversation
+  - Use title case formatting
+  - Avoid generic terms like "Chat", "Question", "Help", "Conversation"
+  - Don't include quotes or special characters
+  - Don't use phrases like "Title for" or "Chat about"
   
   Examples:
-  - "How to center a div in CSS" → "CSS Div Centering Techniques"
-  - "Explain quantum computing" → "Quantum Computing Fundamentals"
-  - "Recipe for chocolate cake" → "Chocolate Cake Recipe"
+  - User asks about CSS: "CSS Flexbox Layout Guide"
+  - User asks about science: "Quantum Physics Explained"
+  - User needs coding help: "React Hook Implementation"
+  - User wants creative content: "Sci-Fi Story Premise"
   
   IMPORTANT: Return ONLY valid JSON with a 'title' field like: {"title": "Your Generated Title"}
   `;

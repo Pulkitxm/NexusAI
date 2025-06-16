@@ -160,7 +160,7 @@ export function ChatProvider({
     input: aiInput,
     handleSubmit: originalHandleSubmit,
     isLoading,
-    setMessages: setAIMessages,
+    setMessages,
     setInput: setAIInput,
     error
   } = useChatAI({
@@ -182,13 +182,7 @@ export function ChatProvider({
       content: msg.content
     })),
     onError,
-    onFinish: (message) => {
-      console.log("Chat finished", {
-        messageId: message.id,
-        role: message.role,
-        contentLength: message.content.length
-      });
-
+    onFinish: () => {
       if (!session) {
         const newCount = messageCount + 1;
         setMessageCount(newCount);
@@ -244,7 +238,7 @@ export function ChatProvider({
   }, [lastFailedMessage, setInput]);
 
   const clearChat = useCallback(() => {
-    setAIMessages([]);
+    setMessages([]);
     setMessageCount(0);
     setMicError(null);
     setConnectionError(null);
@@ -258,17 +252,17 @@ export function ChatProvider({
     removeStoredValue(STORAGE_KEYS.INPUT);
 
     router.push("/");
-  }, [router, setAIMessages, setAttachmentsWithStorage]);
+  }, [router, setMessages, setAttachmentsWithStorage]);
 
   const resetChat = useCallback(() => {
-    setAIMessages([]);
+    setMessages([]);
     setMessageCount(0);
     setMicError(null);
     setConnectionError(null);
     setLastFailedMessage(null);
     setChatId(null);
     setAttachmentsWithStorage([]);
-  }, [setAIMessages, setAttachmentsWithStorage]);
+  }, [setMessages, setAttachmentsWithStorage]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -465,7 +459,7 @@ export function ChatProvider({
 
     chatId,
     setChatId,
-    setMessages: setAIMessages,
+    setMessages,
     clearChat,
     resetChat,
     loadingChatId,

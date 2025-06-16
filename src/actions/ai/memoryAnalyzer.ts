@@ -42,7 +42,7 @@ export async function analyzeAndStoreMemories({
     const provider = modelConfig.provider;
     const aiModelResult = getAiProvider({
       apiKey,
-      finalModel: modelId,
+      finalModelId: modelId,
       modelProvider: provider,
       openRouter
     });
@@ -107,8 +107,6 @@ Only extract genuinely useful information. Skip generic responses or temporary s
         reasoning: memory.reasoning
       }))
     });
-
-    console.log(`[Memory] Stored ${newMemories.length} new memories for user ${userId}`);
 
     return {
       success: true,
