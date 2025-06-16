@@ -1,5 +1,6 @@
 "use client";
 
+import { useChat as useChatAI } from "@ai-sdk/react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -8,18 +9,19 @@ import {
   useState,
   useCallback,
   useRef,
+  useEffect,
   type SetStateAction,
   type Dispatch,
   type FormEventHandler,
   type RefObject,
   type ReactNode,
-  type FormEvent,
-  useEffect
+  type FormEvent
 } from "react";
 
 import { createChatWithTitle, saveUserMessage } from "@/actions/chat";
 import { useToast } from "@/hooks/use-toast";
 import { MESSAGE_LIMIT } from "@/lib/data";
+import { debugLog } from "@/lib/debug";
 import { getAvailableModels } from "@/lib/models";
 import { getStoredValue, removeStoredValue, setStoredValue } from "@/lib/utils";
 import { type Attachment, validateAttachment } from "@/types/chat";
@@ -44,43 +46,54 @@ interface ChatContextType {
   setInput: (input: string | ((prev: string) => string)) => void;
   isLoading: boolean;
   handleSubmit: FormEventHandler;
-  error: Error | null;
+
+  error: Error | undefined;
+  micError: string | null;
+  setMicError: Dispatch<SetStateAction<string | null>>;
+  connectionError: string | null;
+  setConnectionError: Dispatch<SetStateAction<string | null>>;
+
   inputRef: RefObject<HTMLTextAreaElement | null>;
   messageCount: number;
   setMessageCount: Dispatch<SetStateAction<number>>;
   showWarning: boolean;
   setShowWarning: Dispatch<SetStateAction<boolean>>;
-  clearChat: () => void;
+
   chatId: string | null;
   setChatId: (id: string | null) => void;
   setMessages: (messages: MessageWithAttachments[]) => void;
+  clearChat: () => void;
   resetChat: () => void;
-  micError: string | null;
-  setMicError: Dispatch<SetStateAction<string | null>>;
+  loadingChatId: string | null;
+  setLoadingChatId: Dispatch<SetStateAction<string | null>>;
+
   webSearch: boolean | null;
   setWebSearch: (enabled: boolean | null) => void;
   reasoning: Reasoning | null;
   setReasoning: (level: Reasoning | null) => void;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
+
   retryLastMessage: () => void;
-  connectionError: string | null;
-  setConnectionError: Dispatch<SetStateAction<string | null>>;
-  loadingChatId: string | null;
-  setLoadingChatId: Dispatch<SetStateAction<string | null>>;
+
   useOpenRouter: boolean;
   setUseOpenRouter: Dispatch<SetStateAction<boolean>>;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
 const STORAGE_KEYS = {
   MESSAGE_COUNT: "chat_message_count",
-  SHOW_WARNING: "chat_show_warning"
+  SHOW_WARNING: "chat_show_warning",
+  INPUT: "input",
+  ATTACHMENTS: "attachments"
 } as const;
 
-const localAttachments = getStoredValue<Attachment[]>("attachments", []);
-const isValid = validateAttachment.safeParse(localAttachments);
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+const getInitialAttachments = (): Attachment[] => {
+  const localAttachments = getStoredValue<Attachment[]>(STORAGE_KEYS.ATTACHMENTS, []);
+  const isValid = validateAttachment.safeParse(localAttachments);
+  return isValid.success ? localAttachments : [];
+};
 
 export function ChatProvider({
   children,
@@ -95,57 +108,129 @@ export function ChatProvider({
   const { keys, hasAnyKeys, haveOnlyOpenRouterKey } = useKeys();
   const { toast } = useToast();
   const { openModal } = useSettingsModal();
-  const [error, setError] = useState<Error | null>(null);
-  const [micError, setMicError] = useState<string | null>(null);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [webSearch, setWebSearch] = useState<boolean | null>(null);
-  const [useOpenRouter, setUseOpenRouter] = useState(false);
-  const [reasoning, setReasoning] = useState<Reasoning | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [input, setInputState] = useState(() => getStoredValue("input", ""));
-  const [messages, setMessages] = useState<MessageWithAttachments[]>(initialMessages);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { addChat } = useSidebar();
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
+
   const [chatId, setChatId] = useState<string | null>(initialChatId || (params?.id as string) || null);
-  const [attachments, setAttachments] = useState<Attachment[]>(isValid.success ? localAttachments : []);
-  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
+  const [input, setInputState] = useState(() => getStoredValue(STORAGE_KEYS.INPUT, ""));
 
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
   const [showWarning, setShowWarning] = useState(() => getStoredValue(STORAGE_KEYS.SHOW_WARNING, true));
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
 
-  const prevMessageLengthRef = useRef(0);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
+
+  const [webSearch, setWebSearch] = useState<boolean | null>(null);
+  const [reasoning, setReasoning] = useState<Reasoning | null>(null);
+  const [useOpenRouter, setUseOpenRouter] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>(getInitialAttachments());
 
   const availableModels = getAvailableModels(keys);
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
   const apiKey =
     useOpenRouter && keys.openrouter
       ? keys.openrouter
-        ? keys.openrouter
-        : undefined
       : keys[selectedModelDetails?.provider.toString() as keyof typeof keys];
 
-  const { addChat } = useSidebar();
-  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
+  const onError = useCallback(
+    (error: Error) => {
+      console.error("Chat error:", error);
+      setLastFailedMessage(input);
 
-  const setInput = useCallback((value: string | ((prev: string) => string)) => {
-    if (typeof value === "function") {
-      setInputState((prev) => {
-        const newInput = value(prev);
-        setStoredValue("input", newInput);
-        return newInput;
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        setConnectionError("Network error. Please check your connection and try again.");
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "An error occurred while sending your message"
       });
-    } else {
-      setInputState(value);
-      setStoredValue("input", value);
+    },
+    [input, toast]
+  );
+
+  const {
+    messages,
+    input: aiInput,
+    handleSubmit: originalHandleSubmit,
+    isLoading,
+    setMessages: setAIMessages,
+    setInput: setAIInput,
+    error
+  } = useChatAI({
+    api: "/api/chat",
+    body: {
+      model: selectedModelDetails?.uuid,
+      provider: selectedModelDetails?.provider,
+      apiKey,
+      chatId,
+      userId: session?.user?.id,
+      webSearch,
+      reasoning,
+      attachments: attachments.map((attachment) => attachment.id),
+      openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
+    },
+    initialMessages: initialMessages.map((msg) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content
+    })),
+    onError,
+    onFinish: (message) => {
+      console.log("Chat finished", {
+        messageId: message.id,
+        role: message.role,
+        contentLength: message.content.length
+      });
+
+      if (!session) {
+        const newCount = messageCount + 1;
+        setMessageCount(newCount);
+        setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, newCount);
+
+        if (newCount >= MESSAGE_LIMIT - 2) {
+          setShowWarning(true);
+          setStoredValue(STORAGE_KEYS.SHOW_WARNING, true);
+        }
+      }
     }
-  }, []);
+  });
+
+  const setInput = useCallback(
+    (value: string | ((prev: string) => string)) => {
+      if (typeof value === "function") {
+        setInputState((prev) => {
+          const newInput = value(prev);
+          setStoredValue(STORAGE_KEYS.INPUT, newInput);
+          setAIInput(newInput);
+          return newInput;
+        });
+      } else {
+        setInputState(value);
+        setStoredValue(STORAGE_KEYS.INPUT, value);
+        setAIInput(value);
+      }
+    },
+    [setAIInput]
+  );
+
+  useEffect(() => {
+    if (aiInput !== input) {
+      setInputState(aiInput);
+      setStoredValue(STORAGE_KEYS.INPUT, aiInput);
+    }
+  }, [aiInput, input]);
 
   const setAttachmentsWithStorage = useCallback((value: SetStateAction<Attachment[]>) => {
     setAttachments((prev) => {
       const newAttachments = typeof value === "function" ? value(prev) : value;
-      setStoredValue("attachments", newAttachments);
+      setStoredValue(STORAGE_KEYS.ATTACHMENTS, newAttachments);
       return newAttachments;
     });
   }, []);
@@ -154,10 +239,36 @@ export function ChatProvider({
     if (lastFailedMessage) {
       setInput(lastFailedMessage);
       setLastFailedMessage(null);
-      setError(null);
       setConnectionError(null);
     }
   }, [lastFailedMessage, setInput]);
+
+  const clearChat = useCallback(() => {
+    setAIMessages([]);
+    setMessageCount(0);
+    setMicError(null);
+    setConnectionError(null);
+    setLastFailedMessage(null);
+    setChatId(null);
+    setAttachmentsWithStorage([]);
+
+    removeStoredValue(STORAGE_KEYS.MESSAGE_COUNT);
+    removeStoredValue(STORAGE_KEYS.SHOW_WARNING);
+    removeStoredValue(STORAGE_KEYS.ATTACHMENTS);
+    removeStoredValue(STORAGE_KEYS.INPUT);
+
+    router.push("/");
+  }, [router, setAIMessages, setAttachmentsWithStorage]);
+
+  const resetChat = useCallback(() => {
+    setAIMessages([]);
+    setMessageCount(0);
+    setMicError(null);
+    setConnectionError(null);
+    setLastFailedMessage(null);
+    setChatId(null);
+    setAttachmentsWithStorage([]);
+  }, [setAIMessages, setAttachmentsWithStorage]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -195,32 +306,10 @@ export function ChatProvider({
       const currentInput = input.trim();
       if (!currentInput) return;
 
-      if (!navigator.onLine) {
-        setConnectionError("You're offline. Please check your internet connection.");
-        setLastFailedMessage(currentInput);
-        return;
-      }
+      debugLog("Submitting message", { input: currentInput, chatId });
 
-      setIsLoading(true);
-      setError(null);
       setConnectionError(null);
       setLastFailedMessage(null);
-
-      const userMessage: MessageWithAttachments = {
-        id: Date.now().toString(),
-        role: "user",
-        content: currentInput,
-        createdAt: new Date(),
-        attachments: [...attachments]
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
-
-      const currentAttachments = [...attachments];
-      setAttachmentsWithStorage([]);
-      setInput("");
-      removeStoredValue("input");
-      removeStoredValue("attachments");
 
       let currentChatId = chatId;
       let shouldUpdateUrl = false;
@@ -233,8 +322,9 @@ export function ChatProvider({
             apiKey,
             modelUUId: selectedModelDetails?.uuid || "",
             openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter,
-            attachments: currentAttachments.map((a) => ({ id: a.id }))
+            attachments: attachments.map((a) => ({ id: a.id }))
           });
+
           if (result.success && result.chat) {
             currentChatId = result.chat.id;
             setChatId(currentChatId);
@@ -245,12 +335,6 @@ export function ChatProvider({
           }
         } catch (error) {
           console.error("Error creating chat:", error);
-          setIsLoading(false);
-          setLoadingChatId(null);
-
-          setMessages((prev) => prev.slice(0, -1));
-          setInput(currentInput);
-          setAttachmentsWithStorage(currentAttachments);
           setLastFailedMessage(currentInput);
           toast({
             variant: "destructive",
@@ -263,13 +347,18 @@ export function ChatProvider({
         }
       }
 
-      if (currentChatId && messages.length > 1) {
+      if (currentChatId && messages.length > 0) {
         try {
-          await saveUserMessage(
-            currentChatId,
-            currentInput,
-            currentAttachments.map((a) => ({ id: a.id }))
-          );
+          debugLog("Saving user message", {
+            chatId: currentChatId,
+            content: currentInput
+          });
+          const result = await saveUserMessage(currentChatId, currentInput);
+          if (!result.success) {
+            console.error("Failed to save user message:", result.error);
+          } else {
+            debugLog("User message saved", { messageId: result.message?.id });
+          }
         } catch (error) {
           console.error("Error saving user message:", error);
         }
@@ -279,119 +368,18 @@ export function ChatProvider({
         window.history.pushState({}, "", `/${currentChatId}`);
       }
 
-      const assistantMessageId = (Date.now() + 1).toString();
-      let assistantMessage = "";
+      setAttachmentsWithStorage([]);
+      removeStoredValue(STORAGE_KEYS.ATTACHMENTS);
+      debugLog("Submitting to AI");
 
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            messages: [...messages, userMessage].map((msg) => ({
-              role: msg.role,
-              content: msg.content
-            })),
-            model: selectedModelDetails?.uuid,
-            provider: selectedModelDetails?.provider,
-            apiKey,
-            chatId: currentChatId,
-            userId: session?.user?.id,
-            webSearch,
-            reasoning,
-            attachments: currentAttachments.map((attachment) => attachment.id),
-            openRouter: selectedModelDetails?.provider === Provider.OpenRouter ? true : useOpenRouter
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+      originalHandleSubmit(e, {
+        body: {
+          chatId: currentChatId
         }
-
-        if (messages.filter((m) => m.role === "user").length === 0) {
-          setMessages((prev) => [...prev, userMessage]);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("No response body");
-        }
-
-        const decoder = new TextDecoder();
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: assistantMessageId,
-            role: "assistant",
-            content: "",
-            createdAt: new Date()
-          }
-        ]);
-
-        if (currentChatId) {
-          setLoadingChatId(currentChatId);
-        }
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.type === "text") {
-                  assistantMessage += data.data;
-
-                  setMessages((prev) =>
-                    prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, content: assistantMessage } : msg))
-                  );
-                }
-              } catch (e) {
-                console.error("Error parsing SSE data:", e);
-              }
-            }
-          }
-        }
-
-        if (!session) {
-          const newCount = messageCount + 1;
-          setMessageCount(newCount);
-          setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, newCount);
-
-          if (newCount >= MESSAGE_LIMIT - 2) {
-            setShowWarning(true);
-            setStoredValue(STORAGE_KEYS.SHOW_WARNING, true);
-          }
-        }
-      } catch (error) {
-        console.error("Chat error:", error);
-        setError(error as Error);
-        setLastFailedMessage(currentInput);
-
-        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
-
-        if (error instanceof TypeError && error.message.includes("fetch")) {
-          setConnectionError("Network error. Please check your connection and try again.");
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error instanceof Error ? error.message : "An error occurred while sending your message"
-        });
-      } finally {
-        setIsLoading(false);
-        setLoadingChatId(null);
-      }
+      });
     },
     [
+      addChat,
       apiKey,
       attachments,
       chatId,
@@ -399,18 +387,15 @@ export function ChatProvider({
       input,
       isLoading,
       messageCount,
-      messages,
+      messages.length,
       openModal,
-      reasoning,
-      addChat,
+      originalHandleSubmit,
       selectedModelDetails?.provider,
       selectedModelDetails?.uuid,
       session,
       setAttachmentsWithStorage,
-      setInput,
       toast,
-      useOpenRouter,
-      webSearch
+      useOpenRouter
     ]
   );
 
@@ -430,44 +415,12 @@ export function ChatProvider({
     }
   }, [keys, selectedModelDetails, useOpenRouter]);
 
-  const clearChat = useCallback(() => {
-    setMessages([]);
-    setMessageCount(0);
-    setError(null);
-    setMicError(null);
-    setConnectionError(null);
-    setLastFailedMessage(null);
-    prevMessageLengthRef.current = 0;
-    setChatId(null);
-    setAttachmentsWithStorage([]);
-
-    removeStoredValue(STORAGE_KEYS.MESSAGE_COUNT);
-    removeStoredValue(STORAGE_KEYS.SHOW_WARNING);
-    removeStoredValue("attachments");
-    removeStoredValue("input");
-
-    router.push("/");
-  }, [router, setAttachmentsWithStorage]);
-
-  const resetChat = useCallback(() => {
-    setMessages([]);
-    setMessageCount(0);
-    setError(null);
-    setMicError(null);
-    setConnectionError(null);
-    setLastFailedMessage(null);
-    prevMessageLengthRef.current = 0;
-    setChatId(null);
-    setAttachmentsWithStorage([]);
-  }, [setAttachmentsWithStorage]);
-
   useEffect(() => {
     const handleRouteChange = () => {
       resetChat();
     };
 
     window.addEventListener("popstate", handleRouteChange);
-
     window.addEventListener("hashchange", handleRouteChange);
 
     const originalPushState = window.history.pushState;
@@ -492,35 +445,41 @@ export function ChatProvider({
   }, [resetChat]);
 
   const contextValue: ChatContextType = {
-    messages,
+    messages: messages as MessageWithAttachments[],
     input,
     setInput,
     isLoading,
     handleSubmit,
+
     error,
+    micError,
+    setMicError,
+    connectionError,
+    setConnectionError,
+
     inputRef,
     messageCount,
     setMessageCount,
     showWarning,
     setShowWarning,
-    clearChat,
+
     chatId,
     setChatId,
-    setMessages,
+    setMessages: setAIMessages,
+    clearChat,
     resetChat,
-    micError,
-    setMicError,
+    loadingChatId,
+    setLoadingChatId,
+
     webSearch,
     setWebSearch,
     reasoning,
     setReasoning,
     attachments: status === "authenticated" ? attachments : [],
     setAttachments: setAttachmentsWithStorage,
+
     retryLastMessage,
-    connectionError,
-    setConnectionError,
-    loadingChatId,
-    setLoadingChatId,
+
     useOpenRouter,
     setUseOpenRouter
   };

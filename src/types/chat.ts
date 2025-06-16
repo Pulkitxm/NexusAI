@@ -52,7 +52,7 @@ export const validateChatStreamBody = z.object({
   reasoning: z.nativeEnum(Reasoning).nullable(),
   attachments: z.array(z.string()),
   webSearch: z.boolean().nullable(),
-  temperature: z.number().nullable(),
-  maxTokens: z.number().nullable(),
+  temperature: z.number().nullable().optional(),
+  maxTokens: z.number().nullable().optional(),
   openRouter: z.boolean().default(false)
 });

@@ -93,7 +93,12 @@ export async function POST(req: Request) {
     const validateBody = validateChatStreamBody.safeParse(body);
 
     if (!validateBody.success) {
-      throw new APIError(validateBody.error.message, 400, "INVALID_REQUEST");
+      return new Response(JSON.stringify({ error: validateBody.error.issues }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
     }
 
     const { messages, model, provider, apiKey, webSearch, chatId, reasoning, openRouter } = validateBody.data;
@@ -104,7 +109,7 @@ export async function POST(req: Request) {
 
     const { userSettings, globalMemories } = await getUserData(userId);
 
-    const modelConfig = AI_MODELS.find((m) => m.id === model);
+    const modelConfig = AI_MODELS.find((m) => m.uuid === model);
     if (!modelConfig) {
       throw new APIError(`Model "${model}" is not supported`, 400, "MODEL_NOT_FOUND");
     }
