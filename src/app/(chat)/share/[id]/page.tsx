@@ -1,12 +1,12 @@
 import { getChatMessages } from "@/actions/chat";
 import StateDisplay from "@/components/ui/state-display";
 
-import ChatDisplay from "../ChatDisplay";
+import ChatDisplay from "../../ChatDisplay";
 
 export default async function page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const chatMessages = await getChatMessages(id);
+  const chatMessages = await getChatMessages(id, true);
 
   if (!chatMessages.success) {
     return (
@@ -22,7 +22,7 @@ export default async function page({ params }: { params: Promise<{ id: string }>
 
   const { messages } = chatMessages;
 
-  return <ChatDisplay id={id} messages={messages || []} />;
+  return <ChatDisplay id={id} messages={messages || []} share />;
 }
 
 function Error({ children }: { children: React.ReactNode }) {

@@ -16,6 +16,7 @@ import {
 } from "react";
 
 import { deleteChat, getUserChats, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
+import { ShareModal } from "@/components/ChatUI/ShareModal";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -48,6 +49,8 @@ export type SidebarContext = {
   updateChatTitle: (chatId: string, title: string) => Promise<void>;
   generatingTitleForChat: string | null;
   setGeneratingTitleForChat: (chatId: string | null) => void;
+  shareModelForChatID: string | null;
+  openShareModal: Dispatch<SetStateAction<string | null>>;
 };
 
 const SidebarContext = createContext<SidebarContext | null>(null);
@@ -97,6 +100,7 @@ export const SidebarProvider = forwardRef<
   const [initialized, setInitialized] = useState(false);
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [generatingTitleForChat, setGeneratingTitleForChatState] = useState<string | null>(null);
+  const [shareModelForChatID, setShareModelForChatID] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -257,7 +261,9 @@ export const SidebarProvider = forwardRef<
       addChat,
       updateChatTitle,
       generatingTitleForChat,
-      setGeneratingTitleForChat: setGeneratingTitleForChatState
+      setGeneratingTitleForChat: setGeneratingTitleForChatState,
+      shareModelForChatID,
+      openShareModal: setShareModelForChatID
     }),
     [
       open,
@@ -276,7 +282,8 @@ export const SidebarProvider = forwardRef<
       addChat,
       updateChatTitle,
       generatingTitleForChat,
-      setGeneratingTitleForChatState
+      setGeneratingTitleForChatState,
+      shareModelForChatID
     ]
   );
 
@@ -294,6 +301,7 @@ export const SidebarProvider = forwardRef<
           {children}
         </div>
       </TooltipProvider>
+      <ShareModal />
     </SidebarContext.Provider>
   );
 });

@@ -120,11 +120,12 @@ export function ChatProvider({
 
   const availableModels = getAvailableModels(keys);
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
-  const apiKey = useOpenRouter
-    ? keys.openrouter
+  const apiKey =
+    useOpenRouter && keys.openrouter
       ? keys.openrouter
-      : undefined
-    : keys[selectedModelDetails?.provider.toString() as keyof typeof keys];
+        ? keys.openrouter
+        : undefined
+      : keys[selectedModelDetails?.provider.toString() as keyof typeof keys];
 
   const { refreshChats } = useSidebar();
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);

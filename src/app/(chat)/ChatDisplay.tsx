@@ -6,7 +6,7 @@ import ChatUI from "@/components/ChatUI";
 import { useChat } from "@/providers/chat-provider";
 import { Message } from "@/types/chat";
 
-export default function ChatDisplay({ id, messages }: { id: string; messages: Message[] }) {
+export default function ChatDisplay({ id, messages, share }: { id: string; messages: Message[]; share?: boolean }) {
   const { setMessages, setChatId } = useChat();
 
   useEffect(() => {
@@ -27,5 +27,5 @@ export default function ChatDisplay({ id, messages }: { id: string; messages: Me
     }
   }, [id, messages, setChatId, setMessages]);
 
-  return <ChatUI id={id} />;
+  return <ChatUI id={id} share={share} />;
 }

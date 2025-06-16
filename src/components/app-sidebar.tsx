@@ -11,7 +11,8 @@ import {
   LogIn,
   Loader2,
   EllipsisVertical,
-  Pencil
+  Pencil,
+  Share2
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -382,8 +383,7 @@ function ChatItem({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(chat.title || "");
   const inputRef = useRef<HTMLInputElement>(null);
-  const { updateChatTitle, deleteChat, setLoadingChatId } = useSidebar();
-
+  const { updateChatTitle, deleteChat, setLoadingChatId, openShareModal } = useSidebar();
   const handleRename = useCallback(async () => {
     setIsRenaming(false);
     if (newTitle.trim() === chat.title) return;
@@ -485,6 +485,10 @@ function ChatItem({
                     <DropdownMenuItem onClick={() => setIsRenaming(true)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Rename Chat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openShareModal(chat.id)}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share Chat
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />

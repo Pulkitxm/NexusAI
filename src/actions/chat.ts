@@ -90,17 +90,17 @@ export async function saveAssistantMessage(chatId: string, content: string) {
   }
 }
 
-export async function getChatMessages(chatId: string) {
+export async function getChatMessages(chatId: string, share?: boolean) {
   const session = await auth();
   const userId = session?.user?.id;
 
-  if (!userId) {
+  if (!share && !userId) {
     return { success: false, error: "User not authenticated" };
   }
 
   try {
     const chatMessgaes = await prisma.chat.findUnique({
-      where: { id: chatId, userId, isDeleted: false },
+      where: { id: chatId, userId: share ? undefined : userId, isDeleted: false, isShared: share || undefined },
       include: {
         messages: {
           orderBy: { createdAt: "asc" },
@@ -241,5 +241,30 @@ export async function deleteChat(chatId: string) {
   } catch (error) {
     console.error("Error deleting chat:", error);
     return { success: false, error: "Failed to delete chat" };
+  }
+}
+
+export async function shareChat(chatId: string) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return { success: false, error: "User not authenticated" };
+  }
+
+  try {
+    const chat = await prisma.chat.update({
+      where: { id: chatId, userId },
+      data: { isShared: true }
+    });
+
+    if (!chat) {
+      return { success: false, error: "Chat not found" };
+    }
+
+    return { success: true, chat };
+  } catch (error) {
+    console.error("Error sharing chat:", error);
+    return { success: false, error: "Failed to share chat" };
   }
 }

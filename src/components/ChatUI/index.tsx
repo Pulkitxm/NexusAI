@@ -17,7 +17,7 @@ import { LoadingMessage } from "./LoadingMessage";
 import { MessageBubble } from "./MessageBubble";
 import { ScrollToBottomButton } from "./ScrollToBottom";
 
-export default function ChatUI({ id }: { id?: string }) {
+export default function ChatUI({ id, share }: { id?: string; share?: boolean }) {
   const { data: session } = useSession();
   const { messages, isLoading, input, setInput, inputRef, attachments } = useChat();
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -168,10 +168,12 @@ export default function ChatUI({ id }: { id?: string }) {
         </div>
       </ScrollArea>
 
-      <ScrollToBottomButton show={showScrollButton} onClick={() => scrollToBottom(true)} />
-
-      <ChatInput onShowShortcuts={() => setShowShortcuts(true)} />
-
+      {!share && (
+        <>
+          <ScrollToBottomButton show={showScrollButton} onClick={() => scrollToBottom(true)} />{" "}
+          <ChatInput onShowShortcuts={() => setShowShortcuts(true)} />
+        </>
+      )}
       <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
     </div>
   );
