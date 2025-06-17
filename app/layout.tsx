@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import { ReactNode } from "react";
+import { Toaster } from "sonner";
 
 import { Providers } from "@/providers";
 
@@ -7,7 +8,6 @@ import type { Metadata } from "next";
 import type React from "react";
 
 import "./globals.css";
-import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 

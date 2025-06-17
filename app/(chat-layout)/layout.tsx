@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
 
+import { AppSidebar } from "@/chat/app-sidebar";
+
 import { LayoutContent } from "./LayoutContent";
 
 import type React from "react";
-
-import { AppSidebar } from "@/chat/app-sidebar";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
