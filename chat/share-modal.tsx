@@ -20,7 +20,7 @@ export function ShareModal() {
     if (!shareModelForChatID) return;
     setIsLoading(true);
     try {
-      const result = await shareChat(shareModelForChatID);
+      const result = await shareChat({ chatId: shareModelForChatID });
       if (result.success) {
         const baseUrl = window.location.origin;
         setShareLink(`${baseUrl}/share/${shareModelForChatID}`);

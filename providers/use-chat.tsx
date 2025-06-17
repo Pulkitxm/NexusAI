@@ -241,7 +241,7 @@ export function ChatProvider({
         }
 
         if (currentChatId && messages.length > 0) {
-          const result = await saveUserMessage(currentChatId, currentInput);
+          const result = await saveUserMessage({ chatId: currentChatId, content: currentInput });
           if (!result.success) {
             console.error("Failed to save user message:", result.error);
           }

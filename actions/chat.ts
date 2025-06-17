@@ -7,6 +7,27 @@ import { prisma } from "@/prisma";
 
 import { generateChatTitle } from "../lib/ai-helper/titleGenerator";
 
+export async function getChats() {
+  const session = await auth();
+
+  try {
+    const chats = await prisma.chat.findMany({
+      where: { userId: session?.user?.id, isDeleted: false },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        updatedAt: true
+      }
+    });
+
+    return { success: true, chats };
+  } catch (error) {
+    console.error("Error fetching chats:", error);
+    return { success: false, error: "Failed to fetch chats" };
+  }
+}
+
 export async function createChat({
   attachments,
   title,
@@ -44,7 +65,15 @@ export async function createChat({
   }
 }
 
-export async function saveUserMessage(chatId: string, content: string, attachments?: { id: string }[]) {
+export async function saveUserMessage({
+  chatId,
+  content,
+  attachments
+}: {
+  chatId: string;
+  content: string;
+  attachments?: { id: string }[];
+}) {
   const session = await auth();
 
   try {
@@ -119,7 +148,7 @@ export async function saveAssistantMessage({
   }
 }
 
-export async function getChatMessages(chatId: string, share?: boolean) {
+export async function getChatMessages({ chatId, share }: { chatId: string; share?: boolean }) {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -162,7 +191,7 @@ export async function getChatMessages(chatId: string, share?: boolean) {
   }
 }
 
-export async function getChatWithMessages(chatId: string) {
+export async function getChatWithMessages({ chatId }: { chatId: string }) {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -191,33 +220,7 @@ export async function getChatWithMessages(chatId: string) {
   }
 }
 
-export async function getUserChats() {
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    return { success: false, error: "User not authenticated" };
-  }
-
-  try {
-    const chats = await prisma.chat.findMany({
-      where: { userId, isDeleted: false },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        updatedAt: true
-      }
-    });
-
-    return { success: true, chats };
-  } catch (error) {
-    console.error("Error fetching chats:", error);
-    return { success: false, error: "Failed to fetch chats" };
-  }
-}
-
-export async function updateChatTitle(chatId: string, title: string) {
+export async function updateChatTitle({ chatId, title }: { chatId: string; title: string }) {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -243,7 +246,7 @@ export async function updateChatTitle(chatId: string, title: string) {
   }
 }
 
-export async function deleteChat(chatId: string) {
+export async function deleteChat({ chatId }: { chatId: string }) {
   const session = await auth();
   const userId = session?.user?.id;
 
@@ -269,7 +272,7 @@ export async function deleteChat(chatId: string) {
   }
 }
 
-export async function shareChat(chatId: string) {
+export async function shareChat({ chatId }: { chatId: string }) {
   const session = await auth();
   const userId = session?.user?.id;
 

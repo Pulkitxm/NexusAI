@@ -16,6 +16,7 @@
     "lint": "next lint",
     "format": "prettier --write \"**/*.{ts,tsx,mjs,js,jsx,md,mdx,css,yaml,yml}\"",
     "check": "prettier --check \"**/*.{ts,tsx,mjs,js,jsx,md,mdx,css,yaml,yml}\"",
+    "check:types": "tsc --noEmit",
     "postinstall": "prisma generate"
   },
   "dependencies": {
