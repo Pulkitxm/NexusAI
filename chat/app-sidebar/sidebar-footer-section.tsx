@@ -4,8 +4,7 @@ import { Settings, User, LogIn } from "lucide-react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useSettingsModal } from "@/providers/use-settings";
 
 import type { Session } from "next-auth";
@@ -20,14 +19,14 @@ export function SidebarFooterSection({ session, status }: SidebarFooterSectionPr
   const user = session?.user;
 
   const AuthOption = (
-    <SidebarMenuItem>
+    <Button variant={"ghost"} className="mb-2 w-full">
       {status === "loading" ? (
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <Skeleton className="h-5 w-5 rounded-full" />
-          <Skeleton className="h-4 w-20" />
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-5 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
         </div>
       ) : status === "authenticated" ? (
-        <SidebarMenuButton className="flex items-center gap-2 px-2 py-1.5">
+        <div className="flex w-full items-center gap-2">
           {user?.avatar ? (
             <img
               src={user.avatar || "/placeholder.svg?height=20&width=20"}
@@ -38,26 +37,32 @@ export function SidebarFooterSection({ session, status }: SidebarFooterSectionPr
             <User className="h-4 w-4" />
           )}
           <span className="truncate text-sm">{user?.name}</span>
-        </SidebarMenuButton>
+        </div>
       ) : (
-        <SidebarMenuButton className="hover:bg-accent px-2 py-1.5" onClick={() => signIn("google")}>
+        <div className="flex w-full items-center gap-2" onClick={() => signIn("google")}>
           <LogIn className="h-4 w-4" />
-          <span className="text-sm">Login</span>
-        </SidebarMenuButton>
+          <span>Login</span>
+        </div>
       )}
-    </SidebarMenuItem>
+    </Button>
   );
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton onClick={openModal} className="hover:bg-accent/50 h-9">
+    <div className="space-y-1">
+      <Button onClick={openModal} variant={"ghost"} className="h-9 w-full gap-2 rounded-md">
+        <div className="flex items-center justify-start w-full gap-2">
           <Settings className="h-4 w-4" />
-          <span className="text-sm">Manage API Keys</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+          Manage API Keys
+        </div>
+      </Button>
 
-      {status === "authenticated" ? <Link href={"/settings"}>{AuthOption}</Link> : AuthOption}
-    </SidebarMenu>
+      {status === "authenticated" ? (
+        <Link href="/settings" className="w-full">
+          {AuthOption}
+        </Link>
+      ) : (
+        AuthOption
+      )}
+    </div>
   );
 }

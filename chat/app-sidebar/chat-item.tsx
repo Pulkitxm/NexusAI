@@ -5,17 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { useSidebar } from "@/providers/use-sidebar";
+
+import { DropdownMenu } from "./dropdown-menu";
 
 import type { Chat } from "@/types/chat";
 import type React from "react";
@@ -31,6 +23,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
   const isActive = params?.id === chat.id;
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(chat.title || "");
+  const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { updateChatTitle, deleteChat, setLoadingChatId, openShareModal } = useSidebar();
 
@@ -75,40 +68,58 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
     }
   }, [isRenaming]);
 
+  const dropdownItems = [
+    {
+      icon: Pencil,
+      label: "Rename Chat",
+      onClick: () => setIsRenaming(true)
+    },
+    {
+      icon: Share2,
+      label: "Share Chat",
+      onClick: () => openShareModal(chat.id)
+    },
+    {
+      icon: Trash2,
+      label: "Delete Chat",
+      onClick: () => deleteChat(chat.id),
+      destructive: true
+    }
+  ];
+
   return (
-    <SidebarMenuItem>
+    <div className="relative">
       <Link href={`/${chat.id}`} onDoubleClick={handleDoubleClick}>
-        <SidebarMenuButton
-          className={cn(
-            "group hover:bg-accent/50 h-auto w-full justify-start rounded-md p-2 transition-colors",
-            isActive && "bg-accent"
-          )}
+        <div
+          className={`group flex h-auto w-full cursor-pointer items-center justify-start rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${
+            isActive ? "bg-gray-100 dark:bg-gray-800" : ""
+          }`}
         >
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex-shrink-0">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
               ) : (
-                <MessageSquare className="text-muted-foreground h-4 w-4" />
+                <MessageSquare className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               )}
             </div>
             <div className="my-0.5 min-w-0 flex-1 py-1 text-left">
               <div className="mb-1 flex items-center justify-between">
                 {isRenaming ? (
                   <form onSubmit={handleSubmit} className="flex-1">
-                    <Input
+                    <input
                       ref={inputRef}
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       onBlur={handleRename}
-                      className="h-6 border-2 border-black text-sm dark:border-white"
+                      className="h-6 w-full rounded border-2 border-black px-2 text-sm dark:border-white dark:bg-gray-800 dark:text-white"
                       onKeyDown={(e) => e.key === "Escape" && handleEscape()}
                     />
                   </form>
                 ) : (
-                  <span className="truncate pr-2 text-sm font-medium">
+                  <span className="truncate pr-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                     {isGeneratingTitle ? (
-                      <span className="text-muted-foreground flex items-center gap-2">
+                      <span className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                         <Loader2 className="h-3 w-3 animate-spin" />
                         Generating title...
                       </span>
@@ -117,40 +128,29 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
                     )}
                   </span>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
-                      <EllipsisVertical className="text-muted-foreground h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setIsRenaming(true)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Rename Chat
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openShareModal(chat.id)}>
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Share Chat
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => deleteChat(chat.id)} className="text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Chat
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <button
+                  className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowDropdown(!showDropdown);
+                  }}
+                >
+                  <EllipsisVertical className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                </button>
               </div>
             </div>
           </div>
-        </SidebarMenuButton>
+        </div>
       </Link>
-    </SidebarMenuItem>
+
+      {showDropdown && (
+        <DropdownMenu
+          items={dropdownItems}
+          onClose={() => setShowDropdown(false)}
+          className="absolute top-8 right-2 z-10"
+        />
+      )}
+    </div>
   );
 }

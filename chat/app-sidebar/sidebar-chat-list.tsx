@@ -1,11 +1,10 @@
 "use client";
-import { MessageSquare } from "lucide-react";
-
 import { useChat } from "@/providers/use-chat";
 import { useSidebar } from "@/providers/use-sidebar";
 
 import { ChatItem } from "./chat-item";
 import { ChatListSkeleton } from "./chat-list-skeleton";
+import { EmptyState } from "./empty-state";
 import { VirtualizedChatList } from "./virtualized-chat-list";
 
 import type { Chat } from "@/types/chat";
@@ -56,13 +55,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
   }
 
   if (filteredChats.length === 0) {
-    return (
-      <div className="text-muted-foreground py-8 text-center">
-        <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-30" />
-        <p className="text-sm font-medium">No conversations yet</p>
-        <p className="text-muted-foreground mt-1 text-xs">Start a new chat to begin</p>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   if (useVirtualization) {
@@ -82,7 +75,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
     <div className="space-y-4">
       {groupedChats.today.length > 0 && (
         <div className="space-y-1">
-          <h3 className="text-muted-foreground px-2 text-xs font-medium">Today</h3>
+          <h3 className="px-2 text-xs font-medium text-gray-500 dark:text-gray-400">Today</h3>
           {groupedChats.today.map((chat) => (
             <ChatItem
               key={chat.id}
@@ -95,7 +88,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
       )}
       {groupedChats.lastWeek.length > 0 && (
         <div className="space-y-1">
-          <h3 className="text-muted-foreground px-2 text-xs font-medium">Last 7 days</h3>
+          <h3 className="px-2 text-xs font-medium text-gray-500 dark:text-gray-400">Last 7 days</h3>
           {groupedChats.lastWeek.map((chat) => (
             <ChatItem
               key={chat.id}
@@ -108,7 +101,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
       )}
       {groupedChats.lastMonth.length > 0 && (
         <div className="space-y-1">
-          <h3 className="text-muted-foreground px-2 text-xs font-medium">Last 30 days</h3>
+          <h3 className="px-2 text-xs font-medium text-gray-500 dark:text-gray-400">Last 30 days</h3>
           {groupedChats.lastMonth.map((chat) => (
             <ChatItem
               key={chat.id}
@@ -121,7 +114,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
       )}
       {groupedChats.older.length > 0 && (
         <div className="space-y-1">
-          <h3 className="text-muted-foreground px-2 text-xs font-medium">Older</h3>
+          <h3 className="px-2 text-xs font-medium text-gray-500 dark:text-gray-400">Older</h3>
           {groupedChats.older.map((chat) => (
             <ChatItem
               key={chat.id}

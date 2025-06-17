@@ -1,15 +1,12 @@
 "use client";
 
-import { Search, Plus, Key } from "lucide-react";
+import { Search, Plus, Key, PanelLeft } from "lucide-react";
 import Link from "next/link";
 
+import LOGO from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSettingsModal } from "@/providers/use-settings";
-
-import LogoIcon from "@/assets/logo.png";
+import { useSidebar } from "@/providers/use-sidebar";
 
 interface SidebarHeaderProps {
   searchQuery: string;
@@ -19,41 +16,43 @@ interface SidebarHeaderProps {
 
 export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: SidebarHeaderProps) {
   const { openModal } = useSettingsModal();
+  const { setOpen } = useSidebar();
 
   return (
     <>
       <div className="mb-3 flex items-center justify-between">
-        <Link href={"/"} className="flex items-center gap-2">
-          <img
-            src={LogoIcon.src || "/placeholder.svg"}
-            alt="Logo"
-            className="pointer-events-none h-8 w-8 object-contain"
-            draggable={false}
-          />
+        <Link href="/" className="flex items-center gap-2">
+          <img src={LOGO.src} alt="Logo" className="pointer-events-none h-8 w-8 object-contain" draggable={false} />
           <h2 className="bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
             Nexus AI
           </h2>
         </Link>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setOpen(false)}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
           <ThemeToggle />
-          <SidebarTrigger />
         </div>
       </div>
 
       <Link href="/">
-        <Button className="mb-3 h-9 w-full border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white hover:from-purple-600 hover:to-purple-700">
+        <button className="mb-3 flex h-9 w-full items-center justify-center rounded-md border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white transition-colors hover:from-purple-600 hover:to-purple-700">
           <Plus className="mr-2 h-4 w-4" />
           New Chat
-        </Button>
+        </button>
       </Link>
 
       <div className="relative">
-        <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 transform" />
-        <Input
+        <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+        <input
+          type="text"
           placeholder="Search conversations..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-9 pl-9 text-sm"
+          className="h-9 w-full rounded-md border border-gray-300 bg-white pl-9 text-sm text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
         />
       </div>
 

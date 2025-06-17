@@ -335,7 +335,7 @@ const CustomDropdown = memo<{
                     <Button
                       variant="link"
                       onClick={() => openModal()}
-                      className="text-xs text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+                      className="cursor-pointer text-xs text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
                     >
                       Add API key
                     </Button>
