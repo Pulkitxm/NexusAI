@@ -7,6 +7,8 @@ import { OPENROUTER_BASE_URL } from "@/data";
 import { AI_MODELS } from "@/data/models";
 import { Provider } from "@/types/provider";
 
+import { debugLog } from "../utils";
+
 import { ReasoningHandler } from "./resoning-handler";
 
 export function getAiProvider({
@@ -32,8 +34,10 @@ export function getAiProvider({
     } {
   let aiModel: LanguageModelV1 | null = null;
 
-  const shouldUseOpenRouter = modelProvider === Provider.OpenAI || openRouter;
-  if (modelProvider === Provider.OpenRouter || shouldUseOpenRouter) {
+  const shouldUseOpenRouter = modelProvider === Provider.OpenRouter || openRouter;
+  debugLog("shouldUseOpenRouter", { shouldUseOpenRouter });
+
+  if (modelProvider === Provider.OpenAI || shouldUseOpenRouter) {
     const openai = createOpenAI({
       apiKey,
       baseURL: shouldUseOpenRouter ? OPENROUTER_BASE_URL : undefined

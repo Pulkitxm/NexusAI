@@ -4,7 +4,7 @@ import { cache } from "react";
 import { saveAssistantMessage } from "@/actions/chat";
 import { AI_MODELS } from "@/data/models";
 import { getAiProvider } from "@/lib/ai-helper/get-provider";
-import { analyzeAndStoreMemories } from "@/lib/ai-helper/memoryAnalyzer";
+import { analyzeAndStoreMemories } from "@/lib/ai-helper/memory-analyzer";
 import { ReasoningHandler } from "@/lib/ai-helper/resoning-handler";
 import { auth } from "@/lib/authOptions";
 import { prisma } from "@/prisma";

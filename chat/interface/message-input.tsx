@@ -134,6 +134,15 @@ export function MessageInput(props: { showForLoading: boolean }) {
     };
   }, [inputRef, toggleRecording]);
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim() && !isLoading) {
+        handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+      }
+    }
+  };
+
   const isLimitReached = status === "unauthenticated" && messageCount >= MESSAGE_LIMIT;
   const remainingMessages = MESSAGE_LIMIT - messageCount;
 
@@ -263,6 +272,7 @@ export function MessageInput(props: { showForLoading: boolean }) {
               <div className="flex items-end gap-3 p-4">
                 <div className="flex-1">
                   <Textarea
+                    onKeyDown={onKeyDown}
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}

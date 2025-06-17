@@ -46,7 +46,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
 
         return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
       })}
-      
+
       {/* Show skeleton for the next message when loading */}
       {isLoading && <MessageSkeleton isUser={false} lines={3} />}
     </div>

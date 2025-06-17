@@ -3,7 +3,7 @@
 import { useChat as useAIChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 
 import { createChatWithTitle, saveUserMessage, getChatMessages } from "@/actions/chat";
 import { MESSAGE_LIMIT } from "@/data";
@@ -43,7 +43,7 @@ interface ChatContextType {
   clearMessages: () => void;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   attachments: Attachment[];
-  setAttachments: (attachments: Attachment[]) => void;
+  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messageCount: number;
   chatConfig: ChatConfig;
   setChatConfig: (config: ChatConfig) => void;
@@ -73,12 +73,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { keys, hasAnyKeys } = useKeys();
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
-  const selectedAPIKey =
-    !hasAnyKeys || !selectedModelConfig?.provider
-      ? undefined
-      : selectedModelConfig?.provider === Provider.OpenRouter && selectedModelConfig.provider === Provider.OpenRouter
-        ? keys.openrouter
-        : keys[selectedModelConfig?.provider] || undefined;
 
   const aiChatBody = {
     model: selectedModelConfig?.uuid,

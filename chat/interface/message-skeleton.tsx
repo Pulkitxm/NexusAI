@@ -13,7 +13,7 @@ interface MessageSkeletonProps {
 export function MessageSkeleton({ isUser = false, lines = 3 }: MessageSkeletonProps) {
   return (
     <div className={`group mb-6 flex will-change-transform ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`flex min-w-0 max-w-[85%] flex-col ${isUser ? "items-end" : "items-start"}`}>
+      <div className={`flex max-w-[85%] min-w-0 flex-col ${isUser ? "items-end" : "items-start"}`}>
         <div
           className={`relative rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200 ${
             isUser
@@ -25,11 +25,7 @@ export function MessageSkeleton({ isUser = false, lines = 3 }: MessageSkeletonPr
             {Array.from({ length: lines }).map((_, index) => (
               <Skeleton
                 key={index}
-                className={`h-4 ${
-                  isUser
-                    ? "bg-purple-400/50"
-                    : "bg-slate-300 dark:bg-slate-600"
-                }`}
+                className={`h-4 ${isUser ? "bg-purple-400/50" : "bg-slate-300 dark:bg-slate-600"}`}
                 style={{
                   width: `${Math.random() * 40 + 60}%`
                 }}

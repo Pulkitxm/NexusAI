@@ -90,7 +90,7 @@ const getLanguageFromExtension = (fileName: string) => {
 };
 
 interface FilePreviewProps {
-  attachment: Attachment;
+  attachment: Pick<Attachment, "id" | "name" | "size" | "url">;
   isUser: boolean;
 }
 
@@ -247,7 +247,7 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
   return (
     <div
       className={cn(
-        "group mb-6 flex will-change-transform",
+        "group mb-6a flex will-change-transform",
         isUser ? "justify-end" : "justify-start",
         "opacity-100 transition-opacity duration-300"
       )}
