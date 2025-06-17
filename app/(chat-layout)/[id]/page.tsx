@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { ChatInterface } from "@/chat/interface/chat-interface";
+import { ChatInterface } from "@/chat/interface";
 import { useChat } from "@/providers/use-chat";
 
 export default function ChatPage() {

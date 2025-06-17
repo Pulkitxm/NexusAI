@@ -2,7 +2,7 @@
 
 import { Bot } from "lucide-react";
 
-import { ChatMessage } from "./chat-message";
+import { ChatMessage } from "./message/chat-message";
 import { MessageSkeleton } from "./message-skeleton";
 
 import type { MessageWithAttachments } from "@/types/chat";
