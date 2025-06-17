@@ -11,6 +11,10 @@ interface ModelContextType {
   changeModel: (model: string) => void;
   ModelSwitcher: (() => React.ReactNode) | null;
   setSelectedModel: (model: string) => void;
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
+  toggleModal: () => void;
+  closeModal: () => void;
 }
 
 const ModelContext = createContext<ModelContextType | undefined>(undefined);
@@ -19,6 +23,7 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
   const { keys, hasAnyKeys } = useKeys();
   const [selectedModel, setSelectedModel] = useState("");
   const availableModels = getAvailableModels(keys);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const changeModel = useCallback((model: string) => {
     setSelectedModel(model);
@@ -53,7 +58,11 @@ export function ModelProvider({ children }: { children: React.ReactNode }) {
         selectedModel,
         changeModel,
         ModelSwitcher: ModelSwitcherComponent,
-        setSelectedModel
+        setSelectedModel,
+        isModalOpen,
+        setIsModalOpen,
+        toggleModal: () => setIsModalOpen((prev) => !prev),
+        closeModal: () => setIsModalOpen(false)
       }}
     >
       {children}

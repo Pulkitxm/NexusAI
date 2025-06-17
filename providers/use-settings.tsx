@@ -16,6 +16,7 @@ interface SettingsModalContextType {
   isOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
+  toggleModal: () => void;
 }
 
 const SettingsModalContext = createContext<SettingsModalContextType | undefined>(undefined);
@@ -27,7 +28,14 @@ export function SettingsModalProvider({ children }: { children: ReactNode }) {
   const closeModal = () => setIsOpen(false);
 
   return (
-    <SettingsModalContext.Provider value={{ isOpen, openModal, closeModal }}>
+    <SettingsModalContext.Provider
+      value={{
+        isOpen,
+        openModal,
+        closeModal,
+        toggleModal: () => setIsOpen((prev) => !prev)
+      }}
+    >
       {children}
       <SettingsModal open={isOpen} onOpenChange={setIsOpen} />
     </SettingsModalContext.Provider>

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { AI_MODELS } from "@/data/models";
 import { filterModels } from "@/lib/ai-helper/moderl-seach";
+import { useModel } from "@/providers/use-model";
 
 import { SEARCH_SUGGESTIONS } from "./constants";
 import { ProviderSection } from "./provider-section";
@@ -24,7 +25,7 @@ interface ModelDialogProps {
 }
 
 export const ModelDialog = memo<ModelDialogProps>(({ availableModels, selectedModel, onModelChange }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isModalOpen, setIsModalOpen } = useModel();
   const [searchQuery, setSearchQuery] = useState("");
   const modalSearchRef = useRef<HTMLInputElement>(null);
 
@@ -61,7 +62,7 @@ export const ModelDialog = memo<ModelDialogProps>(({ availableModels, selectedMo
       onModelChange(modelId);
       setIsModalOpen(false);
     },
-    [onModelChange]
+    [onModelChange, setIsModalOpen]
   );
 
   const handleModalSuggestionClick = useCallback((query: string) => {

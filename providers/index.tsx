@@ -7,6 +7,7 @@ import Syncer from "@/components/syncer";
 
 import { ChatProvider } from "./use-chat";
 import { FontProvider } from "./use-font";
+import { KeyboardShortcutsProvider } from "./use-keyboardshortcuts";
 import { KeyProvider } from "./use-keys";
 import { ModelProvider } from "./use-model";
 import { SettingsModalProvider } from "./use-settings";
@@ -17,20 +18,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <KeyProvider>
-          <SidebarProvider>
-            <SettingsModalProvider>
-              <ModelProvider>
-                <ChatProvider>
-                  <FontProvider>
-                    <Syncer />
-                    <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
-                  </FontProvider>
-                </ChatProvider>
-              </ModelProvider>
-            </SettingsModalProvider>
-          </SidebarProvider>
-        </KeyProvider>
+        <KeyboardShortcutsProvider>
+          <KeyProvider>
+            <SidebarProvider>
+              <SettingsModalProvider>
+                <ModelProvider>
+                  <ChatProvider>
+                    <FontProvider>
+                      <Syncer />
+                      <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
+                    </FontProvider>
+                  </ChatProvider>
+                </ModelProvider>
+              </SettingsModalProvider>
+            </SidebarProvider>
+          </KeyProvider>
+        </KeyboardShortcutsProvider>
       </ThemeProvider>
     </SessionProvider>
   );

@@ -4,8 +4,6 @@ import { AppSidebar } from "@/chat/app-sidebar";
 
 import { LayoutContent } from "./LayoutContent";
 
-import type React from "react";
-
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <div className="bg-background flex h-screen w-screen overflow-hidden">
