@@ -222,6 +222,14 @@ export function ChatProvider({
     }
   }, [aiInput, input]);
 
+  useEffect(() => {
+    const id = window.location.pathname.split("/")[1];
+    if (id && id.length > 0 && id !== chatId) {
+      setChatId(id);
+      debugLog("Updated chatId from URL", { id });
+    }
+  }, [params, chatId]);
+
   const setAttachmentsWithStorage = useCallback((value: SetStateAction<Attachment[]>) => {
     setAttachments((prev) => {
       const newAttachments = typeof value === "function" ? value(prev) : value;
