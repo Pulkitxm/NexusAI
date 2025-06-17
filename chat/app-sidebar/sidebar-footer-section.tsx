@@ -50,7 +50,7 @@ export function SidebarFooterSection({ session, status }: SidebarFooterSectionPr
   return (
     <div className="space-y-1">
       <Button onClick={openModal} variant={"ghost"} className="h-9 w-full gap-2 rounded-md">
-        <div className="flex items-center justify-start w-full gap-2">
+        <div className="flex w-full items-center justify-start gap-2">
           <Settings className="h-4 w-4" />
           Manage API Keys
         </div>

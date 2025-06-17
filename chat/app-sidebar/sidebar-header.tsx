@@ -28,13 +28,13 @@ export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: Sideb
           </h2>
         </Link>
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           <button
             onClick={() => setOpen(false)}
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300"
           >
             <PanelLeft className="h-4 w-4" />
           </button>
-          <ThemeToggle />
         </div>
       </div>
 

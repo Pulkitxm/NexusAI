@@ -2,16 +2,10 @@
 
 import { memo } from "react";
 
-import { AIModel } from "@/types/chat";
-
 import { ModelDialog } from "./model-dialog";
 import { ModelDropdown } from "./model-dropdown";
 
-interface ModelSelectorProps {
-  availableModels: AIModel[];
-  selectedModel: string;
-  onModelChange: (modelId: string) => void;
-}
+import type { ModelSelectorProps } from "../../types/model-selector";
 
 export const ModelSelector = memo<ModelSelectorProps>(({ availableModels, selectedModel, onModelChange }) => {
   return (
