@@ -2,86 +2,90 @@
 
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useFont } from "@/providers/use-font";
 import { useKeyboardShortcuts } from "@/providers/use-keyboardshortcuts";
 import { useModel } from "@/providers/use-model";
 import { useSettingsModal } from "@/providers/use-settings";
 
+type ShortcutConfig = {
+  key: string;
+  action: () => void;
+  description: string;
+};
+
 export default function Syncer() {
-  const [isChange, setisChange] = useState(false);
   const { data: session } = useSession();
   const { setTheme } = useTheme();
   const { setCurrentFont } = useFont();
+  const { toggleModal: toggleSettingsModal } = useSettingsModal();
+  const { toggleModal: toggleKeyboardShortcuts } = useKeyboardShortcuts();
+  const { toggleModal: toggleModelModal } = useModel();
 
-  const { toggleModal: toggleSettingsModal, closeModal: closeSettingsModal } = useSettingsModal();
-  const { toggleModal: toggleKeyboardShortcuts, closeModal: closeKeyboardShortcuts } = useKeyboardShortcuts();
-  const { toggleModal: toggleModelModal, closeModal: closeModelModal } = useModel();
+  // Use ref to track if theme has been synced to avoid unnecessary state
+  const hasThemeSynced = useRef(false);
 
+  // Sync user settings (theme and font) when session loads
   useEffect(() => {
-    if (
-      isChange === false &&
-      session?.user?.settings?.theme &&
-      (session.user.settings.theme === "light" || session.user.settings.theme === "dark")
-    ) {
-      setTheme(session.user.settings.theme);
-      setisChange(true);
-    }
-    if (session?.user?.settings?.customFont) {
-      setCurrentFont(session.user.settings.customFont);
-    }
-  }, [isChange, session, setCurrentFont, setTheme]);
+    if (!session?.user?.settings) return;
 
-  useEffect(() => {
-    const shortcutMap = [
-      {
-        key: "/",
-        action: toggleKeyboardShortcuts,
-        description: "Keyboard Shortcuts",
-        close: closeKeyboardShortcuts
-      },
-      {
-        key: ",",
-        action: toggleSettingsModal,
-        description: "Settings",
-        close: closeSettingsModal
-      },
-      {
-        key: "m",
-        action: toggleModelModal,
-        description: "Model Selection",
-        close: closeModelModal
-      }
-    ];
+    const { theme, customFont } = session.user.settings;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    // Sync theme only once and only if it's a valid theme
+    if (!hasThemeSynced.current && theme && (theme === "light" || theme === "dark")) {
+      setTheme(theme);
+      hasThemeSynced.current = true;
+    }
+
+    // Sync custom font if available
+    if (customFont) {
+      setCurrentFont(customFont);
+    }
+  }, [session, setCurrentFont, setTheme]);
+
+  // Memoize keyboard shortcut handler to prevent recreation on every render
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
       const modifierPressed = event.metaKey || event.ctrlKey;
+      if (!modifierPressed) return;
 
-      if (!modifierPressed || !event.key) return;
-
-      for (const shortcut of shortcutMap) {
-        if (shortcut.key === event.key) {
-          event.preventDefault();
-          shortcut.action();
-          return; // Exit early after finding and executing the matching shortcut
+      const shortcuts: ShortcutConfig[] = [
+        {
+          key: "/",
+          action: toggleKeyboardShortcuts,
+          description: "Keyboard Shortcuts"
+        },
+        {
+          key: ",",
+          action: toggleSettingsModal,
+          description: "Settings"
+        },
+        {
+          key: "m",
+          action: toggleModelModal,
+          description: "Model Selection"
         }
-      }
-    };
+      ];
 
+      const matchedShortcut = shortcuts.find((shortcut) => shortcut.key === event.key);
+
+      if (matchedShortcut) {
+        event.preventDefault();
+        matchedShortcut.action();
+      }
+    },
+    [toggleKeyboardShortcuts, toggleSettingsModal, toggleModelModal]
+  );
+
+  // Set up keyboard shortcuts
+  useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    closeKeyboardShortcuts,
-    closeSettingsModal,
-    closeModelModal,
-    toggleKeyboardShortcuts,
-    toggleSettingsModal,
-    toggleModelModal
-  ]);
+  }, [handleKeyDown]);
 
   return null;
 }

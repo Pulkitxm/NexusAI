@@ -10,23 +10,23 @@ interface MessageContentProps {
 
 export function MessageContent({ content, isUser, isStreaming = false }: MessageContentProps) {
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none">
-      <div className="inline">
+    <div className="text-sm">
+      <div className="prose prose-sm dark:prose-invert max-w-none">
         <ReactMarkdown
           components={{
             // Override code blocks to have proper styling
             code: ({ className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || "");
               return match ? (
-                <pre className="rounded-md bg-gray-800 p-3 text-sm text-gray-100">
+                <pre className="rounded-md bg-slate-800 p-3 text-sm text-slate-100 dark:bg-slate-900">
                   <code className={className} {...props}>
                     {children}
                   </code>
                 </pre>
               ) : (
                 <code
-                  className={`rounded bg-gray-200 px-1 py-0.5 text-sm dark:bg-gray-700 ${
-                    isUser ? "bg-blue-500 text-white" : ""
+                  className={`rounded bg-slate-200 px-1 py-0.5 text-sm dark:bg-slate-700 ${
+                    isUser ? "bg-purple-400/20 text-white" : ""
                   }`}
                   {...props}
                 >
@@ -41,7 +41,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`underline hover:no-underline ${
-                  isUser ? "text-blue-200" : "text-blue-600 dark:text-blue-400"
+                  isUser ? "text-purple-200" : "text-purple-600 dark:text-purple-400"
                 }`}
                 {...props}
               >
@@ -63,7 +63,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
             blockquote: ({ children, ...props }) => (
               <blockquote
                 className={`border-l-4 pl-4 italic ${
-                  isUser ? "border-blue-400 text-blue-100" : "border-gray-400 text-gray-600 dark:text-gray-400"
+                  isUser ? "border-purple-400 text-purple-100" : "border-slate-400 text-slate-600 dark:text-slate-400"
                 }`}
                 {...props}
               >
@@ -77,9 +77,16 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
           {content}
         </ReactMarkdown>
 
-        {/* Inline heartbeat dot as a separate React element */}
-        {!isUser && isStreaming && (
-          <span className="ml-1 inline-block animate-pulse text-blue-500 dark:text-blue-400">●</span>
+        {/* Streaming indicator */}
+        {isStreaming && !isUser && (
+          <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-2 dark:border-slate-700">
+            <div className="flex gap-1">
+              <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]" />
+              <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]" />
+              <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Assistant is typing...</span>
+          </div>
         )}
       </div>
     </div>

@@ -1,19 +1,39 @@
 "use client";
 
-import { useChat as useAIChat } from "ai/react";
+import { useChat as useAIChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { createChatWithTitle, saveUserMessage, getChatMessages } from "@/actions/chat";
+import { MESSAGE_LIMIT } from "@/data";
 import { getAvailableModels } from "@/data/models";
+import { getStoredValue, setStoredValue } from "@/lib/utils";
 import { useKeys } from "@/providers/use-keys";
 import { useModel } from "@/providers/use-model";
+import { Provider, Reasoning } from "@/types/provider";
 
-import type { MessageWithAttachments } from "@/types/chat";
+import type { Attachment, MessageWithAttachments } from "@/types/chat";
+
+const STORAGE_KEYS = {
+  MESSAGE_COUNT: "chat_message_count",
+  SHOW_WARNING: "chat_show_warning",
+  INPUT: "input",
+  ATTACHMENTS: "attachments"
+} as const;
+
+interface ChatConfig {
+  reasoning: Reasoning | null;
+  webSearch: boolean;
+  attachments: Attachment[];
+  openRouter: boolean;
+  canUseOpenRouter: boolean;
+}
 
 interface ChatContextType {
   messages: MessageWithAttachments[];
   input: string;
+  setInput: (input: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
@@ -21,36 +41,60 @@ interface ChatContextType {
   chatId: string | null;
   setChatId: (id: string | null) => void;
   clearMessages: () => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  attachments: Attachment[];
+  setAttachments: (attachments: Attachment[]) => void;
+  messageCount: number;
+  chatConfig: ChatConfig;
+  setChatConfig: (config: ChatConfig) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const router = useRouter();
+  const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
+
+  const [chatConfig, setChatConfig] = useState<ChatConfig>({
+    reasoning: null,
+    webSearch: false,
+    attachments: [],
+    openRouter: false,
+    canUseOpenRouter: false
+  });
 
   const { selectedModel } = useModel();
   const { keys, hasAnyKeys } = useKeys();
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
+  const selectedAPIKey =
+    !hasAnyKeys || !selectedModelConfig?.provider
+      ? undefined
+      : selectedModelConfig?.provider === Provider.OpenRouter && selectedModelConfig.provider === Provider.OpenRouter
+        ? keys.openrouter
+        : keys[selectedModelConfig?.provider] || undefined;
 
-  // Prepare the body for AI SDK, only including chatId if it exists
   const aiChatBody = {
     model: selectedModelConfig?.uuid,
     provider: selectedModelConfig?.provider,
-    apiKey: keys[selectedModelConfig?.provider || "openai"] || "",
-    openRouter: keys.openrouter ? true : false,
+    apiKey: chatConfig.openRouter ? keys.openrouter : keys[selectedModelConfig?.provider || Provider.OpenAI],
+    openRouter: chatConfig.openRouter,
     reasoning: null,
     webSearch: false,
     attachments: [],
-    ...(chatId && { chatId }) // Only include chatId if it exists
+    ...(chatId && { chatId })
   };
 
   const {
     messages: aiMessages,
     input,
+    setInput,
     handleInputChange,
     handleSubmit: handleAISubmit,
     isLoading,
@@ -61,15 +105,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     api: "/api/chat",
     body: aiChatBody,
     onFinish: async () => {
-      // The AI SDK handles the message state automatically
-      // We don't need to manually add it here
+      if (!session) {
+        const newCount = messageCount + 1;
+        setMessageCount(newCount);
+        setStoredValue(STORAGE_KEYS.MESSAGE_COUNT, newCount);
+
+        if (newCount >= MESSAGE_LIMIT - 2) {
+          setStoredValue(STORAGE_KEYS.SHOW_WARNING, true);
+        }
+      }
     },
     onError: (error) => {
       console.error("Chat error:", error);
     }
   });
 
-  // Load existing messages when chatId changes
   useEffect(() => {
     if (chatId) {
       setIsLoadingMessages(true);
@@ -78,7 +128,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         try {
           const result = await getChatMessages({ chatId });
           if (result.success && result.messages) {
-            // Convert database messages to AI SDK format
             const aiFormatMessages = result.messages.map((msg) => ({
               id: msg.id,
               role: msg.role === "USER" ? ("user" as const) : ("assistant" as const),
@@ -100,7 +149,29 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [chatId, setAIMessages]);
 
-  // Convert AI SDK messages to our format for the UI
+  useEffect(() => {
+    if (selectedModel) {
+      setChatConfig({
+        reasoning: null,
+        webSearch: false,
+        attachments: [],
+        openRouter: false,
+        canUseOpenRouter: false
+      });
+    }
+  }, [selectedModel]);
+
+  useEffect(() => {
+    if (!selectedModelConfig) return;
+
+    if (keys.openrouter) {
+      setChatConfig((prev) => ({
+        ...prev,
+        openRouter: true
+      }));
+    }
+  }, [selectedModelConfig, keys]);
+
   const messages: MessageWithAttachments[] = aiMessages.map((msg) => ({
     id: msg.id,
     role: msg.role === "user" ? "USER" : "ASSISTANT",
@@ -119,7 +190,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsInitializing(true);
 
-      // If no chatId, create a new chat first
       if (!chatId) {
         const chatResult = await createChatWithTitle({
           currentInput,
@@ -131,9 +201,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
         if (chatResult.success && chatResult.chat) {
           setChatId(chatResult.chat.id);
-          // Redirect to the new chat
+
           router.push(`/${chatResult.chat.id}`);
-          // Trigger AI response for the new chat
+
           append({
             role: "user",
             content: currentInput
@@ -144,14 +214,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // For existing chats, save user message to database
       await saveUserMessage({
         chatId,
         content: currentInput,
         attachments: []
       });
 
-      // Submit to AI SDK
       handleAISubmit(e);
     } catch (error) {
       console.error("Error in chat submission:", error);
@@ -167,13 +235,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const value: ChatContextType = {
     messages,
     input,
+    setInput,
     handleInputChange,
     handleSubmit,
     isLoading: isLoading || isInitializing || isLoadingMessages,
     error: error || null,
     chatId,
     setChatId,
-    clearMessages
+    clearMessages,
+    inputRef,
+    attachments,
+    setAttachments,
+    messageCount,
+    chatConfig,
+    setChatConfig
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

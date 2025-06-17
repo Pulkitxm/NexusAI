@@ -22,6 +22,7 @@ import { codeExtensions } from "@/lib/extensions";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { Attachment } from "@/types/chat";
 
+import { useChat } from "./use-chat";
 import { useKeys } from "./use-keys";
 import { useModel } from "./use-model";
 
@@ -68,7 +69,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   const [isDragOver, setIsDragOver] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>({});
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const { attachments, setAttachments } = useChat();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
@@ -151,7 +152,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         );
       } catch (error) {
         console.error("Failed to save files to database:", error);
-        toast.error("There was an error saving your files. Please try again.");
+        toast.error("Failed to save files. Please try again.");
       }
     },
     onUploadError: (error) => {
@@ -172,14 +173,14 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       });
 
       setAttachments((prev: Attachment[]) => prev.filter((attachment) => attachment.uploaded));
-      toast("There was an error uploading your files. Please try again.");
+      toast.error("There was an error uploading your files. Please try again.");
     }
   });
 
   const handleFiles = useCallback(
     async (files: File[]) => {
       if (files.length > MAX_ATTACHMENTS) {
-        toast("You can only upload up to 5 files at a time");
+        toast.error(`You can only upload up to ${MAX_ATTACHMENTS} files at a time`);
         return;
       }
 
@@ -210,7 +211,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
         await startUpload(files);
       } catch (error) {
         console.error("Failed to start upload:", error);
-        toast("Failed to start upload. Please try again.");
+        toast.error("Failed to start upload. Please try again.");
       }
     },
     [startUpload, setAttachments]
@@ -275,14 +276,14 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
       setOpen(false);
 
       if (status !== "authenticated") {
-        return toast.error("You must be signed in to upload files");
+        return toast.error("Please sign in to upload files.");
       }
 
       const files = Array.from(e.dataTransfer?.files || []);
       const allowed = validateAndFilterFiles(files);
 
       if (allowed.length === 0) {
-        return toast.error("No valid files found");
+        return toast.error("Please drop code files, images (JPG/PNG), or PDFs.");
       }
 
       const processedFiles = await Promise.all(
@@ -333,13 +334,13 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
     if (files.length === 0) return;
 
     if (status !== "authenticated") {
-      return toast.error("You must be signed in to upload files");
+      return toast.error("Please sign in to upload files.");
     }
 
     const allowed = validateAndFilterFiles(files);
 
     if (allowed.length === 0) {
-      return toast.error("No valid files found");
+      return toast.error("Please select code files, images (JPG/PNG), or PDFs.");
     }
 
     const processedFiles = await Promise.all(

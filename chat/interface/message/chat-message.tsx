@@ -255,13 +255,11 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
         transform: "translateY(0)"
       }}
     >
-      <div className={cn("flex max-w-[85%] min-w-0 flex-col", isUser ? "items-end" : "items-start")}>
+      <div className={cn("flex min-w-0 flex-col", isUser ? "max-w-[85%] items-end" : "items-start")}>
         <div
           className={cn(
-            "relative rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200",
-            isUser
-              ? "rounded-br-md border-purple-400/20 bg-gradient-to-br from-purple-500 to-purple-600 text-white"
-              : "rounded-bl-md border-slate-200/60 bg-white/90 text-slate-800 dark:border-slate-700/60 dark:bg-slate-800/90 dark:text-slate-200"
+            "relative rounded-2xl px-4 py-3 backdrop-blur-sm transition-all duration-200",
+            isUser ? "rounded-br-md border shadow-lg" : ""
           )}
         >
           <div className="text-sm">

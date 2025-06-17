@@ -2,34 +2,17 @@
 
 import { Bot } from "lucide-react";
 
-interface EmptyStateProps {
-  type: "no-keys" | "no-messages";
-}
-
-export function EmptyState({ type }: EmptyStateProps) {
-  const getContent = () => {
-    switch (type) {
-      case "no-keys":
-        return {
-          title: "No API Keys Configured",
-          description: "Please configure your API keys in settings to start chatting."
-        };
-      case "no-messages":
-        return {
-          title: "Start a new conversation",
-          description: "Type a message below to begin chatting with the AI."
-        };
-    }
-  };
-
-  const content = getContent();
-
+export function EmptyState() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
-        <Bot className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{content.title}</h3>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{content.description}</p>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+          <Bot className="h-8 w-8 text-white" />
+        </div>
+        <h3 className="mt-4 text-lg font-medium text-slate-800 dark:text-slate-200">Start a new conversation</h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Type a message below to begin chatting with the AI.
+        </p>
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   if (messages.length === 0) {
     if (isLoading) {
       return (
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="space-y-1">
           <MessageSkeleton isUser={false} lines={4} />
           <MessageSkeleton isUser={true} lines={2} />
           <MessageSkeleton isUser={false} lines={3} />
@@ -38,7 +38,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 space-y-4 overflow-y-auto p-4">
+    <div className="space-y-1">
       {messages.map((message, index) => {
         // Check if this is the last assistant message and we're currently loading
         const isLastAssistantMessage = message.role === "ASSISTANT" && index === messages.length - 1;
@@ -46,7 +46,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
 
         return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
       })}
-
+      
       {/* Show skeleton for the next message when loading */}
       {isLoading && <MessageSkeleton isUser={false} lines={3} />}
     </div>
