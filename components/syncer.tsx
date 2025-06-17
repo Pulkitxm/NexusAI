@@ -19,7 +19,6 @@ export default function Syncer() {
   const { toggleModal: toggleModelModal, closeModal: closeModelModal } = useModel();
 
   useEffect(() => {
-    console.log(session?.user?.settings);
     if (session?.user?.settings?.theme) {
       setTheme(session.user.settings.theme);
     }
