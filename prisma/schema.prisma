@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  avatar       String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  chats        Chat[]
+  messages     Message[]
+  settings     UserSettings?
+  globalMemory GlobalMemory[]
+  attachments  Attachment[]
+}
+
+model Chat {
+  id          String       @id @default(cuid())
+  title       String?
+  isShared    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  attachments Attachment[]
+
+  isDeleted Boolean @default(false)
+}
+
+enum Role {
+  USER
+  ASSISTANT
+}
+
+model Message {
+  id          String       @id @default(cuid())
+  role        Role         @default(USER)
+  content     String
+  modelUsed   String?
+  createdAt   DateTime     @default(now())
+  chatId      String
+  chat        Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id             String   @id @default(cuid())
+  name           String
+  url            String
+  size           Int
+  uploadThingKey String   @unique
+  isDeleted      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  chatId         String?
+  messageId      String?
+  userId         String
+  chat           Chat?    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message        Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle   String?
+  occupation String?
+  bio        String?
+  location   String?
+  company    String?
+  website    String?
+  customFont String?
+  theme      String   @default("system")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model GlobalMemory {
+  id         String   @id @default(cuid())
+  content    String
+  category   String?
+  importance Int      @default(5)
+  reasoning  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  isDeleted  Boolean  @default(false)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, importance])
+  @@index([userId, category])
+}
