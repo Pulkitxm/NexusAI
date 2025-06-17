@@ -64,7 +64,7 @@ export const ModelDropdown = memo<ModelDropdownProps>(({ availableModels, select
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-11 w-[200px] cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-2.5 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md sm:w-[240px] lg:w-[280px] dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
+        className="flex h-11 w-[200px] cursor-pointer items-center justify-between rounded-xl border px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-md sm:w-[240px] lg:w-[280px]"
       >
         {selectedModelData ? (
           <div className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export const ModelDropdown = memo<ModelDropdownProps>(({ availableModels, select
                   <button
                     key={model.id}
                     onClick={() => handleModelSelect(model.id)}
-                    className={`w-full px-4 py-3 text-left transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                    className={`w-full cursor-pointer px-4 py-3 text-left transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 ${
                       isSelected ? "bg-purple-50 dark:bg-purple-950/30" : ""
                     }`}
                   >

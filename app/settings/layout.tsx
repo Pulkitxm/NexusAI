@@ -1,5 +1,7 @@
 import { ArrowLeft, LogIn, LogOutIcon } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { LogInButton, LogOutButton } from "@/lib/auth-buttons";
@@ -7,6 +9,14 @@ import { auth } from "@/lib/authOptions";
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+
+  await new Promise((res) => setTimeout(res, 5000));
+
+  const pathName = (await headers()).get("x-current-path");
+
+  if (pathName === "/settings") {
+    redirect("/settings/account");
+  }
 
   if (!session) {
     return (

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form } from "@/components/ui/form";
 import { useFont } from "@/providers/use-font";
 
-import SettingsSkeleton from "../loading";
+import { SettingsSkeleton } from "../loading";
 import { SettingsForm, settingsFormSchema, SettingsFormValues } from "../settings-form";
 
 export default function CustomizationSettingsPage() {
@@ -87,7 +87,7 @@ export default function CustomizationSettingsPage() {
   }
 
   if (loading) {
-    return <SettingsSkeleton />;
+    return <SettingsSkeleton notFullPage />;
   }
 
   if (!session) {

@@ -77,11 +77,7 @@ export const ModelDialog = memo<ModelDialogProps>(({ availableModels, selectedMo
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-11 rounded-xl border border-gray-200 bg-gray-50 px-4 transition-all duration-200 hover:bg-gray-100 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-        >
+        <Button variant="ghost" size="sm" className="h-11 rounded-xl border">
           <Settings2 className="h-4 w-4 sm:mr-2" />
           <span className="hidden text-sm font-medium sm:inline">All Models</span>
         </Button>

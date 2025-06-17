@@ -10,7 +10,7 @@ import { getUserSettings, updateUserSettings } from "@/actions/user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 
-import SettingsSkeleton from "../loading";
+import { SettingsSkeleton } from "../loading";
 import { SettingsForm, settingsFormSchema, SettingsFormValues } from "../settings-form";
 
 export default function AccountSettingsPage() {
@@ -76,7 +76,7 @@ export default function AccountSettingsPage() {
   }
 
   if (loading) {
-    return <SettingsSkeleton />;
+    return <SettingsSkeleton notFullPage />;
   }
 
   if (!session) {

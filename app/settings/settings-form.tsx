@@ -366,7 +366,7 @@ export function SettingsForm({ form, section, session, onSubmit, isSaving = fals
                     </TableCell>
                   </TableRow>
                 ))
-              ) : memories.length > 0 ? (
+              ) : memories?.length > 0 ? (
                 memories.map((memory) => (
                   <TableRow key={memory.id}>
                     <TableCell className="max-w-md truncate font-medium">{memory.content}</TableCell>

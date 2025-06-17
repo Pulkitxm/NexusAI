@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 
-import SettingsSkeleton from "../loading";
+import { SettingsSkeleton } from "../loading";
 import { SettingsForm, settingsFormSchema, SettingsFormValues } from "../settings-form";
 
 export default function MemorySettingsPage() {
@@ -38,7 +38,7 @@ export default function MemorySettingsPage() {
   }, [session?.user?.id]);
 
   if (loading) {
-    return <SettingsSkeleton />;
+    return <SettingsSkeleton notFullPage />;
   }
 
   if (!session) {
