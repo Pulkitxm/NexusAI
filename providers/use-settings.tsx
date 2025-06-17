@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { keyConfigs } from "@/data/mdels";
+import { keyConfigs } from "@/data/models";
 import { useKeys } from "@/providers/use-keys";
 
 interface SettingsModalContextType {

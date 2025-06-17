@@ -1,6 +1,7 @@
 "use client";
 import { MessageSquare } from "lucide-react";
 
+import { useChat } from "@/providers/use-chat";
 import { useSidebar } from "@/providers/use-sidebar";
 
 import { ChatItem } from "./chat-item";
@@ -8,8 +9,6 @@ import { ChatListSkeleton } from "./chat-list-skeleton";
 import { VirtualizedChatList } from "./virtualized-chat-list";
 
 import type { Chat } from "@/types/chat";
-
-import { useChat } from "@/providers/use-chat";
 
 interface SidebarChatListProps {
   loading: boolean;

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { IconType } from "react-icons";
+import { z } from "zod";
 
 import { Provider } from "./provider";
 
@@ -37,3 +38,15 @@ export interface AIModel {
   description: string;
   capabilities?: Capabilities;
 }
+
+export const validateAttachment = z.array(
+  z.object({
+    id: z.string().min(1),
+    size: z.number().min(1),
+    name: z.string().min(1),
+    url: z.string().min(1),
+    uploaded: z.boolean(),
+    uploadThingKey: z.string().min(1)
+  })
+);
+export type Attachment = z.infer<typeof validateAttachment>[number];

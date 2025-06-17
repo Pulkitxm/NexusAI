@@ -27,6 +27,16 @@ export const setStoredValue = <T>(key: string, value: T): void => {
   }
 };
 
+export const removeStoredValue = (key: string): void => {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(`Error removing localStorage key "${key}":`, error);
+  }
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debugLog(message: string, data?: any) {
   if (process.env.NODE_ENV === "development") {
