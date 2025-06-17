@@ -10,9 +10,20 @@ import {
   Raleway,
   Nunito,
   Source_Sans_3,
-  Merriweather
+  Merriweather,
+  Oswald,
+  Playfair_Display,
+  Ubuntu,
+  Rubik,
+  Quicksand,
+  Cabin,
+  Josefin_Sans,
+  Dancing_Script,
+  Comfortaa
 } from "next/font/google";
 import { createContext, useContext, useEffect, useState } from "react";
+
+import { debugLog } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const roboto = Roboto({
@@ -49,6 +60,43 @@ const merriweather = Merriweather({
   subsets: ["latin"],
   variable: "--font-merriweather"
 });
+const oswald = Oswald({
+  subsets: ["latin"],
+  variable: "--font-oswald"
+});
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair-display"
+});
+const ubuntu = Ubuntu({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  variable: "--font-ubuntu"
+});
+const rubik = Rubik({
+  subsets: ["latin"],
+  variable: "--font-rubik"
+});
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  variable: "--font-quicksand"
+});
+const cabin = Cabin({
+  subsets: ["latin"],
+  variable: "--font-cabin"
+});
+const josefinSans = Josefin_Sans({
+  subsets: ["latin"],
+  variable: "--font-josefin-sans"
+});
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  variable: "--font-dancing-script"
+});
+const comfortaa = Comfortaa({
+  subsets: ["latin"],
+  variable: "--font-comfortaa"
+});
 
 const fonts = {
   inter,
@@ -60,7 +108,16 @@ const fonts = {
   raleway,
   nunito,
   "source-sans-pro": sourceSansPro,
-  merriweather
+  merriweather,
+  oswald,
+  "playfair-display": playfairDisplay,
+  ubuntu,
+  rubik,
+  quicksand,
+  cabin,
+  "josefin-sans": josefinSans,
+  "dancing-script": dancingScript,
+  comfortaa
 };
 
 type FontContextType = {
@@ -84,6 +141,7 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleFontChange = (font: string) => {
+    debugLog("Font changed to", font);
     setCurrentFont(font);
     localStorage.setItem("customFont", font);
   };

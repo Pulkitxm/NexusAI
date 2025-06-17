@@ -33,7 +33,7 @@ export const ProviderSection = memo<ProviderSectionProps>(
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 p-2 lg:grid-cols-2 lg:gap-8 xl:grid-cols-2">
             {models.map((model, modelIndex) => (
               <ModelCard
                 key={model.id}

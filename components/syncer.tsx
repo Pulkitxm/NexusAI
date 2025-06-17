@@ -12,13 +12,14 @@ export default function Syncer() {
   const { setCurrentFont } = useFont();
 
   useEffect(() => {
+    console.log(session?.user?.settings);
     if (session?.user?.settings?.theme) {
       setTheme(session.user.settings.theme);
     }
     if (session?.user?.settings?.customFont) {
       setCurrentFont(session.user.settings.customFont);
     }
-  }, [session?.user?.settings?.theme, session?.user?.settings?.customFont, setTheme, setCurrentFont]);
+  }, [session, setCurrentFont, setTheme]);
 
   return null;
 }

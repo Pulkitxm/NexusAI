@@ -58,7 +58,7 @@ export const SUGGESTED_PROMPTS: {
 export const DEEPSEEK_ICON = (props: IconBaseProps) => (
   <svg
     fill="currentColor"
-    fill-rule="evenodd"
+    fillRule="evenodd"
     height="1em"
     viewBox="0 0 24 24"
     width="1em"
@@ -74,7 +74,7 @@ export const DEEPSEEK_ICON = (props: IconBaseProps) => (
 export const META_ICON = (props: IconBaseProps) => (
   <svg
     fill="currentColor"
-    fill-rule="evenodd"
+    fillRule="evenodd"
     height="1em"
     viewBox="0 0 24 24"
     width="1em"
@@ -90,7 +90,7 @@ export const META_ICON = (props: IconBaseProps) => (
 export const QWEN_ICON = (props: IconBaseProps) => (
   <svg
     fill="currentColor"
-    fill-rule="evenodd"
+    fillRule="evenodd"
     height="1em"
     viewBox="0 0 24 24"
     width="1em"
@@ -106,7 +106,7 @@ export const QWEN_ICON = (props: IconBaseProps) => (
 export const GROK_ICON = (props: IconBaseProps) => (
   <svg
     fill="currentColor"
-    fill-rule="evenodd"
+    fillRule="evenodd"
     height="1em"
     viewBox="0 0 24 24"
     width="1em"

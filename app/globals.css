@@ -120,3 +120,24 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  .font-inter { font-family: var(--font-inter); }
+  .font-roboto { font-family: var(--font-roboto); }
+  .font-open-sans { font-family: var(--font-open-sans); }
+  .font-lato { font-family: var(--font-lato); }
+  .font-poppins { font-family: var(--font-poppins); }
+  .font-montserrat { font-family: var(--font-montserrat); }
+  .font-raleway { font-family: var(--font-raleway); }
+  .font-nunito { font-family: var(--font-nunito); }
+  .font-source-sans-pro { font-family: var(--font-source-sans-pro); }
+  .font-merriweather { font-family: var(--font-merriweather); }
+  .font-oswald { font-family: var(--font-oswald); }
+  .font-playfair-display { font-family: var(--font-playfair-display); }
+  .font-ubuntu { font-family: var(--font-ubuntu); }
+  .font-rubik { font-family: var(--font-rubik); }
+  .font-quicksand { font-family: var(--font-quicksand); }
+  .font-cabin { font-family: var(--font-cabin); }
+  .font-josefin-sans { font-family: var(--font-josefin-sans); }
+  .font-dancing-script { font-family: var(--font-dancing-script); }
+  .font-comfortaa { font-family: var(--font-comfortaa); }
+}

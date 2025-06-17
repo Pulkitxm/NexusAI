@@ -17,7 +17,7 @@ export const ModelCard = memo<ModelCardProps>(
     return (
       <AnimatedWrapper show={true} delay={index * 30}>
         <div
-          className={`group relative transform ${
+          className={`group relative h-full transform ${
             isAvailable ? "cursor-pointer" : ""
           } rounded-xl border p-5 transition-all duration-300 hover:shadow-lg ${
             isSelected

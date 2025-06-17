@@ -3,6 +3,8 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { prisma } from "@/prisma";
 
+import { debugLog } from "./utils";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -80,11 +82,17 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
           }
         });
 
+        debugLog("Session user", dbUser);
+
         if (!dbUser) throw new Error("User not found");
 
         session.user.id = dbUser.id.toString();
         session.user.name = dbUser.name ?? "";
         session.user.avatar = dbUser.avatar ?? "";
+        session.user.settings = {
+          theme: dbUser.settings?.theme === "light" ? "light" : "dark",
+          customFont: dbUser.settings?.customFont ?? "inter"
+        };
       }
       return session;
     },
