@@ -188,7 +188,7 @@ export async function POST(req: Request) {
                 await analyzeAndStoreMemories({
                   apiKey,
                   assistantResponse: text.trim(),
-                  modelId: model,
+                  modelUUID: model,
                   userId,
                   userMessage: lastUserMessage,
                   openRouter

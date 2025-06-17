@@ -20,7 +20,7 @@ const MemorySchema = z.object({
 export async function analyzeAndStoreMemories({
   apiKey,
   assistantResponse,
-  modelId,
+  modelUUID,
   userId,
   userMessage,
   openRouter
@@ -29,20 +29,20 @@ export async function analyzeAndStoreMemories({
   userMessage: string;
   assistantResponse: string;
   apiKey: string;
-  modelId: string;
+  modelUUID: string;
   openRouter: boolean;
 }) {
   try {
-    const modelConfig = AI_MODELS.find((m) => m.id === modelId);
+    const modelConfig = AI_MODELS.find((m) => m.uuid === modelUUID);
     if (!modelConfig) {
-      console.error(`[Memory] Model "${modelId}" not found`);
+      console.error(`[Memory] Model "${modelUUID}" not found`);
       return { success: false, error: "Model not found" };
     }
 
     const provider = modelConfig.provider;
     const aiModelResult = getAiProvider({
       apiKey,
-      finalModelId: modelId,
+      finalModelId: modelConfig.id,
       modelProvider: provider,
       openRouter
     });

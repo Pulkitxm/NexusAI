@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   type ComponentProps,
   createContext,
@@ -93,6 +94,7 @@ export const SidebarProvider = forwardRef<
     children: ReactNode;
   }
 >(({ defaultOpen, open: openProp, onOpenChange: setOpenProp, style, children, ...props }, ref) => {
+  const router = useRouter();
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = useState(false);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -192,21 +194,25 @@ export const SidebarProvider = forwardRef<
     debouncedLoadChats();
   }, [debouncedLoadChats]);
 
-  const handleDeleteChat = useCallback(async (chatId: string) => {
-    setLoadingChatId(chatId);
-    try {
-      const res = await deleteChat(chatId);
-      if (!res.success) {
-        console.error("Error deleting chat:", res.error);
-        return;
+  const handleDeleteChat = useCallback(
+    async (chatId: string) => {
+      setLoadingChatId(chatId);
+      try {
+        const res = await deleteChat(chatId);
+        if (!res.success) {
+          console.error("Error deleting chat:", res.error);
+          return;
+        }
+        setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+        router.push("/");
+      } catch (error) {
+        console.error("Error deleting chat:", error);
+      } finally {
+        setLoadingChatId(null);
       }
-      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-    } catch (error) {
-      console.error("Error deleting chat:", error);
-    } finally {
-      setLoadingChatId(null);
-    }
-  }, []);
+    },
+    [router]
+  );
 
   const addChat = useCallback((chat: Chat) => {
     setChats((prev) => [chat, ...prev]);
