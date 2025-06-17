@@ -5,37 +5,21 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
 
 import { getUserSettings, updateUserSettings } from "@/actions/user";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 
 import SettingsSkeleton from "../loading";
-
-import { AccountSettingsForm } from "./account-form";
-
-const formSchema = z.object({
-  jobTitle: z.string().optional(),
-  occupation: z.string().optional(),
-  bio: z.string().optional(),
-  location: z.string().optional(),
-  company: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-  customFont: z.string().optional(),
-  theme: z.enum(["light", "dark"])
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { SettingsForm, settingsFormSchema, SettingsFormValues } from "../settings-form";
 
 export default function AccountSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const { data: session, update } = useSession();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       jobTitle: "",
       occupation: "",
@@ -77,7 +61,7 @@ export default function AccountSettingsPage() {
     }
   }, [session?.user?.id, form]);
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(data: SettingsFormValues) {
     setIsSaving(true);
     try {
       await updateUserSettings(data);
@@ -109,12 +93,7 @@ export default function AccountSettingsPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-              <AccountSettingsForm form={form} session={session} />
-              <div className="border-border mt-6 flex justify-end border-t pt-6">
-                <Button type="submit" disabled={isSaving} className="bg-purple-600 text-white hover:bg-purple-700">
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
+              <SettingsForm form={form} section="account" session={session} onSubmit={onSubmit} isSaving={isSaving} />
             </form>
           </Form>
         </CardContent>

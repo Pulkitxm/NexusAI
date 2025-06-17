@@ -23,7 +23,7 @@ export const SearchSuggestions = memo<SearchSuggestionsProps>(({ suggestions, on
             <button
               key={suggestion.query}
               onClick={() => onSuggestionClick(suggestion.query)}
-              className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition-all duration-200 hover:scale-105 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 transition-all duration-200 hover:scale-105 hover:bg-gray-100 hover:text-gray-800 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
             >
               <SuggestionIcon className="h-3.5 w-3.5" />
               {suggestion.label}

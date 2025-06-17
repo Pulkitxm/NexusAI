@@ -1,33 +1,19 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import * as z from "zod";
 
 import { getUserSettings, updateUserSettings } from "@/actions/user";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { useFont } from "@/providers/use-font";
+
 import SettingsSkeleton from "../loading";
-import { CustomizationSettingsForm } from "./customization-form";
-
-const formSchema = z.object({
-  jobTitle: z.string().optional(),
-  occupation: z.string().optional(),
-  bio: z.string().optional(),
-  location: z.string().optional(),
-  company: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-  customFont: z.string().optional(),
-  theme: z.enum(["light", "dark"])
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { SettingsForm, settingsFormSchema, SettingsFormValues } from "../settings-form";
 
 export default function CustomizationSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -36,8 +22,8 @@ export default function CustomizationSettingsPage() {
   const { theme, setTheme } = useTheme();
   const { setCurrentFont } = useFont();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<SettingsFormValues>({
+    resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       jobTitle: "",
       occupation: "",
@@ -79,7 +65,7 @@ export default function CustomizationSettingsPage() {
     }
   }, [session?.user?.id, theme, form]);
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(data: SettingsFormValues) {
     setIsSaving(true);
     try {
       if (data.theme !== theme) {
@@ -118,12 +104,7 @@ export default function CustomizationSettingsPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-              <CustomizationSettingsForm form={form} />
-              <div className="border-border flex justify-end border-t pt-6 mt-6">
-                <Button type="submit" disabled={isSaving} className="bg-purple-600 text-white hover:bg-purple-700">
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
+              <SettingsForm form={form} section="customization" onSubmit={onSubmit} isSaving={isSaving} />
             </form>
           </Form>
         </CardContent>
