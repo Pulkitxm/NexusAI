@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { ChatInterface } from "@/chat/ui/chat-interface";
+import { ChatInterface } from "@/chat/interface/chat-interface";
 import { useChat } from "@/providers/use-chat";
 
 export default function ChatPage() {
@@ -17,7 +17,6 @@ export default function ChatPage() {
     }
 
     return () => {
-      // Cleanup when component unmounts
       setChatId(null);
     };
   }, [chatId, setChatId]);
