@@ -36,6 +36,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
 
+  // Prepare the body for AI SDK, only including chatId if it exists
+  const aiChatBody = {
+    model: selectedModelConfig?.uuid,
+    provider: selectedModelConfig?.provider,
+    apiKey: keys[selectedModelConfig?.provider || "openai"] || "",
+    openRouter: keys.openrouter ? true : false,
+    reasoning: null,
+    webSearch: false,
+    attachments: [],
+    ...(chatId && { chatId }) // Only include chatId if it exists
+  };
+
   const {
     messages: aiMessages,
     input,
@@ -47,16 +59,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     append
   } = useAIChat({
     api: "/api/chat",
-    body: {
-      chatId,
-      model: selectedModelConfig?.uuid,
-      provider: selectedModelConfig?.provider,
-      apiKey: keys[selectedModelConfig?.provider || "openai"] || "",
-      openRouter: keys.openrouter ? true : false,
-      reasoning: null,
-      webSearch: false,
-      attachments: []
-    },
+    body: aiChatBody,
     onFinish: async () => {
       // The AI SDK handles the message state automatically
       // We don't need to manually add it here

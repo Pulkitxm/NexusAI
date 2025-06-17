@@ -16,15 +16,14 @@ interface ChatMessageProps {
 export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) {
   const isUser = message.role === "USER";
   const [animatedContent, setAnimatedContent] = useState("");
-  const [isAnimating, setIsAnimating] = useState(false);
   const previousContentRef = useRef("");
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Handle streaming animation for assistant messages
   useEffect(() => {
     if (isUser) {
       setAnimatedContent(message.content);
-      setIsAnimating(false);
       return;
     }
 
@@ -34,7 +33,6 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
     // If content is shorter than before, it means we're starting fresh
     if (currentContent.length < previousContent.length) {
       setAnimatedContent(currentContent);
-      setIsAnimating(false);
       previousContentRef.current = currentContent;
       return;
     }
@@ -43,19 +41,22 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
     if (currentContent.length > previousContent.length && isStreaming) {
       const newContent = currentContent.slice(previousContent.length);
       let currentIndex = 0;
+      let lastTimestamp = 0;
 
-      const animateNewContent = () => {
+      const animateNewContent = (timestamp: number) => {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+
+        // Smoother animation with consistent timing (every 15ms for better readability)
+        if (timestamp - lastTimestamp >= 15) {
+          if (currentIndex < newContent.length) {
+            setAnimatedContent(previousContent + newContent.slice(0, currentIndex + 1));
+            currentIndex++;
+            lastTimestamp = timestamp;
+          }
+        }
+
         if (currentIndex < newContent.length) {
-          setAnimatedContent(previousContent + newContent.slice(0, currentIndex + 1));
-          currentIndex++;
-
-          // Adjust speed based on character type
-          const baseDelay = 15; // Faster base delay for more responsive feel
-          const delay = newContent[currentIndex] === " " ? baseDelay / 2 : baseDelay;
-
-          animationTimeoutRef.current = setTimeout(animateNewContent, delay);
-        } else {
-          setIsAnimating(false);
+          animationFrameRef.current = requestAnimationFrame(animateNewContent);
         }
       };
 
@@ -63,26 +64,30 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
 
-      setIsAnimating(true);
-      animateNewContent();
+      animationFrameRef.current = requestAnimationFrame(animateNewContent);
     } else if (!isStreaming) {
       // If not streaming, show full content immediately
       setAnimatedContent(currentContent);
-      setIsAnimating(false);
     }
 
     previousContentRef.current = currentContent;
 
-    // Cleanup timeout on unmount
+    // Cleanup on unmount
     return () => {
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, [message.content, isUser, isStreaming]);
 
-  // Use animated content for assistant messages, regular content for user messages
+  // Remove the HTML injection approach
   const displayContent = isUser ? message.content : animatedContent;
 
   return (
@@ -101,74 +106,78 @@ export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) 
         }`}
       >
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown
-            components={{
-              // Override code blocks to have proper styling
-              code: ({ className, children, ...props }) => {
-                const match = /language-(\w+)/.exec(className || "");
-                return match ? (
-                  <pre className="rounded-md bg-gray-800 p-3 text-sm text-gray-100">
-                    <code className={className} {...props}>
+          <div className="inline">
+            <ReactMarkdown
+              components={{
+                // Override code blocks to have proper styling
+                code: ({ className, children, ...props }) => {
+                  const match = /language-(\w+)/.exec(className || "");
+                  return match ? (
+                    <pre className="rounded-md bg-gray-800 p-3 text-sm text-gray-100">
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    </pre>
+                  ) : (
+                    <code
+                      className={`rounded bg-gray-200 px-1 py-0.5 text-sm dark:bg-gray-700 ${
+                        isUser ? "bg-blue-500 text-white" : ""
+                      }`}
+                      {...props}
+                    >
                       {children}
                     </code>
-                  </pre>
-                ) : (
-                  <code
-                    className={`rounded bg-gray-200 px-1 py-0.5 text-sm dark:bg-gray-700 ${
-                      isUser ? "bg-blue-500 text-white" : ""
+                  );
+                },
+                // Override links to have proper styling
+                a: ({ children, href, ...props }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`underline hover:no-underline ${
+                      isUser ? "text-blue-200" : "text-blue-600 dark:text-blue-400"
                     }`}
                     {...props}
                   >
                     {children}
-                  </code>
-                );
-              },
-              // Override links to have proper styling
-              a: ({ children, href, ...props }) => (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`underline hover:no-underline ${
-                    isUser ? "text-blue-200" : "text-blue-600 dark:text-blue-400"
-                  }`}
-                  {...props}
-                >
-                  {children}
-                </a>
-              ),
-              // Override lists to have proper styling
-              ul: ({ children, ...props }) => (
-                <ul className="list-disc pl-4" {...props}>
-                  {children}
-                </ul>
-              ),
-              ol: ({ children, ...props }) => (
-                <ol className="list-decimal pl-4" {...props}>
-                  {children}
-                </ol>
-              ),
-              // Override blockquotes
-              blockquote: ({ children, ...props }) => (
-                <blockquote
-                  className={`border-l-4 pl-4 italic ${
-                    isUser ? "border-blue-400 text-blue-100" : "border-gray-400 text-gray-600 dark:text-gray-400"
-                  }`}
-                  {...props}
-                >
-                  {children}
-                </blockquote>
-              )
-            }}
-          >
-            {displayContent}
-          </ReactMarkdown>
-        </div>
+                  </a>
+                ),
+                // Override lists to have proper styling
+                ul: ({ children, ...props }) => (
+                  <ul className="list-disc pl-4" {...props}>
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children, ...props }) => (
+                  <ol className="list-decimal pl-4" {...props}>
+                    {children}
+                  </ol>
+                ),
+                // Override blockquotes
+                blockquote: ({ children, ...props }) => (
+                  <blockquote
+                    className={`border-l-4 pl-4 italic ${
+                      isUser ? "border-blue-400 text-blue-100" : "border-gray-400 text-gray-600 dark:text-gray-400"
+                    }`}
+                    {...props}
+                  >
+                    {children}
+                  </blockquote>
+                ),
+                // Override paragraphs to be inline when streaming
+                p: ({ children, ...props }) => <span {...props}>{children}</span>
+              }}
+            >
+              {displayContent}
+            </ReactMarkdown>
 
-        {/* Cursor for streaming effect */}
-        {isAnimating && !isUser && (
-          <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-gray-600 dark:bg-gray-400" />
-        )}
+            {/* Inline heartbeat dot as a separate React element */}
+            {!isUser && isStreaming && (
+              <span className="ml-1 inline-block animate-pulse text-blue-500 dark:text-blue-400">●</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {isUser && (

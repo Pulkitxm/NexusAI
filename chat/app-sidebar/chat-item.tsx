@@ -129,7 +129,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
                   </span>
                 )}
                 <button
-                  className="h-5 w-5 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  className="h-5 w-5 cursor-pointer p-0 opacity-0 transition-opacity group-hover:opacity-100"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

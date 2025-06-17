@@ -43,7 +43,7 @@ export function DropdownMenu({ items, onClose, className = "" }: DropdownMenuPro
             item.onClick();
             onClose();
           }}
-          className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
+          className={`flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
             item.destructive ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
           }`}
         >

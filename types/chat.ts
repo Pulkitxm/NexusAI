@@ -67,7 +67,7 @@ export const validateChatStreamBody = z.object({
     return AI_MODELS.some((m) => m.uuid === model);
   }, "Invalid model ID"),
   apiKey: z.string(),
-  chatId: z.string(),
+  chatId: z.string().optional(),
   reasoning: z.nativeEnum(Reasoning).nullable(),
   attachments: z.array(z.string()),
   webSearch: z.boolean().nullable(),
