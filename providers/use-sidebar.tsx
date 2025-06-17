@@ -1,10 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ReactNode,
+  Dispatch,
+  SetStateAction
+} from "react";
 
 import { deleteChat, getChats, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
-import { ShareModal } from "@/chat/share-modal";
+import { DeleteChatModal } from "@/chat/modals/delete-modal";
+import { RenameChatModal } from "@/chat/modals/rename-modal";
+import { ShareModal } from "@/chat/modals/share-modal";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -22,6 +34,7 @@ type SidebarContext = {
   isMobile: boolean;
   toggleSidebar: () => void;
   chats: Chat[];
+  setChats: Dispatch<SetStateAction<Chat[]>>;
   loading: boolean;
   deleteChat: (chatId: string) => void;
   refreshChats: () => void;
@@ -33,6 +46,10 @@ type SidebarContext = {
   setGeneratingTitleForChat: (chatId: string | null) => void;
   shareModelForChatID: string | null;
   openShareModal: (chatId: string | null) => void;
+  deleteModelForChatID: string | null;
+  openDeleteModal: (chatId: string | null) => void;
+  renameModelForChatID: string | null;
+  openRenameModal: (chatId: string | null) => void;
 };
 
 const SidebarContext = createContext<SidebarContext | null>(null);
@@ -79,6 +96,8 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [generatingTitleForChat, setGeneratingTitleForChat] = useState<string | null>(null);
   const [shareModelForChatID, setShareModelForChatID] = useState<string | null>(null);
+  const [deleteModelForChatID, setDeleteModelForChatID] = useState<string | null>(null);
+  const [renameModelForChatID, setRenameModelForChatID] = useState<string | null>(null);
 
   const setOpen = useCallback(
     (newOpen: boolean) => {
@@ -154,11 +173,17 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
     setShareModelForChatID(chatId);
   }, []);
 
+  const openDeleteModal = useCallback((chatId: string | null) => {
+    setDeleteModelForChatID(chatId);
+  }, []);
+
+  const openRenameModal = useCallback((chatId: string | null) => {
+    setRenameModelForChatID(chatId);
+  }, []);
+
   useEffect(() => {
-    if (open) {
-      fetchChats();
-    }
-  }, [open, fetchChats]);
+    fetchChats();
+  }, [fetchChats]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -182,6 +207,7 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       setOpenMobile,
       toggleSidebar,
       chats,
+      setChats,
       loading,
       deleteChat: handleDeleteChat,
       refreshChats,
@@ -192,7 +218,11 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       generatingTitleForChat,
       setGeneratingTitleForChat,
       shareModelForChatID,
-      openShareModal
+      openShareModal,
+      deleteModelForChatID,
+      openDeleteModal,
+      renameModelForChatID,
+      openRenameModal
     }),
     [
       open,
@@ -209,7 +239,11 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       updateChatTitle,
       generatingTitleForChat,
       shareModelForChatID,
-      openShareModal
+      openShareModal,
+      deleteModelForChatID,
+      openDeleteModal,
+      renameModelForChatID,
+      openRenameModal
     ]
   );
 
@@ -217,6 +251,8 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
     <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
       <ShareModal />
+      <DeleteChatModal />
+      <RenameChatModal />
     </SidebarContext.Provider>
   );
 }

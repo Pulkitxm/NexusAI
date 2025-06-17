@@ -25,7 +25,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
   const [newTitle, setNewTitle] = useState(chat.title || "");
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { updateChatTitle, deleteChat, setLoadingChatId, openShareModal } = useSidebar();
+  const { updateChatTitle, openDeleteModal, setLoadingChatId, openShareModal } = useSidebar();
 
   const handleRename = useCallback(async () => {
     setIsRenaming(false);
@@ -82,7 +82,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
     {
       icon: Trash2,
       label: "Delete Chat",
-      onClick: () => deleteChat(chat.id),
+      onClick: () => openDeleteModal(chat.id),
       destructive: true
     }
   ];

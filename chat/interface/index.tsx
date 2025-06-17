@@ -26,9 +26,9 @@ export function ChatInterface() {
   const hide = input || messages.length > 0;
 
   return (
-    <div className="flex h-full w-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="mb-20 flex-1 overflow-y-auto px-4">
-        <div className="mx-auto max-w-4xl py-6">
+    <div className="flex size-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="flex-1 overflow-y-auto px-4">
+        <div className="mx-auto max-w-4xl overflow-y-auto py-6">
           {messages.length === 0 && !isLoading ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div

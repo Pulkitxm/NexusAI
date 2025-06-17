@@ -52,7 +52,6 @@ export function MessageInput(props: { showForLoading: boolean }) {
   const selectedModelDetails = useMemo(() => {
     return AI_MODELS.find((m) => m.id === selectedModel);
   }, [selectedModel]);
-  const [isFocused, setIsFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const speechToTextServiceRef = useRef<SpeechToTextService | null>(null);
@@ -113,7 +112,6 @@ export function MessageInput(props: { showForLoading: boolean }) {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        setIsFocused(false);
         inputRef.current?.blur();
       }
 
@@ -153,12 +151,9 @@ export function MessageInput(props: { showForLoading: boolean }) {
             <div className="relative">
               <div
                 className={cn(
-                  "relative rounded-t-2xl border bg-white shadow-sm transition-all duration-200 dark:bg-slate-900",
+                  "relative rounded-t-2xl border-none shadow-sm transition-all duration-200 dark:bg-slate-900",
                   "border-slate-200 dark:border-slate-700"
                 )}
-                style={{
-                  borderColor: isDark ? "transparent" : undefined
-                }}
               >
                 <div className="flex items-end gap-3 p-4">
                   <div className="flex-1">
@@ -257,14 +252,10 @@ export function MessageInput(props: { showForLoading: boolean }) {
 
         <FileUploadCards />
 
-        <div className="mx-auto max-w-4xl p-4 pb-0">
+        <div className="p-4a mx-auto max-w-4xl pb-0">
           <form onSubmit={handleSubmit} className="relative">
             <div
-              className={cn(
-                "relative rounded-t-2xl border bg-white shadow-sm transition-all duration-200 dark:bg-slate-900",
-                "border-slate-200 dark:border-slate-700",
-                isFocused && "border-slate-300 shadow-md dark:border-slate-600"
-              )}
+              className={cn("relative rounded-t-2xl border shadow-sm transition-all duration-200 dark:bg-slate-900")}
               style={{
                 borderColor: isDark ? "transparent" : undefined
               }}
@@ -275,8 +266,6 @@ export function MessageInput(props: { showForLoading: boolean }) {
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
                     placeholder="Ask me anything..."
                     className={cn(
                       "max-h-[120px] min-h-[44px] resize-none border-0 bg-transparent p-0",

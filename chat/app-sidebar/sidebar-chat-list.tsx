@@ -73,7 +73,7 @@ export function SidebarChatList({ loading, filteredChats, useVirtualization }: S
   const groupedChats = groupChatsByTimePeriod(filteredChats);
 
   return (
-    <div className="space-y-4">
+    <div className="mt-2 space-y-4">
       {groupedChats.today.length > 0 && (
         <div className="space-y-1">
           <h3 className="px-2 text-xs font-medium text-gray-500 dark:text-gray-400">Today</h3>
