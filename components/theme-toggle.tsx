@@ -17,7 +17,7 @@ export function ThemeToggle() {
   }, []);
 
   useEffect(() => {
-    if (theme !== "light") {
+    if (theme !== "light" && theme !== "dark") {
       setTheme("dark");
     }
   }, [theme, setTheme]);
@@ -34,7 +34,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
       className={cn("h-9 w-9", theme === "dark" ? "text-white" : "text-black")}
     >
       {theme === "dark" ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
