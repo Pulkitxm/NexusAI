@@ -87,7 +87,7 @@ export const ModelDialog = memo<ModelDialogProps>(({ availableModels, selectedMo
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="flex h-[90vh] w-[95vw] max-w-6xl flex-col border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <DialogContent className="flex h-[90vh] w-[98vw] max-w-4xl flex-col overflow-hidden border-slate-200 bg-slate-50 sm:max-w-2xl lg:max-w-4xl dark:border-slate-700 dark:bg-slate-900">
         <DialogHeader className="mt-10 flex-shrink-0 border-b border-gray-100 pb-6 dark:border-gray-800">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
