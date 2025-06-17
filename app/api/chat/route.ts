@@ -1,13 +1,13 @@
 import { streamText, convertToCoreMessages } from "ai";
 import { cache } from "react";
 
-import { analyzeAndStoreMemories } from "@/actions/ai/memoryAnalyzer";
 import { saveAssistantMessage } from "@/actions/chat";
-import { getAiProvider } from "@/lib/ai-helper";
+import { AI_MODELS } from "@/data/models";
+import { getAiProvider } from "@/lib/ai-helper/get-provider";
+import { analyzeAndStoreMemories } from "@/lib/ai-helper/memoryAnalyzer";
+import { ReasoningHandler } from "@/lib/ai-helper/resoning-handler";
 import { auth } from "@/lib/authOptions";
-import { prisma } from "@/lib/db";
-import { AI_MODELS } from "@/lib/models";
-import { ReasoningHandler } from "@/lib/reasoningHandler";
+import { prisma } from "@/prisma";
 import { validateChatStreamBody } from "@/types/chat";
 
 export const maxDuration = 30;

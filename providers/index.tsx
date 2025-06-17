@@ -5,7 +5,6 @@ import { ThemeProvider } from "next-themes";
 
 import Syncer from "@/components/syncer";
 
-import { ChatProvider } from "./use-chat";
 import { FontProvider } from "./use-font";
 import { KeyboardShortcutsProvider } from "./use-keyboardshortcuts";
 import { KeyProvider } from "./use-keys";
@@ -23,12 +22,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <SidebarProvider>
               <SettingsModalProvider>
                 <ModelProvider>
-                  <ChatProvider>
-                    <FontProvider>
-                      <Syncer />
-                      <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
-                    </FontProvider>
-                  </ChatProvider>
+                  <FontProvider>
+                    <Syncer />
+                    <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
+                  </FontProvider>
                 </ModelProvider>
               </SettingsModalProvider>
             </SidebarProvider>

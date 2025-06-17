@@ -10,6 +10,10 @@ import { generateChatTitle } from "../lib/ai-helper/titleGenerator";
 export async function getChats() {
   const session = await auth();
 
+  if (!session?.user?.id) {
+    return { success: false, error: "User not authenticated" };
+  }
+
   try {
     const chats = await prisma.chat.findMany({
       where: { userId: session?.user?.id, isDeleted: false },

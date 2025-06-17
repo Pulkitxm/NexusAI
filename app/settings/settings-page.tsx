@@ -61,7 +61,6 @@ function SettingsCard({
 
 export default function SettingsPage({ session }: { session: Session }) {
   const [isSaving, setIsSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const { setCurrentFont } = useFont();
   const { theme, setTheme } = useTheme();
@@ -98,8 +97,6 @@ export default function SettingsPage({ session }: { session: Session }) {
       } catch (error) {
         console.error("Failed to load settings:", error);
         toast.error("Failed to load settings");
-      } finally {
-        setLoading(false);
       }
     }
 

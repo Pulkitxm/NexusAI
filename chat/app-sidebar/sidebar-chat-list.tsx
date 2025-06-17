@@ -1,5 +1,5 @@
 "use client";
-import { useChat } from "@/providers/use-chat";
+
 import { useSidebar } from "@/providers/use-sidebar";
 
 import { ChatItem } from "./chat-item";
@@ -17,7 +17,8 @@ interface SidebarChatListProps {
 
 export function SidebarChatList({ loading, filteredChats, useVirtualization }: SidebarChatListProps) {
   const { loadingChatId, generatingTitleForChat } = useSidebar();
-  const { loadingChatId: chatLoadingId } = useChat();
+  // const { loadingChatId: chatLoadingId } = useChat();
+  const chatLoadingId = null;
 
   const groupChatsByTimePeriod = (chats: Chat[]) => {
     const now = new Date();

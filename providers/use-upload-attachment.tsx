@@ -20,7 +20,6 @@ import { addFiles, deleteFile } from "@/actions/file";
 import { getAvailableModels } from "@/data/models";
 import { codeExtensions } from "@/lib/extensions";
 import { useUploadThing } from "@/lib/uploadthing/client";
-import { useChat } from "@/providers/use-chat";
 import { Attachment } from "@/types/chat";
 
 import { useKeys } from "./use-keys";
@@ -69,7 +68,7 @@ export function UploadAttachmentProvider({ children }: { children: ReactNode }) 
   const [isDragOver, setIsDragOver] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState<string[]>([]);
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>({});
-  const { attachments, setAttachments } = useChat();
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedModelDetails = availableModels.find((m) => m.id === selectedModel);
