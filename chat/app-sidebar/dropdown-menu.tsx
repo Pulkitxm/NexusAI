@@ -1,34 +1,35 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import type { LucideIcon } from "lucide-react"
+import { useEffect, useRef } from "react";
+
+import type { LucideIcon } from "lucide-react";
 
 interface DropdownItem {
-  icon: LucideIcon
-  label: string
-  onClick: () => void
-  destructive?: boolean
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
 }
 
 interface DropdownMenuProps {
-  items: DropdownItem[]
-  onClose: () => void
-  className?: string
+  items: DropdownItem[];
+  onClose: () => void;
+  className?: string;
 }
 
 export function DropdownMenu({ items, onClose, className = "" }: DropdownMenuProps) {
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onClose()
+        onClose();
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [onClose])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   return (
     <div
@@ -39,8 +40,8 @@ export function DropdownMenu({ items, onClose, className = "" }: DropdownMenuPro
         <button
           key={index}
           onClick={() => {
-            item.onClick()
-            onClose()
+            item.onClick();
+            onClose();
           }}
           className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
             item.destructive ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
@@ -51,5 +52,5 @@ export function DropdownMenu({ items, onClose, className = "" }: DropdownMenuPro
         </button>
       ))}
     </div>
-  )
+  );
 }

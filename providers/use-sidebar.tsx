@@ -59,8 +59,8 @@ const setSidebarState = (open: boolean): void => {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(open));
-  } catch {
-    // Ignore storage errors
+  } catch (error) {
+    console.error("Failed to set sidebar state:", error);
   }
 };
 

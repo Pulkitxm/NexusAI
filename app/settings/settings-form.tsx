@@ -158,7 +158,6 @@ export function SettingsForm({ form, section, session, onSubmit, isSaving = fals
     }
   };
 
-  // Render the appropriate form section based on the section prop
   const renderFormSection = () => {
     switch (section) {
       case "account":
@@ -487,7 +486,6 @@ export function SettingsForm({ form, section, session, onSubmit, isSaving = fals
     );
   };
 
-  // Render the form with the appropriate section
   return (
     <>
       {renderFormSection()}

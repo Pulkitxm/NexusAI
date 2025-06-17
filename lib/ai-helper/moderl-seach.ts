@@ -8,17 +8,13 @@ export function calculateMatchScore(model: AIModel, query: string, availableMode
   const lowerQuery = query.toLowerCase();
   let score = 0;
 
-  // Exact name match
   if (model.name.toLowerCase() === lowerQuery) score += 1.0;
   else if (model.name.toLowerCase().includes(lowerQuery)) score += 0.8;
 
-  // Provider match
   if (model.provider.toLowerCase().includes(lowerQuery)) score += 0.6;
 
-  // Description match
   if (model.description.toLowerCase().includes(lowerQuery)) score += 0.4;
 
-  // Capabilities match
   if (model.capabilities) {
     Object.entries(model.capabilities).forEach(([key, value]) => {
       if (!value) return;
@@ -34,7 +30,6 @@ export function calculateMatchScore(model: AIModel, query: string, availableMode
     });
   }
 
-  // Availability match
   const isAvailable = availableModels.some((m) => m.id === model.id);
   if (lowerQuery === "available" && isAvailable) score += 0.9;
   if (lowerQuery === "unavailable" && !isAvailable) score += 0.9;

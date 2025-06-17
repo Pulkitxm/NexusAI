@@ -67,7 +67,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   };
 
   const handleCancel = () => {
-    setTempKeys(keys); // Reset to original keys
+    setTempKeys(keys);
     onOpenChange(false);
   };
 
