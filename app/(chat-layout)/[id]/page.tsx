@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { ChatInterface } from "@/chat/ui/chat-interface";
 import { useChat } from "@/providers/use-chat";
@@ -23,4 +23,4 @@ export default function ChatPage() {
   }, [chatId, setChatId]);
 
   return <ChatInterface />;
-} 
+}

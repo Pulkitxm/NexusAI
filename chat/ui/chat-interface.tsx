@@ -1,7 +1,7 @@
 "use client";
 
+import { Send, Bot } from "lucide-react";
 import { useRef, useEffect } from "react";
-import { Send, Bot, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,9 +44,7 @@ export function ChatInterface() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <Bot className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
-            No API Keys Configured
-          </h3>
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No API Keys Configured</h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Please configure your API keys in settings to start chatting.
           </p>
@@ -58,23 +56,25 @@ export function ChatInterface() {
   return (
     <div className="flex h-full flex-col">
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <Bot className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
-                Start a new conversation
-              </h3>
+              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Start a new conversation</h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Type a message below to begin chatting with the AI.
               </p>
             </div>
           </div>
         ) : (
-          messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))
+          messages.map((message, index) => {
+            // Check if this is the last assistant message and we're currently loading
+            const isLastAssistantMessage = message.role === "ASSISTANT" && index === messages.length - 1;
+            const isStreaming = isLastAssistantMessage && isLoading;
+
+            return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -89,19 +89,15 @@ export function ChatInterface() {
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Type your message..."
-              className="min-h-[44px] max-h-32 resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              className="max-h-32 min-h-[44px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               disabled={isLoading}
             />
           </div>
-          <Button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="h-10 w-10 p-0"
-          >
+          <Button type="submit" disabled={!input.trim() || isLoading} className="h-10 w-10 p-0">
             <Send className="h-4 w-4" />
           </Button>
         </form>
       </div>
     </div>
   );
-} 
+}

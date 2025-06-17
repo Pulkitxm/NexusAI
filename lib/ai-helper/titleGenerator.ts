@@ -4,6 +4,8 @@ import { z } from "zod";
 import { AI_MODELS } from "@/data/models";
 import { getAiProvider } from "@/lib/ai-helper/get-provider";
 
+import { debugError, debugLog } from "../utils";
+
 const TitleSchema = z.object({
   title: z.string().min(1)
 });
@@ -24,11 +26,23 @@ export async function generateChatTitle({
       return { success: false, error: "Missing required fields" };
     }
 
+    debugLog("Generating chat title", { message, apiKey, modelUUId, openRouter });
+
     const model = AI_MODELS.find((m) => m.uuid === modelUUId);
 
     if (!model) {
+      debugError("Model not found", { modelUUId });
       return { success: false, error: "Model not found" };
     }
+
+    debugLog("Model found", { model });
+
+    debugLog("Getting AI Provider", {
+      modelProvider: model.provider,
+      apiKey,
+      openRouter,
+      finalModelId: model.id
+    });
 
     const aiProviderRes = getAiProvider({
       modelProvider: model.provider,
@@ -37,11 +51,16 @@ export async function generateChatTitle({
       finalModelId: model.id
     });
 
+    debugLog("AI Provider result", { aiProviderRes });
+
     if (!aiProviderRes.success) {
+      debugError("Provider not supported", { model });
       return { success: false, error: "Provider not supported" };
     }
 
     const aiProvider = aiProviderRes.aiModel;
+
+    debugLog("AI Provider", { aiProvider });
 
     const titlePrompt = `Generate a concise, descriptive title (max 50 characters) for a chat that starts with this user message: "${message}".
     
@@ -68,6 +87,8 @@ export async function generateChatTitle({
       prompt: titlePrompt,
       temperature: 0.3
     });
+
+    debugLog("Title generation result", { result });
 
     if (result.object.title && result.object.title.trim() !== "") {
       return { success: true, title: result.object.title.trim() };

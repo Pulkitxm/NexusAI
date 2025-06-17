@@ -27,7 +27,6 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [chatId, setChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<MessageWithAttachments[]>([]);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const router = useRouter();
@@ -44,7 +43,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     handleSubmit: handleAISubmit,
     isLoading,
     error,
-    setMessages: setAIMessages
+    setMessages: setAIMessages,
+    append
   } = useAIChat({
     api: "/api/chat",
     body: {
@@ -57,17 +57,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       webSearch: false,
       attachments: []
     },
-    onFinish: async (message) => {
-      // Convert AI SDK message to our format
-      const newMessage: MessageWithAttachments = {
-        id: `temp-${Date.now()}`,
-        role: "ASSISTANT",
-        content: message.content,
-        createdAt: new Date(),
-        attachments: []
-      };
-
-      setMessages((prev) => [...prev, newMessage]);
+    onFinish: async () => {
+      // The AI SDK handles the message state automatically
+      // We don't need to manually add it here
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -78,8 +70,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (chatId) {
       setIsLoadingMessages(true);
-      setMessages([]); // Clear messages when chatId changes
-      setAIMessages([]); // Clear AI SDK messages as well
 
       const loadMessages = async () => {
         try {
@@ -103,23 +93,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       loadMessages();
     } else {
-      setMessages([]);
       setAIMessages([]);
     }
   }, [chatId, setAIMessages]);
 
-  // Convert AI SDK messages to our format
-  useEffect(() => {
-    const convertedMessages: MessageWithAttachments[] = aiMessages.map((msg, index) => ({
-      id: msg.id || `msg-${index}`,
-      role: msg.role === "user" ? "USER" : "ASSISTANT",
-      content: msg.content,
-      createdAt: new Date(),
-      attachments: []
-    }));
-
-    setMessages(convertedMessages);
-  }, [aiMessages]);
+  // Convert AI SDK messages to our format for the UI
+  const messages: MessageWithAttachments[] = aiMessages.map((msg) => ({
+    id: msg.id,
+    role: msg.role === "user" ? "USER" : "ASSISTANT",
+    content: msg.content,
+    createdAt: new Date(),
+    attachments: []
+  }));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -131,7 +116,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsInitializing(true);
 
-      // If no chatId, create a new chat
+      // If no chatId, create a new chat first
       if (!chatId) {
         const chatResult = await createChatWithTitle({
           currentInput,
@@ -143,18 +128,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
         if (chatResult.success && chatResult.chat) {
           setChatId(chatResult.chat.id);
+          // Redirect to the new chat
           router.push(`/${chatResult.chat.id}`);
+          // Trigger AI response for the new chat
+          append({
+            role: "user",
+            content: currentInput
+          });
+          return;
         } else {
           throw new Error(chatResult.error || "Failed to create chat");
         }
-      } else {
-        // Save user message to database
-        await saveUserMessage({
-          chatId,
-          content: currentInput,
-          attachments: []
-        });
       }
+
+      // For existing chats, save user message to database
+      await saveUserMessage({
+        chatId,
+        content: currentInput,
+        attachments: []
+      });
 
       // Submit to AI SDK
       handleAISubmit(e);
@@ -166,7 +158,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearMessages = () => {
-    setMessages([]);
     setAIMessages([]);
   };
 
@@ -191,4 +182,4 @@ export function useChat() {
     throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
-} 
+}

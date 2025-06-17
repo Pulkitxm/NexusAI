@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import LOGO from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { useSettingsModal } from "@/providers/use-settings";
 import { useSidebar } from "@/providers/use-sidebar";
 
@@ -39,10 +40,10 @@ export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: Sideb
       </div>
 
       <Link href="/">
-        <button className="mb-3 flex h-9 w-full items-center justify-center rounded-md border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white transition-colors hover:from-purple-600 hover:to-purple-700">
+        <Button className="mb-3 flex h-9 w-full items-center justify-center rounded-md border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white transition-colors hover:from-purple-600 hover:to-purple-700">
           <Plus className="mr-2 h-4 w-4" />
           New Chat
-        </button>
+        </Button>
       </Link>
 
       <div className="relative">
