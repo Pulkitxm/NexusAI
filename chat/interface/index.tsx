@@ -13,7 +13,8 @@ import { MessageList } from "./message-list";
 
 export function ChatInterface() {
   const { data: session } = useSession();
-  const { messages, input, handleInputChange, isLoading, isLoadingMessages, inputRef, chatConfig } = useChat();
+  const { messages, input, handleInputChange, isLoading, isLoadingMessages, inputRef, chatConfig, isRedirecting } =
+    useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
     SUGGESTED_PROMPTS[0].section
@@ -109,7 +110,12 @@ export function ChatInterface() {
               </motion.div>
             </div>
           ) : (
-            <MessageList messages={messages} isLoading={isLoading} isLoadingMessages={isLoadingMessages} />
+            <MessageList
+              messages={messages}
+              isLoading={isLoading}
+              isLoadingMessages={isLoadingMessages}
+              isRedirecting={isRedirecting}
+            />
           )}
           <div ref={messagesEndRef} />
         </div>

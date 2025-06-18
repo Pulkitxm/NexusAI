@@ -30,7 +30,14 @@ export function useChats() {
       return response.chats || [];
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5 // 5 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+    retry: (failureCount, error) => {
+      // Don't retry if user is not authenticated
+      if (error.message.includes("not authenticated")) {
+        return false;
+      }
+      return failureCount < 2;
+    }
   });
 }
 

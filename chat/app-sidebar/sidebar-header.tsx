@@ -22,7 +22,7 @@ export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: Sideb
   return (
     <>
       <div className="mb-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/?new=true" className="flex items-center gap-2">
           <img src={LOGO.src} alt="Logo" className="pointer-events-none h-8 w-8 object-contain" draggable={false} />
           <h2 className="bg-gradient-to-r from-purple-600 to-purple-600 bg-clip-text text-base font-semibold text-transparent">
             Nexus AI
@@ -39,7 +39,7 @@ export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: Sideb
         </div>
       </div>
 
-      <Link href="/">
+      <Link href="/?new=true">
         <Button className="mb-3 flex h-9 w-full items-center justify-center rounded-md border-0 bg-gradient-to-r from-purple-500 to-purple-600 text-sm text-white transition-colors hover:from-purple-600 hover:to-purple-700">
           <Plus className="mr-2 h-4 w-4" />
           New Chat

@@ -11,10 +11,12 @@ interface MessageListProps {
   messages: MessageWithAttachments[];
   isLoading: boolean;
   isLoadingMessages: boolean;
+  isRedirecting: boolean;
 }
 
-export function MessageList({ messages, isLoading, isLoadingMessages }: MessageListProps) {
-  if (isLoading || isLoadingMessages) {
+export function MessageList({ messages, isLoading, isLoadingMessages, isRedirecting }: MessageListProps) {
+  // Only show skeleton if we're actually loading messages for a specific chat
+  if (isLoadingMessages && messages.length === 0) {
     return (
       <div className="space-y-1">
         <MessageSkeleton />
@@ -22,7 +24,7 @@ export function MessageList({ messages, isLoading, isLoadingMessages }: MessageL
     );
   }
 
-  if (messages.length === 0)
+  if (messages.length === 0 && !isRedirecting)
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
@@ -44,7 +46,7 @@ export function MessageList({ messages, isLoading, isLoadingMessages }: MessageL
         return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
       })}
 
-      {(isLoading || isLoadingMessages) && <MessageSkeleton />}
+      {isLoading && <MessageSkeleton />}
     </div>
   );
 }

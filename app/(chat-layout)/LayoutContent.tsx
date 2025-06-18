@@ -31,7 +31,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
                 >
                   <PanelLeft className="h-5 w-5" />
                 </Button>
-                <Link href="/">
+                <Link href="/?new=true">
                   <Button variant={"ghost"} size={"icon"} className="flex cursor-pointer items-center gap-2">
                     <Plus className="h-5 w-5" />
                   </Button>

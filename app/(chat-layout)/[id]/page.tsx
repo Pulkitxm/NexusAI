@@ -9,17 +9,13 @@ import { useChat } from "@/providers/use-chat";
 export default function ChatPage() {
   const params = useParams();
   const chatId = params.id as string;
-  const { setChatId } = useChat();
+  const { setChatId, chatId: currentChatId } = useChat();
 
   useEffect(() => {
-    if (chatId) {
+    if (chatId && chatId !== currentChatId) {
       setChatId(chatId);
     }
-
-    return () => {
-      setChatId(null);
-    };
-  }, [chatId, setChatId]);
+  }, [chatId, currentChatId, setChatId]);
 
   return <ChatInterface />;
 }

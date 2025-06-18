@@ -258,8 +258,8 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
       <div className={cn("flex min-w-0 flex-col", isUser ? "max-w-[85%] items-end" : "items-start")}>
         <div
           className={cn(
-            "relative rounded-2xl px-4 py-3 backdrop-blur-sm transition-all duration-200",
-            isUser ? "rounded-br-md border shadow-lg" : ""
+            "relative rounded-2xl px-4 backdrop-blur-sm transition-all duration-200",
+            isUser ? "rounded-br-md border py-3 shadow-lg" : ""
           )}
         >
           <div className="text-sm">
@@ -323,8 +323,8 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
         {/* Action buttons */}
         <div
           className={cn(
-            "mt-2 flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100",
-            isUser ? "justify-end" : "justify-start"
+            "flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100",
+            isUser ? "mt-2 mb-4 justify-end" : "justify-start"
           )}
         >
           <Button

@@ -21,7 +21,7 @@ export function SidebarFooterSection({ session, status }: SidebarFooterSectionPr
   const AuthOption = (
     <Button variant={"ghost"} className="mb-2 w-full">
       {status === "loading" ? (
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-start gap-2">
           <div className="h-5 w-5 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
           <div className="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
         </div>
