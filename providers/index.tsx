@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 
 import Syncer from "@/components/syncer";
 
+import { QueryProvider } from "./query-client";
 import { ChatProvider } from "./use-chat";
 import { FontProvider } from "./use-font";
 import { KeyboardShortcutsProvider } from "./use-keyboardshortcuts";
@@ -18,22 +19,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <KeyboardShortcutsProvider>
-          <KeyProvider>
-            <SidebarProvider>
-              <SettingsModalProvider>
-                <ModelProvider>
-                  <FontProvider>
-                    <ChatProvider>
-                      <Syncer />
-                      <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
-                    </ChatProvider>
-                  </FontProvider>
-                </ModelProvider>
-              </SettingsModalProvider>
-            </SidebarProvider>
-          </KeyProvider>
-        </KeyboardShortcutsProvider>
+        <QueryProvider>
+          <KeyboardShortcutsProvider>
+            <KeyProvider>
+              <SidebarProvider>
+                <SettingsModalProvider>
+                  <ModelProvider>
+                    <FontProvider>
+                      <ChatProvider>
+                        <Syncer />
+                        <UploadAttachmentProvider>{children}</UploadAttachmentProvider>
+                      </ChatProvider>
+                    </FontProvider>
+                  </ModelProvider>
+                </SettingsModalProvider>
+              </SidebarProvider>
+            </KeyProvider>
+          </KeyboardShortcutsProvider>
+        </QueryProvider>
       </ThemeProvider>
     </SessionProvider>
   );

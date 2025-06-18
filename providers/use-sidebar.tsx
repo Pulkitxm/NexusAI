@@ -13,11 +13,11 @@ import {
   SetStateAction
 } from "react";
 
-import { deleteChat, getChats, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
 import { DeleteChatModal } from "@/chat/modals/delete-modal";
 import { RenameChatModal } from "@/chat/modals/rename-modal";
 import { ShareModal } from "@/chat/modals/share-modal";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useChats, useDeleteChat, useUpdateChatTitle } from "@/hooks/use-chat-cache";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { Chat } from "@/types/chat";
@@ -52,34 +52,18 @@ type SidebarContext = {
   openRenameModal: (chatId: string | null) => void;
 };
 
-const SidebarContext = createContext<SidebarContext | null>(null);
+const SidebarContext = createContext<SidebarContext | undefined>(undefined);
 
-export function useSidebar() {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider");
-  }
-  return context;
+function getStoredSidebarState(): boolean {
+  if (typeof window === "undefined") return true;
+  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : true;
 }
 
-const getStoredSidebarState = (): boolean => {
-  if (typeof window === "undefined") return true;
-  try {
-    const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : true;
-  } catch {
-    return true;
-  }
-};
-
-const setSidebarState = (open: boolean): void => {
+function setSidebarState(open: boolean): void {
   if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(open));
-  } catch (error) {
-    console.error("Failed to set sidebar state:", error);
-  }
-};
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(open));
+}
 
 interface SidebarProviderProps {
   children: ReactNode;
@@ -91,13 +75,16 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
   const isMobile = useIsMobile();
   const [open, setOpenState] = useState(() => defaultOpen ?? getStoredSidebarState());
   const [openMobile, setOpenMobile] = useState(false);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [loading, setLoading] = useState(false);
   const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [generatingTitleForChat, setGeneratingTitleForChat] = useState<string | null>(null);
   const [shareModelForChatID, setShareModelForChatID] = useState<string | null>(null);
   const [deleteModelForChatID, setDeleteModelForChatID] = useState<string | null>(null);
   const [renameModelForChatID, setRenameModelForChatID] = useState<string | null>(null);
+
+  // Use cached hooks
+  const { data: chats = [], isLoading: loading, refetch: refreshChats } = useChats();
+  const deleteChatMutation = useDeleteChat();
+  const updateChatTitleMutation = useUpdateChatTitle();
 
   const setOpen = useCallback(
     (newOpen: boolean) => {
@@ -117,57 +104,38 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
     }
   }, [isMobile, open, setOpen]);
 
-  const fetchChats = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getChats();
-      if (!response.success) throw new Error(response.error);
-      const mappedChats = response.chats?.map((chat) => ({
-        id: chat.id,
-        title: chat.title || `Chat ${chat.id}`,
-        updatedAt: chat.updatedAt
-      }));
-      setChats(mappedChats || []);
-    } catch (error) {
-      console.error("Error fetching chats:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refreshChats = useCallback(() => {
-    fetchChats();
-  }, [fetchChats]);
-
   const handleDeleteChat = useCallback(
     async (chatId: string) => {
       setLoadingChatId(chatId);
       try {
-        const res = await deleteChat({ chatId });
-        if (res.success) {
-          setChats((prev) => prev.filter((chat) => chat.id !== chatId));
-          router.push("/");
-        }
+        await deleteChatMutation.mutateAsync({ chatId });
+        router.push("/");
+      } catch (error) {
+        console.error("Error deleting chat:", error);
       } finally {
         setLoadingChatId(null);
       }
     },
-    [router]
+    [deleteChatMutation, router]
   );
 
   const addChat = useCallback((chat: Chat) => {
-    setChats((prev) => [chat, ...prev]);
+    // This will be handled by the cache automatically when a new chat is created
   }, []);
 
-  const updateChatTitle = useCallback(async (chatId: string, title: string) => {
-    setLoadingChatId(chatId);
-    try {
-      await updateChatTitleAction({ chatId, title });
-      setChats((prev) => prev.map((chat) => (chat.id === chatId ? { ...chat, title, updatedAt: new Date() } : chat)));
-    } finally {
-      setLoadingChatId(null);
-    }
-  }, []);
+  const updateChatTitle = useCallback(
+    async (chatId: string, title: string) => {
+      setLoadingChatId(chatId);
+      try {
+        await updateChatTitleMutation.mutateAsync({ chatId, title });
+      } catch (error) {
+        console.error("Error updating chat title:", error);
+      } finally {
+        setLoadingChatId(null);
+      }
+    },
+    [updateChatTitleMutation]
+  );
 
   const openShareModal = useCallback((chatId: string | null) => {
     setShareModelForChatID(chatId);
@@ -180,10 +148,6 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
   const openRenameModal = useCallback((chatId: string | null) => {
     setRenameModelForChatID(chatId);
   }, []);
-
-  useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -207,7 +171,7 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       setOpenMobile,
       toggleSidebar,
       chats,
-      setChats,
+      setChats: () => {}, // No-op since we're using cached data
       loading,
       deleteChat: handleDeleteChat,
       refreshChats,
@@ -255,4 +219,12 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       <RenameChatModal />
     </SidebarContext.Provider>
   );
+}
+
+export function useSidebar() {
+  const context = useContext(SidebarContext);
+  if (context === undefined) {
+    throw new Error("useSidebar must be used within a SidebarProvider");
+  }
+  return context;
 }

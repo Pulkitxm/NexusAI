@@ -4,10 +4,11 @@ import { useChat as useAIChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
-import { createChatWithTitle, saveUserMessage, getChatMessages } from "@/actions/chat";
 import { MESSAGE_LIMIT } from "@/data";
 import { getAvailableModels } from "@/data/models";
+import { useChatMessages, useCreateChat, useSaveUserMessage } from "@/hooks/use-chat-cache";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
 import { useKeys } from "@/providers/use-keys";
 import { useModel } from "@/providers/use-model";
@@ -23,6 +24,7 @@ const STORAGE_KEYS = {
 } as const;
 
 interface ChatConfig {
+  error: string | null;
   reasoning: Reasoning | null;
   webSearch: boolean;
   attachments: Attachment[];
@@ -47,6 +49,7 @@ interface ChatContextType {
   messageCount: number;
   chatConfig: ChatConfig;
   setChatConfig: (config: ChatConfig) => void;
+  isLoadingMessages: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -58,10 +61,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
 
   const [chatConfig, setChatConfig] = useState<ChatConfig>({
+    error: null,
     reasoning: null,
     webSearch: false,
     attachments: [],
@@ -73,6 +76,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { keys, hasAnyKeys } = useKeys();
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
+
+  // Use cached hooks
+  const { data: cachedMessages = [], isLoading: isLoadingMessages, error: messagesError } = useChatMessages(chatId);
+  const createChatMutation = useCreateChat();
+  const saveUserMessageMutation = useSaveUserMessage();
 
   const aiChatBody = {
     model: selectedModelConfig?.uuid,
@@ -114,38 +122,35 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
+  // Update AI messages when cached messages change
   useEffect(() => {
-    if (chatId) {
-      setIsLoadingMessages(true);
-
-      const loadMessages = async () => {
-        try {
-          const result = await getChatMessages({ chatId });
-          if (result.success && result.messages) {
-            const aiFormatMessages = result.messages.map((msg) => ({
-              id: msg.id,
-              role: msg.role === "USER" ? ("user" as const) : ("assistant" as const),
-              content: msg.content
-            }));
-
-            setAIMessages(aiFormatMessages);
-          }
-        } catch (error) {
-          console.error("Error loading chat messages:", error);
-        } finally {
-          setIsLoadingMessages(false);
-        }
-      };
-
-      loadMessages();
-    } else {
+    if (cachedMessages.length > 0) {
+      const aiFormatMessages = cachedMessages.map((msg) => ({
+        id: msg.id,
+        role: msg.role === "USER" ? ("user" as const) : ("assistant" as const),
+        content: msg.content
+      }));
+      setAIMessages(aiFormatMessages);
+    } else if (chatId) {
       setAIMessages([]);
     }
-  }, [chatId, setAIMessages]);
+  }, [cachedMessages, chatId, setAIMessages]);
+
+  // Handle messages error
+  useEffect(() => {
+    if (messagesError) {
+      setChatConfig((prev) => ({
+        ...prev,
+        error: messagesError.message
+      }));
+      toast.error("Failed to load chat messages");
+    }
+  }, [messagesError]);
 
   useEffect(() => {
     if (selectedModel) {
       setChatConfig({
+        error: null,
         reasoning: null,
         webSearch: false,
         attachments: [],
@@ -185,7 +190,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       setIsInitializing(true);
 
       if (!chatId) {
-        const chatResult = await createChatWithTitle({
+        const chatResult = await createChatMutation.mutateAsync({
           currentInput,
           apiKey: keys[selectedModelConfig.provider] || "",
           openRouter: keys.openrouter ? true : false,
@@ -193,26 +198,23 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           attachments: []
         });
 
-        if (chatResult.success && chatResult.chat) {
-          setChatId(chatResult.chat.id);
-
-          router.push(`/${chatResult.chat.id}`);
+        if (chatResult) {
+          setChatId(chatResult.id);
+          router.push(`/${chatResult.id}`);
 
           append({
             role: "user",
             content: currentInput
           });
           return;
-        } else {
-          throw new Error(chatResult.error || "Failed to create chat");
         }
+      } else {
+        await saveUserMessageMutation.mutateAsync({
+          chatId,
+          content: currentInput,
+          attachments: []
+        });
       }
-
-      await saveUserMessage({
-        chatId,
-        content: currentInput,
-        attachments: []
-      });
 
       handleAISubmit(e);
     } catch (error) {
@@ -233,7 +235,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     handleInputChange,
     handleSubmit,
     isLoading: isLoading || isInitializing || isLoadingMessages,
-    error: error || null,
+    error: error || messagesError || null,
     chatId,
     setChatId,
     clearMessages,
@@ -242,7 +244,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setAttachments,
     messageCount,
     chatConfig,
-    setChatConfig
+    setChatConfig,
+    isLoadingMessages
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

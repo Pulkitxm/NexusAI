@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 
+import { usePrefetchChatMessages } from "@/hooks/use-chat-cache";
 import { useSidebar } from "@/providers/use-sidebar";
 
 import { DropdownMenu } from "./dropdown-menu";
@@ -26,6 +27,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { updateChatTitle, openDeleteModal, setLoadingChatId, openShareModal } = useSidebar();
+  const prefetchChatMessages = usePrefetchChatMessages();
 
   const handleRename = useCallback(async () => {
     setIsRenaming(false);
@@ -61,6 +63,11 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
     [handleRename]
   );
 
+  const handleMouseEnter = useCallback(() => {
+    // Prefetch chat messages on hover
+    prefetchChatMessages(chat.id);
+  }, [chat.id, prefetchChatMessages]);
+
   useEffect(() => {
     if (isRenaming && inputRef.current) {
       inputRef.current.focus();
@@ -89,7 +96,7 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
 
   return (
     <div className="relative">
-      <Link href={`/${chat.id}`} onDoubleClick={handleDoubleClick}>
+      <Link href={`/${chat.id}`} onDoubleClick={handleDoubleClick} onMouseEnter={handleMouseEnter}>
         <div
           className={`group flex h-auto w-full cursor-pointer items-center justify-start rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${
             isActive ? "bg-gray-100 dark:bg-gray-800" : ""
@@ -128,18 +135,20 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
                     )}
                   </span>
                 )}
-                <button
-                  className="h-5 w-5 cursor-pointer p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowDropdown(!showDropdown);
-                  }}
-                >
-                  <EllipsisVertical className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-                </button>
               </div>
             </div>
+          </div>
+          <div className="flex-shrink-0">
+            <button
+              className="h-5 w-5 cursor-pointer p-0 opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDropdown(!showDropdown);
+              }}
+            >
+              <EllipsisVertical className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+            </button>
           </div>
         </div>
       </Link>

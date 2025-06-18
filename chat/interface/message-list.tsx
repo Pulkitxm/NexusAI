@@ -10,20 +10,19 @@ import type { MessageWithAttachments } from "@/types/chat";
 interface MessageListProps {
   messages: MessageWithAttachments[];
   isLoading: boolean;
+  isLoadingMessages: boolean;
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
-  if (messages.length === 0) {
-    if (isLoading) {
-      return (
-        <div className="space-y-1">
-          <MessageSkeleton isUser={false} lines={4} />
-          <MessageSkeleton isUser={true} lines={2} />
-          <MessageSkeleton isUser={false} lines={3} />
-        </div>
-      );
-    }
+export function MessageList({ messages, isLoading, isLoadingMessages }: MessageListProps) {
+  if (isLoading || isLoadingMessages) {
+    return (
+      <div className="space-y-1">
+        <MessageSkeleton />
+      </div>
+    );
+  }
 
+  if (messages.length === 0)
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
@@ -35,20 +34,17 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
         </div>
       </div>
     );
-  }
 
   return (
     <div className="space-y-1">
       {messages.map((message, index) => {
-        // Check if this is the last assistant message and we're currently loading
         const isLastAssistantMessage = message.role === "ASSISTANT" && index === messages.length - 1;
         const isStreaming = isLastAssistantMessage && isLoading;
 
         return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
       })}
 
-      {/* Show skeleton for the next message when loading */}
-      {isLoading && <MessageSkeleton isUser={false} lines={3} />}
+      {(isLoading || isLoadingMessages) && <MessageSkeleton />}
     </div>
   );
 }

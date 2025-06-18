@@ -13,7 +13,7 @@ import { MessageList } from "./message-list";
 
 export function ChatInterface() {
   const { data: session } = useSession();
-  const { messages, input, handleInputChange, isLoading, inputRef } = useChat();
+  const { messages, input, handleInputChange, isLoading, isLoadingMessages, inputRef, chatConfig } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
     SUGGESTED_PROMPTS[0].section
@@ -25,11 +25,19 @@ export function ChatInterface() {
 
   const hide = input || messages.length > 0;
 
+  if (chatConfig.error) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-red-500">{chatConfig.error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex size-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="flex-1 overflow-y-auto px-4">
         <div className="mx-auto max-w-3xl overflow-y-auto py-6">
-          {messages.length === 0 && !isLoading ? (
+          {messages.length === 0 && !isLoading && !isLoadingMessages ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, display: "none", pointerEvents: "none" }}
@@ -101,7 +109,7 @@ export function ChatInterface() {
               </motion.div>
             </div>
           ) : (
-            <MessageList messages={messages} isLoading={isLoading} />
+            <MessageList messages={messages} isLoading={isLoading} isLoadingMessages={isLoadingMessages} />
           )}
           <div ref={messagesEndRef} />
         </div>
