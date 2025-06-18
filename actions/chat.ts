@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/authOptions";
+import { debugLog } from "@/lib/utils";
 import { prisma } from "@/prisma";
 
 import { generateChatTitle } from "../lib/ai-helper/titleGenerator";
@@ -332,6 +333,8 @@ export const createChatWithTitle = async ({
   if (!userId) {
     return { success: false, error: "User not authenticated" };
   }
+
+  debugLog("createChatWithTitle", { currentInput, apiKey, openRouter, modelUUId, attachments });
 
   const title = await generateChatTitle({
     apiKey,

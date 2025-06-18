@@ -38,7 +38,6 @@ interface ChatContextType {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
   isStreaming: boolean;
-  error: Error | null;
   chatId: string | null;
   setChatId: (id: string | null) => void;
   clearMessages: () => void;
@@ -68,7 +67,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
-  const [error, setError] = useState<Error | null>(null);
   const [chatConfig, setChatConfig] = useState<ChatConfig>({
     error: null,
     reasoning: null,
@@ -84,6 +82,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { keys, hasAnyKeys } = useKeys();
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
+
+  const apiKey = chatConfig.openRouter
+    ? keys.openrouter
+    : selectedModelConfig
+      ? keys[selectedModelConfig.provider]
+      : undefined;
 
   const { data: cachedMessages = [], isLoading: isLoadingMessages, error: messagesError } = useChatMessages(chatId);
   const { data: chats = [] } = useChats();
@@ -121,7 +125,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setInput("");
     setAttachments([]);
     setIsStreaming(false);
-    setError(null);
     setChatConfig({
       error: null,
       reasoning: null,
@@ -149,8 +152,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       if (!input.trim() || !hasAnyKeys || !selectedModelConfig) return;
 
+      if (!apiKey) {
+        return toast.error("No API key found");
+      }
+
       const currentInput = input.trim();
-      setError(null);
 
       try {
         setIsInitializing(true);
@@ -164,7 +170,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         if (!chatId) {
           const chatResult = await createChatMutation.mutateAsync({
             currentInput,
-            apiKey: keys[selectedModelConfig.provider] || "",
+            apiKey,
             openRouter: keys.openrouter ? true : false,
             modelUUId: selectedModelConfig.uuid,
             attachments: []
@@ -216,7 +222,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             ],
             model: selectedModelConfig.uuid,
             provider: selectedModelConfig.provider,
-            apiKey: chatConfig.openRouter ? keys.openrouter : keys[selectedModelConfig.provider],
+            apiKey,
             chatId: chatId || undefined,
             reasoning: chatConfig.reasoning,
             attachments: attachments.map((att) => att.id),
@@ -280,7 +286,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error in chat submission:", error);
-        setError(error instanceof Error ? error : new Error("Unknown error"));
         toast.error("Failed to send message");
 
         setMessages((prev) => prev.slice(0, -1));
@@ -305,9 +310,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       session,
       messageCount,
       attachments,
-      chatConfig
+      chatConfig,
+      apiKey
     ]
   );
+
+  if (messages.length) console.log({ messages });
 
   useEffect(() => {
     const isRootPage = pathname === "/";
@@ -423,7 +431,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     handleSubmit,
     isLoading: isStreaming || isInitializing || (chatId ? isLoadingMessages : false),
     isStreaming,
-    error: error || messagesError || null,
     chatId,
     setChatId,
     clearMessages,

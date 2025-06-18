@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { getChats, getChatMessages, deleteChat, updateChatTitle as updateChatTitleAction } from "@/actions/chat";
 import { createChatWithTitle, saveUserMessage, saveAssistantMessage } from "@/actions/chat";
+import { debugLog } from "@/lib/utils";
 
 import type { Chat } from "@/types/chat";
 
@@ -72,6 +73,7 @@ export function useCreateChat() {
       modelUUId: string;
       attachments?: { id: string }[];
     }) => {
+      debugLog("createChatWithTitle", { currentInput, apiKey, openRouter, modelUUId, attachments });
       const response = await createChatWithTitle({
         currentInput,
         apiKey,
@@ -79,6 +81,7 @@ export function useCreateChat() {
         modelUUId,
         attachments
       });
+      debugLog("createChatWithTitle response", response);
       if (!response.success) {
         throw new Error(response.error || "Failed to create chat");
       }

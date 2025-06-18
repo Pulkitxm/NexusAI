@@ -3,8 +3,6 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { prisma } from "@/prisma";
 
-import { debugLog } from "./utils";
-
 declare module "next-auth" {
   interface Session {
     user: {
@@ -81,8 +79,6 @@ const { auth, handlers, signIn, signOut, unstable_update } = NextAuth({
             }
           }
         });
-
-        debugLog("Session user", dbUser);
 
         if (!dbUser) throw new Error("User not found");
 
