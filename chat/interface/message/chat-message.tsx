@@ -2,11 +2,12 @@
 
 import { Copy, Check, Volume2, FileText, ImageIcon, Download, Eye, EyeOff, Code, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo, useRef } from "react";
 
 import { MemoizedMarkdown } from "@/components/markdown/markdown-rendered";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes } from "@/lib/utils";
+
 import { StreamingIndicator } from "../streaming-indicator";
 
 import { UserMessage } from "./user-message";
@@ -207,6 +208,7 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const copyMessage = useCallback(async () => {
     try {
@@ -238,6 +240,12 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
   const handleImageError = useCallback((attachmentId: string) => {
     setImageErrors((prev) => new Set(prev).add(attachmentId));
   }, []);
+
+  useEffect(() => {
+    if (isStreaming && contentRef.current) {
+      contentRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [isStreaming]);
 
   const imageAttachments =
     message.attachments?.filter((att) => isImageFile(att.name) && !imageErrors.has(att.id)) || [];

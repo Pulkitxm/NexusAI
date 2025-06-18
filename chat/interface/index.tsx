@@ -15,7 +15,6 @@ export function ChatInterface() {
   const { data: session } = useSession();
   const {
     messages,
-    input,
     handleInputChange,
     isLoading,
     isStreaming,
@@ -31,15 +30,30 @@ export function ChatInterface() {
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const timeoutId = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages, isStreaming]);
 
-  const hide = input || messages.length > 0;
+  const isInitialState = !chatId && messages.length === 0 && !isLoading && !isLoadingMessages && !isRedirecting;
+  const showErrorState = chatConfig.error;
 
-  if (chatConfig.error) {
+  if (showErrorState) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-red-500">{chatConfig.error}</div>
+        <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
+          <div className="flex items-center gap-2 text-red-500">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>{chatConfig.error}</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -48,17 +62,12 @@ export function ChatInterface() {
     <div className="flex size-full flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="flex-1 overflow-x-hidden overflow-y-auto px-4">
         <div className="mx-auto max-w-3xl overflow-y-auto py-6">
-          {!chatId && messages.length === 0 && !isLoading && !isLoadingMessages ? (
+          {isInitialState ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div
-                initial={{ opacity: 0, display: "none", pointerEvents: "none" }}
-                animate={{
-                  opacity: !hide ? 1 : 0,
-                  display: !hide ? "block" : "none",
-                  pointerEvents: !hide ? "auto" : "none"
-                }}
-                transition={{ duration: 0.1, ease: "easeInOut" }}
-                exit={{ opacity: 0, display: "none", pointerEvents: "none" }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className="space-y-4 text-center"
               >
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
@@ -82,23 +91,21 @@ export function ChatInterface() {
                 </div>
                 <div className="flex flex-col items-center justify-center gap-2">
                   <div className="flex flex-wrap gap-2 md:col-span-2">
-                    {SUGGESTED_PROMPTS.map((prompt) => {
-                      return (
-                        <Button
-                          key={prompt.section}
-                          variant={promptSection === prompt.section ? "default" : "link"}
-                          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-purple-500 transition-all dark:text-purple-400 ${
-                            promptSection === prompt.section
-                              ? "bg-purple-500 text-white hover:bg-purple-500 dark:bg-purple-400 dark:text-black dark:hover:bg-purple-400"
-                              : ""
-                          }`}
-                          onClick={() => setPromptSection(prompt.section)}
-                        >
-                          <prompt.icon className="h-4 w-4" />
-                          {prompt.section}
-                        </Button>
-                      );
-                    })}
+                    {SUGGESTED_PROMPTS.map((prompt) => (
+                      <Button
+                        key={prompt.section}
+                        variant={promptSection === prompt.section ? "default" : "link"}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-purple-500 transition-all dark:text-purple-400 ${
+                          promptSection === prompt.section
+                            ? "bg-purple-500 text-white hover:bg-purple-500 dark:bg-purple-400 dark:text-black dark:hover:bg-purple-400"
+                            : ""
+                        }`}
+                        onClick={() => setPromptSection(prompt.section)}
+                      >
+                        <prompt.icon className="h-4 w-4" />
+                        {prompt.section}
+                      </Button>
+                    ))}
                   </div>
 
                   <div className="flex max-h-[calc(100vh-24rem)] flex-col gap-2 overflow-y-auto">

@@ -30,23 +30,28 @@ interface ChatConfig {
   canUseOpenRouter: boolean;
 }
 
-interface ChatContextType {
+interface ChatState {
   messages: MessageWithAttachments[];
   input: string;
+  isStreaming: boolean;
+  isInitializing: boolean;
+  error: string | null;
+  chatId: string | null;
+  attachments: Attachment[];
+  chatConfig: ChatConfig;
+}
+
+interface ChatContextType extends ChatState {
   setInput: (input: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
-  isStreaming: boolean;
-  chatId: string | null;
   setChatId: (id: string | null) => void;
   clearMessages: () => void;
   clearChat: () => void;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  attachments: Attachment[];
-  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
+  inputRef: React.RefObject<HTMLTextAreaElement>;
+  setAttachments: (attachments: Attachment[] | ((prev: Attachment[]) => Attachment[])) => void;
   messageCount: number;
-  chatConfig: ChatConfig;
   setChatConfig: (config: ChatConfig) => void;
   isLoadingMessages: boolean;
   isRedirecting: boolean;
@@ -54,45 +59,60 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { data: session } = useSession();
-
-  const [messages, setMessages] = useState<MessageWithAttachments[]>([]);
-  const [input, setInput] = useState("");
-  const [chatId, setChatIdState] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
-  const [chatConfig, setChatConfig] = useState<ChatConfig>({
+const initialChatState: ChatState = {
+  messages: [],
+  input: "",
+  isStreaming: false,
+  isInitializing: false,
+  error: null,
+  chatId: null,
+  attachments: [],
+  chatConfig: {
     error: null,
     reasoning: null,
     webSearch: false,
     attachments: [],
     openRouter: false,
     canUseOpenRouter: false
-  });
+  }
+};
 
+export function ChatProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: session } = useSession();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const streamingMessageRef = useRef<string | null>(null);
+  const messagesRef = useRef<MessageWithAttachments[]>([]);
+
+  const [chatState, setChatState] = useState<ChatState>(initialChatState);
+  const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const { selectedModel } = useModel();
   const { keys, hasAnyKeys } = useKeys();
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
 
-  const apiKey = chatConfig.openRouter
+  const apiKey = chatState.chatConfig.openRouter
     ? keys.openrouter
     : selectedModelConfig
       ? keys[selectedModelConfig.provider]
       : undefined;
 
-  const { data: cachedMessages = [], isLoading: isLoadingMessages, error: messagesError } = useChatMessages(chatId);
+  const {
+    data: cachedMessages = [],
+    isLoading: isLoadingMessages,
+    error: messagesError
+  } = useChatMessages(chatState.chatId);
   const { data: chats = [] } = useChats();
   const createChatMutation = useCreateChat();
   const saveUserMessageMutation = useSaveUserMessage();
+
+  const hasLoadedCachedMessages = useRef(false);
+  const isLoadingCachedMessages = useRef(false);
+
+  messagesRef.current = chatState.messages;
 
   const appendMessage = useCallback((message: Omit<MessageWithAttachments, "id" | "createdAt">) => {
     const newMessage: MessageWithAttachments = {
@@ -100,66 +120,91 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       createdAt: new Date()
     };
-    setMessages((prev) => [...prev, newMessage]);
+
+    setChatState((prev) => {
+      const isDuplicate = prev.messages.some(
+        (msg) =>
+          msg.content === newMessage.content &&
+          msg.role === newMessage.role &&
+          Math.abs(new Date(msg.createdAt).getTime() - newMessage.createdAt.getTime()) < 1000
+      );
+
+      if (isDuplicate) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        messages: [...prev.messages, newMessage]
+      };
+    });
+    return newMessage.id;
   }, []);
 
-  const updateLastMessage = useCallback((content: string) => {
-    setMessages((prev) => {
-      if (prev.length === 0) return prev;
-      const newMessages = [...prev];
-      newMessages[newMessages.length - 1] = {
-        ...newMessages[newMessages.length - 1],
-        content
-      };
-      return newMessages;
-    });
+  const updateMessage = useCallback((messageId: string, content: string) => {
+    setChatState((prev) => ({
+      ...prev,
+      messages: prev.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg))
+    }));
   }, []);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    setChatState((prev) => ({
+      ...prev,
+      input: e.target.value
+    }));
   }, []);
 
   const clearChat = useCallback(() => {
-    setChatIdState(null);
-    setMessages([]);
-    setInput("");
-    setAttachments([]);
-    setIsStreaming(false);
-    setChatConfig({
-      error: null,
-      reasoning: null,
-      webSearch: false,
-      attachments: [],
-      openRouter: false,
-      canUseOpenRouter: false
-    });
+    setChatState(initialChatState);
+    hasLoadedCachedMessages.current = false;
+    isLoadingCachedMessages.current = false;
+    if (streamingMessageRef.current) {
+      streamingMessageRef.current = null;
+    }
   }, []);
 
   const clearMessages = useCallback(() => {
-    setMessages([]);
+    setChatState((prev) => ({
+      ...prev,
+      messages: []
+    }));
+    hasLoadedCachedMessages.current = false;
   }, []);
 
   const setChatId = useCallback((id: string | null) => {
-    setChatIdState(id);
+    setChatState((prev) => ({
+      ...prev,
+      chatId: id
+    }));
     if (id) {
       setStoredValue(STORAGE_KEYS.LAST_CHAT_ID, id);
     }
+    hasLoadedCachedMessages.current = false;
+    isLoadingCachedMessages.current = false;
   }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      if (!input.trim() || !hasAnyKeys || !selectedModelConfig) return;
+      if (!chatState.input.trim() || !hasAnyKeys || !selectedModelConfig) return;
 
       if (!apiKey) {
         return toast.error("No API key found");
       }
 
-      const currentInput = input.trim();
+      const currentInput = chatState.input.trim();
+      const currentChatId = chatState.chatId;
+      const currentMessages = messagesRef.current;
 
       try {
-        setIsInitializing(true);
+        setChatState((prev) => ({
+          ...prev,
+          isInitializing: true,
+          error: null,
+          input: ""
+        }));
 
         appendMessage({
           role: "USER",
@@ -167,7 +212,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           attachments: []
         });
 
-        if (!chatId) {
+        let activeChatId = currentChatId;
+
+        if (!currentChatId) {
           const chatResult = await createChatMutation.mutateAsync({
             currentInput,
             apiKey,
@@ -177,32 +224,30 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           });
 
           if (chatResult) {
+            activeChatId = chatResult.id;
             setChatId(chatResult.id);
             router.push(`/${chatResult.id}`);
           }
         } else {
           await saveUserMessageMutation.mutateAsync({
-            chatId,
+            chatId: currentChatId,
             content: currentInput,
             attachments: []
           });
         }
 
-        setIsStreaming(true);
-        setInput("");
+        setChatState((prev) => ({
+          ...prev,
+          isStreaming: true
+        }));
 
-        appendMessage({
+        streamingMessageRef.current = appendMessage({
           role: "ASSISTANT",
           content: "",
           attachments: []
         });
 
-        debugLog("apikey", {
-          openrouter: chatConfig.openRouter,
-          keys,
-          selectedKey: chatConfig.openRouter ? keys.openrouter : keys[selectedModelConfig.provider],
-          selectedModelConfig
-        });
+        debugLog("Starting stream", { messageId: streamingMessageRef.current });
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -210,31 +255,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            messages: [
-              ...messages.map((msg) => ({
-                role: msg.role === "USER" ? "user" : "assistant",
-                content: msg.content
-              })),
-              {
-                role: "user",
-                content: currentInput
-              }
-            ],
+            messages: [...currentMessages, { role: "user", content: currentInput }].map((msg) => ({
+              role: msg.role === "USER" ? "user" : "assistant",
+              content: msg.content
+            })),
             model: selectedModelConfig.uuid,
             provider: selectedModelConfig.provider,
             apiKey,
-            chatId: chatId || undefined,
-            reasoning: chatConfig.reasoning,
-            attachments: attachments.map((att) => att.id),
-            webSearch: chatConfig.webSearch,
-            openRouter: chatConfig.openRouter
+            chatId: activeChatId || undefined,
+            reasoning: chatState.chatConfig.reasoning,
+            attachments: chatState.attachments.map((att) => att.id),
+            webSearch: chatState.chatConfig.webSearch,
+            openRouter: chatState.chatConfig.openRouter
           })
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error?.message || `HTTP error! status: ${response.status}`;
-          throw new Error(errorMessage);
+          throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
         }
 
         const reader = response.body?.getReader();
@@ -260,9 +298,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               }
               try {
                 const parsed = JSON.parse(data);
-                if (parsed.type === "text" && parsed.content) {
+                if (parsed.type === "text" && parsed.content && streamingMessageRef.current) {
                   assistantResponse += parsed.content;
-                  updateLastMessage(assistantResponse);
+                  updateMessage(streamingMessageRef.current, assistantResponse);
                 } else if (parsed.type === "done") {
                   break;
                 } else if (parsed.type === "error") {
@@ -273,6 +311,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               }
             }
           }
+        }
+
+        if (assistantResponse && streamingMessageRef.current) {
+          updateMessage(streamingMessageRef.current, assistantResponse);
         }
 
         if (!session) {
@@ -286,36 +328,59 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error in chat submission:", error);
-        toast.error("Failed to send message");
+        const errorMessage = error instanceof Error ? error.message : "Failed to send message";
 
-        setMessages((prev) => prev.slice(0, -1));
+        if (streamingMessageRef.current) {
+          setChatState((prev) => ({
+            ...prev,
+            error: errorMessage,
+            messages: prev.messages.filter((msg) => msg.id !== streamingMessageRef.current)
+          }));
+        } else {
+          setChatState((prev) => ({
+            ...prev,
+            error: errorMessage
+          }));
+        }
+
+        toast.error(errorMessage);
       } finally {
-        setIsStreaming(false);
-        setIsInitializing(false);
+        setChatState((prev) => ({
+          ...prev,
+          isStreaming: false,
+          isInitializing: false
+        }));
+        streamingMessageRef.current = null;
       }
     },
     [
-      input,
+      chatState.input,
+      chatState.chatId,
+      chatState.chatConfig.reasoning,
+      chatState.chatConfig.webSearch,
+      chatState.chatConfig.openRouter,
+      chatState.attachments,
       hasAnyKeys,
       selectedModelConfig,
-      chatId,
+      apiKey,
       createChatMutation,
-      keys,
+      keys.openrouter,
       setChatId,
       router,
       saveUserMessageMutation,
-      messages,
       appendMessage,
-      updateLastMessage,
+      updateMessage,
       session,
-      messageCount,
-      attachments,
-      chatConfig,
-      apiKey
+      messageCount
     ]
   );
 
-  if (messages.length) console.log({ messages });
+  if (chatState.messages.length > 0) {
+    debugLog(
+      "messages",
+      chatState.messages.map((a) => a.content.slice(0, 10))
+    );
+  }
 
   useEffect(() => {
     const isRootPage = pathname === "/";
@@ -323,7 +388,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const forceNewChat = searchParams.get("new") === "true";
 
     if (isRootPage) {
-      if (chatId) {
+      if (chatState.chatId) {
         clearChat();
       }
 
@@ -348,23 +413,26 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsRedirecting(false);
-  }, [pathname, session?.user?.id, chats, router, chatId, clearChat]);
+  }, [pathname, session?.user?.id, chats, router, chatState.chatId, clearChat]);
 
   useEffect(() => {
-    if (chatId) {
-      setIsInitializing(false);
+    if (chatState.chatId) {
+      setChatState((prev) => ({
+        ...prev,
+        isInitializing: false
+      }));
     }
-  }, [chatId]);
+  }, [chatState.chatId]);
 
   useEffect(() => {
-    debugLog("chatId", { chatId, cachedMessages });
-    if (!chatId) {
-      debugLog("clearing messages coz chatId is null");
-      setMessages([]);
+    if (!chatState.chatId) {
+      clearMessages();
       return;
     }
 
-    if (cachedMessages.length > 0) {
+    if (cachedMessages.length > 0 && !hasLoadedCachedMessages.current && !isLoadingCachedMessages.current) {
+      isLoadingCachedMessages.current = true;
+
       const formattedMessages = cachedMessages.map((msg) => ({
         id: msg.id,
         role: msg.role,
@@ -373,27 +441,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         attachments: msg.attachments || []
       }));
 
-      setMessages((prevMessages) => {
-        if (prevMessages.length !== formattedMessages.length) {
-          return formattedMessages;
-        }
+      setChatState((prev) => ({
+        ...prev,
+        messages: formattedMessages
+      }));
 
-        const isSame = prevMessages.every(
-          (prev, index) => prev.id === formattedMessages[index].id && prev.content === formattedMessages[index].content
-        );
-
-        return isSame ? prevMessages : formattedMessages;
-      });
-    } else if (messages.length > 0) {
-      setMessages([]);
+      hasLoadedCachedMessages.current = true;
+      isLoadingCachedMessages.current = false;
     }
-  }, [chatId, cachedMessages.length]);
+  }, [chatState.chatId, cachedMessages, clearMessages]);
 
   useEffect(() => {
     if (messagesError) {
-      setChatConfig((prev) => ({
+      setChatState((prev) => ({
         ...prev,
-        error: messagesError.message
+        chatConfig: {
+          ...prev.chatConfig,
+          error: messagesError.message
+        }
       }));
       toast.error("Failed to load chat messages");
     }
@@ -401,14 +466,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (selectedModel) {
-      setChatConfig({
-        error: null,
-        reasoning: null,
-        webSearch: false,
-        attachments: [],
-        openRouter: false,
-        canUseOpenRouter: false
-      });
+      setChatState((prev) => ({
+        ...prev,
+        chatConfig: {
+          error: null,
+          reasoning: null,
+          webSearch: false,
+          attachments: [],
+          openRouter: false,
+          canUseOpenRouter: false
+        }
+      }));
     }
   }, [selectedModel]);
 
@@ -416,32 +484,34 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (!selectedModelConfig) return;
 
     if (keys.openrouter) {
-      setChatConfig((prev) => ({
+      setChatState((prev) => ({
         ...prev,
-        openRouter: true
+        chatConfig: {
+          ...prev.chatConfig,
+          openRouter: true
+        }
       }));
     }
   }, [selectedModelConfig, keys]);
 
   const value: ChatContextType = {
-    messages,
-    input,
-    setInput,
+    ...chatState,
+    setInput: (input: string) => setChatState((prev) => ({ ...prev, input })),
     handleInputChange,
     handleSubmit,
-    isLoading: isStreaming || isInitializing || (chatId ? isLoadingMessages : false),
-    isStreaming,
-    chatId,
+    isLoading: chatState.isStreaming || chatState.isInitializing || (chatState.chatId ? isLoadingMessages : false),
     setChatId,
     clearMessages,
     clearChat,
-    inputRef,
-    attachments,
-    setAttachments,
+    inputRef: inputRef as React.RefObject<HTMLTextAreaElement>,
+    setAttachments: (newAttachments) =>
+      setChatState((prev) => ({
+        ...prev,
+        attachments: Array.isArray(newAttachments) ? newAttachments : newAttachments(prev.attachments)
+      })),
     messageCount,
-    chatConfig,
-    setChatConfig,
-    isLoadingMessages: chatId ? isLoadingMessages : false,
+    setChatConfig: (config) => setChatState((prev) => ({ ...prev, chatConfig: config })),
+    isLoadingMessages: chatState.chatId ? isLoadingMessages : false,
     isRedirecting
   };
 
