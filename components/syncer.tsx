@@ -23,28 +23,23 @@ export default function Syncer() {
   const { toggleModal: toggleKeyboardShortcuts } = useKeyboardShortcuts();
   const { toggleModal: toggleModelModal } = useModel();
 
-  // Use ref to track if theme has been synced to avoid unnecessary state
   const hasThemeSynced = useRef(false);
 
-  // Sync user settings (theme and font) when session loads
   useEffect(() => {
     if (!session?.user?.settings) return;
 
     const { theme, customFont } = session.user.settings;
 
-    // Sync theme only once and only if it's a valid theme
     if (!hasThemeSynced.current && theme && (theme === "light" || theme === "dark")) {
       setTheme(theme);
       hasThemeSynced.current = true;
     }
 
-    // Sync custom font if available
     if (customFont) {
       setCurrentFont(customFont);
     }
   }, [session, setCurrentFont, setTheme]);
 
-  // Memoize keyboard shortcut handler to prevent recreation on every render
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const modifierPressed = event.metaKey || event.ctrlKey;
@@ -78,7 +73,6 @@ export default function Syncer() {
     [toggleKeyboardShortcuts, toggleSettingsModal, toggleModelModal]
   );
 
-  // Set up keyboard shortcuts
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
 

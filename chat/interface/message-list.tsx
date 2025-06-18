@@ -1,7 +1,5 @@
 "use client";
 
-import { Bot } from "lucide-react";
-
 import { ChatMessage } from "./message/chat-message";
 import { MessageSkeleton } from "./message-skeleton";
 
@@ -15,7 +13,6 @@ interface MessageListProps {
 }
 
 export function MessageList({ messages, isLoading, isLoadingMessages, isRedirecting }: MessageListProps) {
-  // Only show skeleton if we're actually loading messages for a specific chat
   if (isLoadingMessages && messages.length === 0) {
     return (
       <div className="space-y-1">
@@ -24,18 +21,7 @@ export function MessageList({ messages, isLoading, isLoadingMessages, isRedirect
     );
   }
 
-  if (messages.length === 0 && !isRedirecting)
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <Bot className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">Start a new conversation</h3>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Type a message below to begin chatting with the AI.
-          </p>
-        </div>
-      </div>
-    );
+  if (messages.length === 0 && !isRedirecting) return null;
 
   return (
     <div className="space-y-1">
@@ -45,8 +31,6 @@ export function MessageList({ messages, isLoading, isLoadingMessages, isRedirect
 
         return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
       })}
-
-      {isLoading && <MessageSkeleton />}
     </div>
   );
 }

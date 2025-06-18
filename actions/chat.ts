@@ -43,6 +43,10 @@ export async function createChat({
 }) {
   const session = await auth();
 
+  if (!session?.user?.id) {
+    return { success: false, error: "User not authenticated" };
+  }
+
   try {
     const chat = await prisma.chat.create({
       data: {
@@ -80,6 +84,10 @@ export async function saveUserMessage({
 }) {
   const session = await auth();
 
+  if (!session?.user?.id) {
+    return { success: false, error: "User not authenticated" };
+  }
+
   try {
     const message = await prisma.message.create({
       data: {
@@ -116,6 +124,10 @@ export async function saveAssistantMessage({
   modelUsed: string;
 }) {
   const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, error: "User not authenticated" };
+  }
 
   try {
     const chatExists = await prisma.chat.findUnique({

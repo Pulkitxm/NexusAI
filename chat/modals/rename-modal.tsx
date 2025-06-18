@@ -4,7 +4,6 @@ import { Edit3, Loader2, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-import { updateChatTitle } from "@/actions/chat";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,11 +11,10 @@ import { debugError } from "@/lib/utils";
 import { useSidebar } from "@/providers/use-sidebar";
 
 export function RenameChatModal() {
-  const { renameModelForChatID, openRenameModal, chats, setChats } = useSidebar();
+  const { renameModelForChatID, openRenameModal, chats, updateChatTitle } = useSidebar();
   const [isLoading, setIsLoading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  // Get the current chat title when modal opens
   useEffect(() => {
     if (renameModelForChatID) {
       const currentChat = chats.find((chat) => chat.id === renameModelForChatID);
@@ -35,16 +33,9 @@ export function RenameChatModal() {
 
     setIsLoading(true);
     try {
-      const result = await updateChatTitle({ chatId: renameModelForChatID, title: newTitle.trim() });
-      if (result.success) {
-        toast("Chat renamed successfully");
-        setChats((prev) =>
-          prev.map((chat) => (chat.id === renameModelForChatID ? { ...chat, title: newTitle.trim() } : chat))
-        );
-        openRenameModal(null);
-      } else {
-        throw new Error(result.error || "Failed to rename chat");
-      }
+      await updateChatTitle(renameModelForChatID, newTitle.trim());
+      toast("Chat renamed successfully");
+      openRenameModal(null);
     } catch (error) {
       debugError("Failed to rename chat", error);
       toast("Failed to rename chat");

@@ -64,7 +64,6 @@ export function ChatItem({ chat, isLoading, isGeneratingTitle }: ChatItemProps) 
   );
 
   const handleMouseEnter = useCallback(() => {
-    // Prefetch chat messages on hover
     prefetchChatMessages(chat.id);
   }, [chat.id, prefetchChatMessages]);
 

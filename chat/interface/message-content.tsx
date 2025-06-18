@@ -14,7 +14,6 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
       <div className="prose prose-sm dark:prose-invert max-w-none">
         <ReactMarkdown
           components={{
-            // Override code blocks to have proper styling
             code: ({ className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || "");
               return match ? (
@@ -34,7 +33,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
                 </code>
               );
             },
-            // Override links to have proper styling
+
             a: ({ children, href, ...props }) => (
               <a
                 href={href}
@@ -48,7 +47,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
                 {children}
               </a>
             ),
-            // Override lists to have proper styling
+
             ul: ({ children, ...props }) => (
               <ul className="list-disc pl-4" {...props}>
                 {children}
@@ -59,7 +58,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
                 {children}
               </ol>
             ),
-            // Override blockquotes
+
             blockquote: ({ children, ...props }) => (
               <blockquote
                 className={`border-l-4 pl-4 italic ${
@@ -70,7 +69,7 @@ export function MessageContent({ content, isUser, isStreaming = false }: Message
                 {children}
               </blockquote>
             ),
-            // Override paragraphs to be inline when streaming
+
             p: ({ children, ...props }) => <span {...props}>{children}</span>
           }}
         >

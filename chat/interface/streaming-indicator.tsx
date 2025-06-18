@@ -15,7 +15,6 @@ export function StreamingIndicator({ content, isStreaming, isUser, children }: S
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Handle streaming animation for assistant messages
   useEffect(() => {
     if (isUser) {
       setAnimatedContent(content);
@@ -25,14 +24,12 @@ export function StreamingIndicator({ content, isStreaming, isUser, children }: S
     const currentContent = content;
     const previousContent = previousContentRef.current;
 
-    // If content is shorter than before, it means we're starting fresh
     if (currentContent.length < previousContent.length) {
       setAnimatedContent(currentContent);
       previousContentRef.current = currentContent;
       return;
     }
 
-    // If we have new content to animate
     if (currentContent.length > previousContent.length && isStreaming) {
       const newContent = currentContent.slice(previousContent.length);
       let currentIndex = 0;
@@ -41,7 +38,6 @@ export function StreamingIndicator({ content, isStreaming, isUser, children }: S
       const animateNewContent = (timestamp: number) => {
         if (!lastTimestamp) lastTimestamp = timestamp;
 
-        // Smoother animation with consistent timing (every 15ms for better readability)
         if (timestamp - lastTimestamp >= 15) {
           if (currentIndex < newContent.length) {
             setAnimatedContent(previousContent + newContent.slice(0, currentIndex + 1));
@@ -55,7 +51,6 @@ export function StreamingIndicator({ content, isStreaming, isUser, children }: S
         }
       };
 
-      // Clear any existing animation
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
@@ -65,13 +60,11 @@ export function StreamingIndicator({ content, isStreaming, isUser, children }: S
 
       animationFrameRef.current = requestAnimationFrame(animateNewContent);
     } else if (!isStreaming) {
-      // If not streaming, show full content immediately
       setAnimatedContent(currentContent);
     }
 
     previousContentRef.current = currentContent;
 
-    // Cleanup on unmount
     return () => {
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);

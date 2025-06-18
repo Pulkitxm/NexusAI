@@ -8,7 +8,13 @@ import { toast } from "sonner";
 
 import { MESSAGE_LIMIT } from "@/data";
 import { getAvailableModels } from "@/data/models";
-import { useChatMessages, useCreateChat, useSaveUserMessage, useChats } from "@/hooks/use-chat-cache";
+import {
+  useChatMessages,
+  useCreateChat,
+  useSaveUserMessage,
+  useChats,
+  useSaveAssistantMessage
+} from "@/hooks/use-chat-cache";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
 import { useKeys } from "@/providers/use-keys";
 import { useModel } from "@/providers/use-model";
@@ -87,6 +93,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { data: chats = [] } = useChats();
   const createChatMutation = useCreateChat();
   const saveUserMessageMutation = useSaveUserMessage();
+  const saveAssistantMessageMutation = useSaveAssistantMessage();
 
   const aiChatBody = {
     model: selectedModelConfig?.uuid,
@@ -112,7 +119,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   } = useAIChat({
     api: "/api/chat",
     body: aiChatBody,
-    onFinish: async () => {
+    onFinish: async (message) => {
       if (!session) {
         const newCount = messageCount + 1;
         setMessageCount(newCount);
@@ -122,9 +129,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           setStoredValue(STORAGE_KEYS.SHOW_WARNING, true);
         }
       }
+
+      // Save assistant message to database if we have a chatId and the message is from the assistant
+      if (chatId && message.role === "assistant") {
+        try {
+          await saveAssistantMessageMutation.mutateAsync({
+            chatId,
+            content: message.content,
+            modelUsed: selectedModelConfig?.id || "unknown"
+          });
+        } catch (error) {
+          console.error("Failed to save assistant message:", error);
+        }
+      }
+
+      // Reset loading state when AI finishes responding
+      setIsInitializing(false);
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      // Reset loading state when there's an error
+      setIsInitializing(false);
     }
   });
 
@@ -193,6 +218,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setIsRedirecting(false);
   }, [pathname, session?.user?.id, chats, router, chatId, clearChat]);
 
+  // Reset isCreatingNewChat when chatId changes
+  useEffect(() => {
+    if (chatId) {
+      setIsInitializing(false);
+    }
+  }, [chatId]);
+
   // Update AI messages when cached messages change
   useEffect(() => {
     if (cachedMessages.length > 0) {
@@ -202,10 +234,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         content: msg.content
       }));
       setAIMessages(aiFormatMessages);
-    } else if (chatId) {
+    } else if (chatId && aiMessages.length === 0) {
+      // Only clear AI messages if both the cache and AI messages are empty
       setAIMessages([]);
     }
-  }, [cachedMessages, chatId, setAIMessages]);
+  }, [cachedMessages, chatId, setAIMessages, aiMessages.length]);
 
   // Handle messages error
   useEffect(() => {

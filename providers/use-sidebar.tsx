@@ -1,17 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-  type ReactNode,
-  Dispatch,
-  SetStateAction
-} from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
 
 import { DeleteChatModal } from "@/chat/modals/delete-modal";
 import { RenameChatModal } from "@/chat/modals/rename-modal";
@@ -34,13 +24,11 @@ type SidebarContext = {
   isMobile: boolean;
   toggleSidebar: () => void;
   chats: Chat[];
-  setChats: Dispatch<SetStateAction<Chat[]>>;
   loading: boolean;
   deleteChat: (chatId: string) => void;
   refreshChats: () => void;
   loadingChatId: string | null;
   setLoadingChatId: (chatId: string | null) => void;
-  addChat: (chat: Chat) => void;
   updateChatTitle: (chatId: string, title: string) => Promise<void>;
   generatingTitleForChat: string | null;
   setGeneratingTitleForChat: (chatId: string | null) => void;
@@ -81,7 +69,6 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
   const [deleteModelForChatID, setDeleteModelForChatID] = useState<string | null>(null);
   const [renameModelForChatID, setRenameModelForChatID] = useState<string | null>(null);
 
-  // Use cached hooks
   const { data: chats = [], isLoading: loading, refetch: refreshChats } = useChats();
   const deleteChatMutation = useDeleteChat();
   const updateChatTitleMutation = useUpdateChatTitle();
@@ -118,10 +105,6 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
     },
     [deleteChatMutation, router]
   );
-
-  const addChat = useCallback((chat: Chat) => {
-    // This will be handled by the cache automatically when a new chat is created
-  }, []);
 
   const updateChatTitle = useCallback(
     async (chatId: string, title: string) => {
@@ -171,13 +154,11 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       setOpenMobile,
       toggleSidebar,
       chats,
-      setChats: () => {}, // No-op since we're using cached data
       loading,
       deleteChat: handleDeleteChat,
       refreshChats,
       loadingChatId,
       setLoadingChatId,
-      addChat,
       updateChatTitle,
       generatingTitleForChat,
       setGeneratingTitleForChat,
@@ -199,7 +180,6 @@ export function SidebarProvider({ children, defaultOpen }: SidebarProviderProps)
       handleDeleteChat,
       refreshChats,
       loadingChatId,
-      addChat,
       updateChatTitle,
       generatingTitleForChat,
       shareModelForChatID,

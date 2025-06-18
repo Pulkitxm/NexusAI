@@ -17,7 +17,6 @@ interface SidebarChatListProps {
 
 export function SidebarChatList({ loading, filteredChats, useVirtualization }: SidebarChatListProps) {
   const { loadingChatId, generatingTitleForChat } = useSidebar();
-  // const { loadingChatId: chatLoadingId } = useChat();
   const chatLoadingId = null;
 
   const groupChatsByTimePeriod = (chats: Chat[]) => {
