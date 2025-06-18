@@ -40,9 +40,7 @@ import { Provider, type Reasoning } from "@/types/provider";
 
 import { FileUploadCards } from "../file-upload-cards";
 
-import type React from "react";
-
-export function MessageInput(props: { showForLoading?: boolean }) {
+export function MessageInput() {
   const { status } = useSession();
   const isDark = useTheme().theme === "dark";
   const isDesktop = useMediaQuery("(min-width: 900px)");
@@ -154,80 +152,6 @@ export function MessageInput(props: { showForLoading?: boolean }) {
     chatConfig.reasoning
   ].filter(Boolean).length;
 
-  if ("showForLoading" in props && props.showForLoading) {
-    return (
-      <TooltipProvider delayDuration={300}>
-        <div className="sticky bottom-0 z-10">
-          <div className="mx-auto max-w-4xl p-4 pb-0">
-            <div className="relative">
-              <div
-                className={cn(
-                  "relative rounded-t-2xl border-none shadow-sm transition-all duration-200 dark:bg-slate-900",
-                  "border-slate-200 dark:border-slate-700"
-                )}
-              >
-                <div className="flex items-end gap-3 p-4">
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Ask me anything..."
-                      className={cn(
-                        "max-h-[120px] min-h-[44px] resize-none border-0 bg-transparent p-0",
-                        "text-base leading-relaxed placeholder:text-slate-400",
-                        "focus-visible:ring-0 focus-visible:ring-offset-0"
-                      )}
-                      disabled={true}
-                      style={{
-                        backgroundColor: "transparent"
-                      }}
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={true}
-                    className="h-9 w-9 shrink-0 rounded-xl bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
-                  >
-                    <SendHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 dark:border-slate-800">
-                  <div className="flex items-center gap-1">
-                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
-                      <Mic className="h-4 w-4" />
-                    </Button>
-
-                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
-                      <Upload className="h-4 w-4" />
-                    </Button>
-
-                    <Button type="button" variant="ghost" size="sm" disabled={true} className="h-8 w-8 p-0 opacity-50">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={true}
-                      className="h-6 px-2 text-xs opacity-50"
-                    >
-                      <Command className="mr-1 h-3 w-3" />
-                      Shortcuts
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </TooltipProvider>
-    );
-  }
-
   return (
     <TooltipProvider delayDuration={300}>
       <div className="sticky bottom-0 z-10">
@@ -282,11 +206,7 @@ export function MessageInput(props: { showForLoading?: boolean }) {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask me anything..."
-                    className={cn(
-                      "max-h-[120px] min-h-[44px] resize-none border-0 bg-transparent p-0",
-                      "text-base leading-relaxed placeholder:text-slate-400",
-                      "focus-visible:ring-0 focus-visible:ring-offset-0"
-                    )}
+                    className="max-h-[120px] min-h-[44px] w-full resize-none rounded-none border-none bg-transparent p-0 text-base leading-relaxed shadow-none placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0"
                     disabled={isLoading}
                     style={{
                       backgroundColor: "transparent"

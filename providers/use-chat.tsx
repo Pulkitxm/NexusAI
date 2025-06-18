@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 import { MESSAGE_LIMIT } from "@/data";
@@ -78,35 +78,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     canUseOpenRouter: false
   });
 
-  const [lastProcessedChatId, setLastProcessedChatId] = useState<string | null>(null);
-
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { selectedModel } = useModel();
   const { keys, hasAnyKeys } = useKeys();
-
-  const availableModels = useMemo(() => getAvailableModels(keys), [keys]);
-  const selectedModelConfig = useMemo(
-    () => availableModels.find((model) => model.id === selectedModel),
-    [availableModels, selectedModel]
-  );
+  const availableModels = getAvailableModels(keys);
+  const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
 
   const { data: cachedMessages = [], isLoading: isLoadingMessages, error: messagesError } = useChatMessages(chatId);
   const { data: chats = [] } = useChats();
   const createChatMutation = useCreateChat();
   const saveUserMessageMutation = useSaveUserMessage();
-
-  useEffect(() => {
-    if (chatId) {
-      debugLog("Chat data state:", {
-        chatId,
-        cachedMessagesLength: cachedMessages?.length || 0,
-        isLoadingMessages,
-        messagesError: messagesError?.message,
-        currentMessagesLength: messages.length
-      });
-    }
-  }, [chatId, cachedMessages?.length, isLoadingMessages, messagesError?.message, messages.length]);
 
   const appendMessage = useCallback((message: Omit<MessageWithAttachments, "id" | "createdAt">) => {
     const newMessage: MessageWithAttachments = {
@@ -121,15 +103,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setMessages((prev) => {
       if (prev.length === 0) return prev;
       const newMessages = [...prev];
-      const lastMessage = newMessages[newMessages.length - 1];
-      if (lastMessage && lastMessage.content !== content) {
-        newMessages[newMessages.length - 1] = {
-          ...lastMessage,
-          content
-        };
-        return newMessages;
-      }
-      return prev;
+      newMessages[newMessages.length - 1] = {
+        ...newMessages[newMessages.length - 1],
+        content
+      };
+      return newMessages;
     });
   }, []);
 
@@ -139,7 +117,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const clearChat = useCallback(() => {
     setChatIdState(null);
-    setLastProcessedChatId(null);
     setMessages([]);
     setInput("");
     setAttachments([]);
@@ -212,6 +189,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           role: "ASSISTANT",
           content: "",
           attachments: []
+        });
+
+        debugLog("apikey", {
+          openrouter: chatConfig.openRouter,
+          keys,
+          selectedKey: chatConfig.openRouter ? keys.openrouter : keys[selectedModelConfig.provider],
+          selectedModelConfig
         });
 
         const response = await fetch("/api/chat", {
@@ -327,77 +311,52 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const isRootPage = pathname === "/";
-
-    if (!isRootPage) {
-      if (isRedirecting) {
-        setIsRedirecting(false);
-      }
-      return;
-    }
-
     const searchParams = new URLSearchParams(window.location.search);
     const forceNewChat = searchParams.get("new") === "true";
 
-    if (chatId) {
-      clearChat();
-      return;
-    }
-
-    if (session?.user?.id && chats.length > 0 && !forceNewChat && !isRedirecting) {
-      const lastChatId = getStoredValue(STORAGE_KEYS.LAST_CHAT_ID, null);
-
-      if (lastChatId && chats.some((chat) => chat.id === lastChatId)) {
-        setIsRedirecting(true);
-        router.push(`/${lastChatId}`);
-        return;
+    if (isRootPage) {
+      if (chatId) {
+        clearChat();
       }
 
-      const mostRecentChat = chats[0];
-      if (mostRecentChat) {
+      if (session?.user?.id && chats.length > 0 && !forceNewChat) {
+        const lastChatId = getStoredValue(STORAGE_KEYS.LAST_CHAT_ID, null);
+
+        if (lastChatId) {
+          const lastChatExists = chats.some((chat) => chat.id === lastChatId);
+
+          if (lastChatExists) {
+            setIsRedirecting(true);
+            router.push(`/${lastChatId}`);
+            return;
+          }
+        }
+
+        const mostRecentChat = chats[0];
         setIsRedirecting(true);
         router.push(`/${mostRecentChat.id}`);
         return;
       }
     }
 
-    if (isRedirecting && (forceNewChat || !session?.user?.id || chats.length === 0)) {
-      setIsRedirecting(false);
-    }
-  }, [pathname, session?.user?.id, chats.length, chatId, isRedirecting, router, clearChat]);
+    setIsRedirecting(false);
+  }, [pathname, session?.user?.id, chats, router, chatId, clearChat]);
 
   useEffect(() => {
-    if (chatId && !isInitializing) {
+    if (chatId) {
       setIsInitializing(false);
     }
-  }, [chatId, isInitializing]);
+  }, [chatId]);
 
   useEffect(() => {
-    debugLog("chatId", chatId);
-    debugLog("cachedMessages", cachedMessages);
-    debugLog("isLoadingMessages", isLoadingMessages);
-
+    debugLog("chatId", { chatId, cachedMessages });
     if (!chatId) {
-      if (messages.length > 0) {
-        setMessages([]);
-      }
-
-      if (lastProcessedChatId !== null) {
-        setLastProcessedChatId(null);
-      }
+      debugLog("clearing messages coz chatId is null");
+      setMessages([]);
       return;
     }
 
-    if (isLoadingMessages) {
-      return;
-    }
-
-    const shouldProcess = chatId !== lastProcessedChatId || (cachedMessages && cachedMessages.length > 0);
-
-    if (!shouldProcess) {
-      return;
-    }
-
-    if (cachedMessages && Array.isArray(cachedMessages)) {
+    if (cachedMessages.length > 0) {
       const formattedMessages = cachedMessages.map((msg) => ({
         id: msg.id,
         role: msg.role,
@@ -407,31 +366,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }));
 
       setMessages((prevMessages) => {
-        if (chatId !== lastProcessedChatId) {
-          setLastProcessedChatId(chatId);
-          return formattedMessages;
-        }
-
         if (prevMessages.length !== formattedMessages.length) {
           return formattedMessages;
         }
 
-        const hasChanges = formattedMessages.some((newMsg, index) => {
-          const prevMsg = prevMessages[index];
-          return (
-            !prevMsg || prevMsg.id !== newMsg.id || prevMsg.content !== newMsg.content || prevMsg.role !== newMsg.role
-          );
-        });
+        const isSame = prevMessages.every(
+          (prev, index) => prev.id === formattedMessages[index].id && prev.content === formattedMessages[index].content
+        );
 
-        return hasChanges ? formattedMessages : prevMessages;
+        return isSame ? prevMessages : formattedMessages;
       });
-    } else if (chatId !== lastProcessedChatId) {
-      setLastProcessedChatId(chatId);
-      if (messages.length > 0) {
-        setMessages([]);
-      }
+    } else if (messages.length > 0) {
+      setMessages([]);
     }
-  }, [chatId, cachedMessages, isLoadingMessages]);
+  }, [chatId, cachedMessages.length]);
 
   useEffect(() => {
     if (messagesError) {
@@ -445,75 +393,52 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (selectedModel) {
-      setChatConfig((prev) => ({
-        ...prev,
+      setChatConfig({
         error: null,
         reasoning: null,
         webSearch: false,
         attachments: [],
         openRouter: false,
         canUseOpenRouter: false
-      }));
+      });
     }
   }, [selectedModel]);
 
   useEffect(() => {
-    if (selectedModelConfig && keys.openrouter) {
+    if (!selectedModelConfig) return;
+
+    if (keys.openrouter) {
       setChatConfig((prev) => ({
         ...prev,
         openRouter: true
       }));
     }
-  }, [selectedModelConfig?.id, keys.openrouter]);
+  }, [selectedModelConfig, keys]);
 
-  const contextValue = useMemo<ChatContextType>(
-    () => ({
-      messages,
-      input,
-      setInput,
-      handleInputChange,
-      handleSubmit,
-      isLoading: isStreaming || isInitializing || (chatId ? isLoadingMessages : false),
-      isStreaming,
-      error: error || messagesError || null,
-      chatId,
-      setChatId,
-      clearMessages,
-      clearChat,
-      inputRef,
-      attachments,
-      setAttachments,
-      messageCount,
-      chatConfig,
-      setChatConfig,
-      isLoadingMessages: chatId ? isLoadingMessages : false,
-      isRedirecting
-    }),
-    [
-      messages,
-      input,
-      setInput,
-      handleInputChange,
-      handleSubmit,
-      isStreaming,
-      isInitializing,
-      chatId,
-      isLoadingMessages,
-      error,
-      messagesError,
-      setChatId,
-      clearMessages,
-      clearChat,
-      attachments,
-      setAttachments,
-      messageCount,
-      chatConfig,
-      setChatConfig,
-      isRedirecting
-    ]
-  );
+  const value: ChatContextType = {
+    messages,
+    input,
+    setInput,
+    handleInputChange,
+    handleSubmit,
+    isLoading: isStreaming || isInitializing || (chatId ? isLoadingMessages : false),
+    isStreaming,
+    error: error || messagesError || null,
+    chatId,
+    setChatId,
+    clearMessages,
+    clearChat,
+    inputRef,
+    attachments,
+    setAttachments,
+    messageCount,
+    chatConfig,
+    setChatConfig,
+    isLoadingMessages: chatId ? isLoadingMessages : false,
+    isRedirecting
+  };
 
-  return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 export function useChat() {

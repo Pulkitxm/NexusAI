@@ -189,6 +189,12 @@ export async function POST(req: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          debugLog("streamText", {
+            model: aiModel,
+            messages: processedMessages,
+            temperature: 0.7,
+            maxTokens: 4000
+          });
           const result = streamText({
             model: aiModel,
             messages: processedMessages,
@@ -200,6 +206,8 @@ export async function POST(req: Request) {
 
           for await (const chunk of result.textStream) {
             fullResponse += chunk;
+
+            debugLog("chunk", chunk);
 
             const data = JSON.stringify({
               type: "text",
@@ -213,6 +221,8 @@ export async function POST(req: Request) {
             type: "done",
             content: fullResponse
           });
+
+          debugLog("completionData", completionData);
 
           controller.enqueue(new TextEncoder().encode(`data: ${completionData}\n\n`));
 
