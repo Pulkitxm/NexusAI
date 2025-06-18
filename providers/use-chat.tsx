@@ -426,7 +426,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!chatState.chatId) {
-      clearMessages();
+      const isNewChat = new URLSearchParams(window.location.search).get("new") === "true";
+      if (!isNewChat) {
+        clearMessages();
+      }
       return;
     }
 
