@@ -58,7 +58,7 @@ export const validateChatStreamBody = z.object({
         content: z.string()
       })
     )
-    .min(1),
+    .min(1, "At least one message is required"),
   provider: z.nativeEnum(Provider),
   model: z.string().refine((model) => {
     return AI_MODELS.some((m) => m.uuid === model);

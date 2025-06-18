@@ -139,7 +139,6 @@ const FilePreview = memo(({ attachment, isUser }: FilePreviewProps) => {
         isUser ? "bg-white/90 dark:bg-slate-700/90" : ""
       )}
     >
-      {/* File Header */}
       <div className="flex items-center gap-3 p-3">
         <div
           className={cn(
@@ -171,7 +170,6 @@ const FilePreview = memo(({ attachment, isUser }: FilePreviewProps) => {
         </div>
       </div>
 
-      {/* File Preview */}
       {isExpanded && canPreview && (
         <div className="border-t border-slate-200/60 dark:border-slate-700/60">
           {isLoading ? (
@@ -274,7 +272,6 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
           </div>
         </div>
 
-        {/* Image Attachments */}
         {imageAttachments.length > 0 && (
           <div className={cn("mt-3 w-full", isUser ? "flex justify-end" : "flex justify-start")}>
             <div
@@ -301,7 +298,6 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
           </div>
         )}
 
-        {/* File Attachments with Preview */}
         {fileAttachments.length > 0 && (
           <div className={cn("mt-3 w-full", isUser ? "flex justify-end" : "flex justify-start")}>
             <div className="grid w-full max-w-md grid-cols-1 gap-2">
@@ -312,7 +308,6 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
           </div>
         )}
 
-        {/* Action buttons */}
         <div
           className={cn(
             "flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100",

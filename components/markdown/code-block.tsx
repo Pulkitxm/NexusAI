@@ -229,7 +229,6 @@ export function CodeBlock({
 
   return (
     <div className="not-prose group my-8 overflow-hidden rounded-2xl border border-purple-200/60 bg-white shadow-lg transition-all duration-300 hover:border-purple-300/60 hover:shadow-xl dark:border-purple-700/60 dark:bg-slate-900 dark:hover:border-purple-600/60">
-      {/* Enhanced Header */}
       <div className="flex items-center justify-between border-b border-purple-200/60 bg-gradient-to-r from-purple-50/80 to-violet-100/80 px-6 py-4 backdrop-blur-sm dark:border-purple-700/60 dark:from-purple-900/20 dark:to-violet-900/20">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -279,7 +278,6 @@ export function CodeBlock({
             </Tooltip>
           </TooltipProvider>
 
-          {/* Show wrap button if there's horizontal overflow or long lines */}
           {shouldShowWrapButton && (
             <TooltipProvider>
               <Tooltip>
@@ -379,7 +377,6 @@ export function CodeBlock({
         </div>
       </div>
 
-      {/* Code Content with improved wrapping */}
       <div
         ref={codeRef}
         className={cn("relative transition-all duration-300", !isExpanded && isOverflowing && "overflow-hidden")}
@@ -438,7 +435,6 @@ export function CodeBlock({
             {code}
           </SyntaxHighlighter>
 
-          {/* Enhanced CSS for better wrapping control */}
           <style jsx>{`
             .code-wrapper pre {
               white-space: ${isWrapped ? "pre-wrap !important" : "pre !important"};
@@ -480,13 +476,11 @@ export function CodeBlock({
           `}</style>
         </div>
 
-        {/* Enhanced fade overlay */}
         {!isExpanded && isOverflowing && (
           <div className="absolute right-0 bottom-0 left-0 h-16 bg-gradient-to-t from-white via-white/80 to-transparent dark:from-slate-900 dark:via-slate-900/80" />
         )}
       </div>
 
-      {/* Enhanced Expand/Collapse button */}
       {isOverflowing && (
         <div className="border-t border-purple-200/60 bg-gradient-to-r from-purple-50/50 to-violet-100/50 px-6 py-3 dark:border-purple-700/60 dark:from-purple-900/20 dark:to-violet-900/20">
           <Button

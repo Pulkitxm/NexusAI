@@ -22,7 +22,8 @@ export function ChatInterface() {
     isLoadingMessages,
     inputRef,
     chatConfig,
-    isRedirecting
+    isRedirecting,
+    chatId
   } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
@@ -47,7 +48,7 @@ export function ChatInterface() {
     <div className="flex size-full flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="flex-1 overflow-y-auto px-4">
         <div className="mx-auto max-w-3xl overflow-y-auto py-6">
-          {messages.length === 0 && !isLoading && !isLoadingMessages ? (
+          {!chatId && messages.length === 0 && !isLoading && !isLoadingMessages ? (
             <div className="flex h-full min-h-[60vh] items-center justify-center">
               <motion.div
                 initial={{ opacity: 0, display: "none", pointerEvents: "none" }}

@@ -88,7 +88,7 @@ export async function generateChatTitle({
       temperature: 0.3
     });
 
-    debugLog("Title generation result", { result });
+    debugLog("Title generation result", result.object.title);
 
     if (result.object.title && result.object.title.trim() !== "") {
       return { success: true, title: result.object.title.trim() };

@@ -8,7 +8,6 @@ import { createChatWithTitle, saveUserMessage, saveAssistantMessage } from "@/ac
 
 import type { Chat } from "@/types/chat";
 
-// Query keys
 export const chatKeys = {
   all: ["chats"] as const,
   lists: () => [...chatKeys.all, "list"] as const,
@@ -18,7 +17,6 @@ export const chatKeys = {
   messages: (chatId: string) => [...chatKeys.detail(chatId), "messages"] as const
 };
 
-// Hook for fetching chat list
 export function useChats() {
   return useQuery({
     queryKey: chatKeys.lists(),
@@ -29,10 +27,9 @@ export function useChats() {
       }
       return response.chats || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 5,
     retry: (failureCount, error) => {
-      // Don't retry if user is not authenticated
       if (error.message.includes("not authenticated")) {
         return false;
       }
@@ -41,7 +38,6 @@ export function useChats() {
   });
 }
 
-// Hook for fetching chat messages
 export function useChatMessages(chatId: string | null, share?: boolean) {
   return useQuery({
     queryKey: chatKeys.messages(chatId || ""),
@@ -54,12 +50,11 @@ export function useChatMessages(chatId: string | null, share?: boolean) {
       return response.messages || [];
     },
     enabled: !!chatId,
-    staleTime: 1000 * 60 * 3, // 3 minutes
-    gcTime: 1000 * 60 * 10 // 10 minutes
+    staleTime: 1000 * 60 * 3,
+    gcTime: 1000 * 60 * 10
   });
 }
 
-// Hook for creating a new chat
 export function useCreateChat() {
   const queryClient = useQueryClient();
 
@@ -90,10 +85,8 @@ export function useCreateChat() {
       return response.chat;
     },
     onSuccess: (newChat) => {
-      // Invalidate and refetch chat list
       queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
 
-      // Add the new chat to the cache
       queryClient.setQueryData(chatKeys.lists(), (oldData: Chat[] | undefined) => {
         if (!oldData) return [newChat];
         return [newChat, ...oldData];
@@ -106,7 +99,6 @@ export function useCreateChat() {
   });
 }
 
-// Hook for saving user message
 export function useSaveUserMessage() {
   const queryClient = useQueryClient();
 
@@ -131,10 +123,8 @@ export function useSaveUserMessage() {
       return response.message;
     },
     onSuccess: (message, variables) => {
-      // Invalidate chat messages to refetch
       queryClient.invalidateQueries({ queryKey: chatKeys.messages(variables.chatId) });
 
-      // Invalidate chat list to update last modified time
       queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
     },
     onError: (error) => {
@@ -144,7 +134,6 @@ export function useSaveUserMessage() {
   });
 }
 
-// Hook for saving assistant message
 export function useSaveAssistantMessage() {
   const queryClient = useQueryClient();
 
@@ -161,10 +150,8 @@ export function useSaveAssistantMessage() {
       return response.message;
     },
     onSuccess: (message, variables) => {
-      // Invalidate chat messages to refetch
       queryClient.invalidateQueries({ queryKey: chatKeys.messages(variables.chatId) });
 
-      // Invalidate chat list to update last modified time
       queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
     },
     onError: (error) => {
@@ -174,7 +161,6 @@ export function useSaveAssistantMessage() {
   });
 }
 
-// Hook for deleting a chat
 export function useDeleteChat() {
   const queryClient = useQueryClient();
 
@@ -189,16 +175,13 @@ export function useDeleteChat() {
     onSuccess: (deletedChat) => {
       if (!deletedChat) return;
 
-      // Remove from chat list cache
       queryClient.setQueryData(chatKeys.lists(), (oldData: Chat[] | undefined) => {
         if (!oldData) return [];
         return oldData.filter((chat) => chat.id !== deletedChat.id);
       });
 
-      // Remove chat messages from cache
       queryClient.removeQueries({ queryKey: chatKeys.messages(deletedChat.id) });
 
-      // Remove chat detail from cache
       queryClient.removeQueries({ queryKey: chatKeys.detail(deletedChat.id) });
     },
     onError: (error) => {
@@ -208,7 +191,6 @@ export function useDeleteChat() {
   });
 }
 
-// Hook for updating chat title
 export function useUpdateChatTitle() {
   const queryClient = useQueryClient();
 
@@ -223,7 +205,6 @@ export function useUpdateChatTitle() {
     onSuccess: (updatedChat) => {
       if (!updatedChat) return;
 
-      // Update chat in list cache
       queryClient.setQueryData(chatKeys.lists(), (oldData: Chat[] | undefined) => {
         if (!oldData) return [updatedChat];
         return oldData.map((chat) => (chat.id === updatedChat.id ? updatedChat : chat));
@@ -236,7 +217,6 @@ export function useUpdateChatTitle() {
   });
 }
 
-// Hook for prefetching chat messages
 export function usePrefetchChatMessages() {
   const queryClient = useQueryClient();
 
@@ -250,7 +230,7 @@ export function usePrefetchChatMessages() {
         }
         return response.messages || [];
       },
-      staleTime: 1000 * 60 * 3 // 3 minutes
+      staleTime: 1000 * 60 * 3
     });
   };
 }

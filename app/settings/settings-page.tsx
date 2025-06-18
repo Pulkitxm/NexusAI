@@ -164,7 +164,6 @@ export default function SettingsPage({ session }: { session: Session }) {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
-      {/* Header Section */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-purple-600 md:text-4xl dark:text-purple-400">
@@ -196,11 +195,9 @@ export default function SettingsPage({ session }: { session: Session }) {
         </div>
       </div>
 
-      {/* Main Content */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
           <Tabs defaultValue="account" className="grid gap-8 lg:grid-cols-[240px_1fr]">
-            {/* Sidebar Navigation */}
             <div className="lg:sticky lg:top-8 lg:self-start">
               <TabsList className="bg-muted grid h-auto w-full grid-cols-2 gap-1 p-1 lg:grid-cols-1 lg:bg-transparent lg:p-0">
                 <TabsTrigger
@@ -230,7 +227,6 @@ export default function SettingsPage({ session }: { session: Session }) {
               </TabsList>
             </div>
 
-            {/* Content Area */}
             <div className="min-w-0">
               <TabsContent value="account" className="mt-0 space-y-6">
                 {renderTabContent("account")}

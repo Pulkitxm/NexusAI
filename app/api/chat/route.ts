@@ -81,6 +81,19 @@ function formatErrorResponse(error: unknown) {
   };
 }
 
+function createSSEResponse(stream: ReadableStream) {
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -106,14 +119,11 @@ export async function POST(req: Request) {
 
     const { messages, model, provider, apiKey, webSearch, chatId, reasoning, openRouter } = validateBody.data;
 
-    if (!messages?.length || !model || !apiKey) {
+    if (!messages || !model || !apiKey) {
       throw new APIError("Missing required fields", 400, "MISSING_FIELDS");
     }
 
     const { userSettings, globalMemories } = await getUserData(userId);
-
-    debugLog("userSettings", userSettings);
-    debugLog("globalMemories", globalMemories);
 
     const modelConfig = AI_MODELS.find((m) => m.uuid === model);
     if (!modelConfig) {
@@ -121,14 +131,9 @@ export async function POST(req: Request) {
     }
 
     const finalModel = ReasoningHandler.shouldUseReasoningModel(reasoning, modelConfig, AI_MODELS);
-
-    debugLog("finalModel", finalModel);
-
     const reasoningConfig = ReasoningHandler.getReasoningConfig(reasoning, modelConfig);
-
-    debugLog("reasoningConfig", reasoningConfig);
-
     const modelProvider = modelConfig.provider || provider;
+
     const aiModelResult = getAiProvider({
       apiKey,
       finalModelId: finalModel,
@@ -149,11 +154,8 @@ export async function POST(req: Request) {
     }
 
     const aiModel = aiModelResult.aiModel;
-
     const coreMessages = convertToCoreMessages(messages);
     const lastUserMessage = messages[messages.length - 1]?.content || "";
-
-    debugLog("lastUserMessage", lastUserMessage);
 
     const systemMessageContent = [
       "You are a helpful AI assistant with access to the user's profile and memories.",
@@ -180,39 +182,59 @@ export async function POST(req: Request) {
       .join("\n\n");
 
     const systemMessage = convertToCoreMessages([{ role: "system", content: systemMessageContent }])[0];
-
     const processedMessages = [systemMessage, ...coreMessages];
 
-    try {
-      const result = streamText({
-        model: aiModel,
-        messages: processedMessages,
-        temperature: 0.7,
-        maxTokens: 4000,
-        onFinish: async ({ text }) => {
-          if (chatId && text?.trim()) {
+    debugLog("processedMessages", processedMessages);
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const result = streamText({
+            model: aiModel,
+            messages: processedMessages,
+            temperature: 0.7,
+            maxTokens: 4000
+          });
+
+          let fullResponse = "";
+
+          for await (const chunk of result.textStream) {
+            fullResponse += chunk;
+
+            const data = JSON.stringify({
+              type: "text",
+              content: chunk
+            });
+
+            controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
+          }
+
+          const completionData = JSON.stringify({
+            type: "done",
+            content: fullResponse
+          });
+
+          controller.enqueue(new TextEncoder().encode(`data: ${completionData}\n\n`));
+
+          if (chatId && fullResponse?.trim()) {
             try {
-              debugLog("saving assistant message", text.trim());
-              const res = await saveAssistantMessage({
+              debugLog("saving assistant message", fullResponse.trim());
+              await saveAssistantMessage({
                 chatId,
-                content: text.trim(),
+                content: fullResponse.trim(),
                 modelUsed: model
               });
 
-              debugLog("saveAssistantMessage", res);
-
               try {
-                debugLog("analyzing and storing memories", text.trim());
-                const analyzeRes = await analyzeAndStoreMemories({
+                debugLog("analyzing and storing memories", fullResponse.trim());
+                await analyzeAndStoreMemories({
                   apiKey,
-                  assistantResponse: text.trim(),
+                  assistantResponse: fullResponse.trim(),
                   modelUUID: model,
                   userId,
                   userMessage: lastUserMessage,
                   openRouter
                 });
-
-                debugLog("analyzeAndStoreMemories", analyzeRes);
               } catch (error) {
                 console.error("[Chat API] Error in global memory analysis:", error);
               }
@@ -220,19 +242,22 @@ export async function POST(req: Request) {
               console.error("Error in onFinish:", error);
             }
           }
-        }
-      });
+        } catch (error) {
+          console.error("[Chat API] Error in streamText:", error);
 
-      return result.toDataStreamResponse();
-    } catch (error) {
-      console.error("[Chat API] Error in streamText:", error);
-      return new Response(JSON.stringify({ error: "Failed to generate response" }), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json"
+          const errorData = JSON.stringify({
+            type: "error",
+            message: "Failed to generate response"
+          });
+
+          controller.enqueue(new TextEncoder().encode(`data: ${errorData}\n\n`));
+        } finally {
+          controller.close();
         }
-      });
-    }
+      }
+    });
+
+    return createSSEResponse(stream);
   } catch (error) {
     console.error("Chat API Error:", error);
     const errorResponse = formatErrorResponse(error);
