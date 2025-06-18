@@ -4,7 +4,6 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 
-import { useKeys } from "@/providers/use-keys";
 import { useSidebar } from "@/providers/use-sidebar";
 
 import { SidebarChatList } from "./sidebar-chat-list";
@@ -37,7 +36,6 @@ export function AppSidebar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
   const { data: session, status } = useSession();
-  const { hasAnyKeys } = useKeys();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [hasMounted, setHasMounted] = useState(false);
@@ -116,7 +114,7 @@ export function AppSidebar() {
           className="flex h-full w-64 flex-col"
         >
           <div className="border-b border-gray-200/50 p-3 dark:border-gray-800/50">
-            <SidebarHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} hasAnyKeys={hasAnyKeys} />
+            <SidebarHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-white px-2 dark:bg-gray-900">
             <SidebarChatList
@@ -153,7 +151,7 @@ export function AppSidebar() {
             className="fixed top-0 left-0 z-50 flex h-full w-80 flex-col border-r border-gray-200 bg-white shadow-xl md:hidden dark:border-gray-800 dark:bg-gray-900"
           >
             <div className="border-b border-gray-200/50 p-3 dark:border-gray-800/50">
-              <SidebarHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} hasAnyKeys={hasAnyKeys} />
+              <SidebarHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             </div>
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-white px-2 dark:bg-gray-900">
               <SidebarChatList

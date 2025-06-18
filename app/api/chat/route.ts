@@ -7,6 +7,7 @@ import { getAiProvider } from "@/lib/ai-helper/get-provider";
 import { analyzeAndStoreMemories } from "@/lib/ai-helper/memory-analyzer";
 import { ReasoningHandler } from "@/lib/ai-helper/resoning-handler";
 import { auth } from "@/lib/authOptions";
+import { debugLog } from "@/lib/utils";
 import { prisma } from "@/prisma";
 import { validateChatStreamBody } from "@/types/chat";
 
@@ -92,6 +93,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validateBody = validateChatStreamBody.safeParse(body);
 
+    debugLog("validateBody", validateBody);
+
     if (!validateBody.success) {
       return new Response(JSON.stringify({ error: validateBody.error.issues }), {
         status: 400,
@@ -109,6 +112,9 @@ export async function POST(req: Request) {
 
     const { userSettings, globalMemories } = await getUserData(userId);
 
+    debugLog("userSettings", userSettings);
+    debugLog("globalMemories", globalMemories);
+
     const modelConfig = AI_MODELS.find((m) => m.uuid === model);
     if (!modelConfig) {
       throw new APIError(`Model "${model}" is not supported`, 400, "MODEL_NOT_FOUND");
@@ -116,7 +122,11 @@ export async function POST(req: Request) {
 
     const finalModel = ReasoningHandler.shouldUseReasoningModel(reasoning, modelConfig, AI_MODELS);
 
+    debugLog("finalModel", finalModel);
+
     const reasoningConfig = ReasoningHandler.getReasoningConfig(reasoning, modelConfig);
+
+    debugLog("reasoningConfig", reasoningConfig);
 
     const modelProvider = modelConfig.provider || provider;
     const aiModelResult = getAiProvider({
@@ -126,6 +136,8 @@ export async function POST(req: Request) {
       openRouter,
       reasoningConfig
     });
+
+    debugLog("aiModelResult", aiModelResult);
 
     if (!aiModelResult.success) {
       return new Response(JSON.stringify({ error: aiModelResult.error }), {
@@ -140,6 +152,8 @@ export async function POST(req: Request) {
 
     const coreMessages = convertToCoreMessages(messages);
     const lastUserMessage = messages[messages.length - 1]?.content || "";
+
+    debugLog("lastUserMessage", lastUserMessage);
 
     const systemMessageContent = [
       "You are a helpful AI assistant with access to the user's profile and memories.",
@@ -178,14 +192,18 @@ export async function POST(req: Request) {
         onFinish: async ({ text }) => {
           if (chatId && text?.trim()) {
             try {
-              await saveAssistantMessage({
+              debugLog("saving assistant message", text.trim());
+              const res = await saveAssistantMessage({
                 chatId,
                 content: text.trim(),
                 modelUsed: model
               });
 
+              debugLog("saveAssistantMessage", res);
+
               try {
-                await analyzeAndStoreMemories({
+                debugLog("analyzing and storing memories", text.trim());
+                const analyzeRes = await analyzeAndStoreMemories({
                   apiKey,
                   assistantResponse: text.trim(),
                   modelUUID: model,
@@ -193,6 +211,8 @@ export async function POST(req: Request) {
                   userMessage: lastUserMessage,
                   openRouter
                 });
+
+                debugLog("analyzeAndStoreMemories", analyzeRes);
               } catch (error) {
                 console.error("[Chat API] Error in global memory analysis:", error);
               }

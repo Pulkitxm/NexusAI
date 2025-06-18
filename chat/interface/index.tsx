@@ -13,8 +13,17 @@ import { MessageList } from "./message-list";
 
 export function ChatInterface() {
   const { data: session } = useSession();
-  const { messages, input, handleInputChange, isLoading, isLoadingMessages, inputRef, chatConfig, isRedirecting } =
-    useChat();
+  const {
+    messages,
+    input,
+    handleInputChange,
+    isLoading,
+    isStreaming,
+    isLoadingMessages,
+    inputRef,
+    chatConfig,
+    isRedirecting
+  } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [promptSection, setPromptSection] = useState<(typeof SUGGESTED_PROMPTS)[number]["section"]>(
     SUGGESTED_PROMPTS[0].section
@@ -112,7 +121,7 @@ export function ChatInterface() {
           ) : (
             <MessageList
               messages={messages}
-              isLoading={isLoading}
+              isStreaming={isStreaming}
               isLoadingMessages={isLoadingMessages}
               isRedirecting={isRedirecting}
             />
@@ -121,7 +130,7 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <MessageInput showForLoading={isLoading} />
+      <MessageInput />
     </div>
   );
 }

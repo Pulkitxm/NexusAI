@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MESSAGE_LIMIT, OPENROUTER_ICON } from "@/data";
 import { AI_MODELS } from "@/data/models";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { SpeechToTextService } from "@/lib/speech-to-text";
 import { cn, debugError } from "@/lib/utils";
 import { useChat } from "@/providers/use-chat";
@@ -41,9 +42,10 @@ import { FileUploadCards } from "../file-upload-cards";
 
 import type React from "react";
 
-export function MessageInput(props: { showForLoading: boolean }) {
+export function MessageInput(props: { showForLoading?: boolean }) {
   const { status } = useSession();
   const isDark = useTheme().theme === "dark";
+  const isDesktop = useMediaQuery("(min-width: 900px)");
   const { canUseOpenRouter, haveOnlyOpenRouterKey } = useKeys();
   const { selectedModel } = useModel();
   const { openModal } = useKeyboardShortcuts();
@@ -264,7 +266,10 @@ export function MessageInput(props: { showForLoading: boolean }) {
         <div className="p-4a mx-auto max-w-4xl pb-0">
           <form onSubmit={handleSubmit} className="relative">
             <div
-              className={cn("relative rounded-t-2xl border shadow-sm transition-all duration-200 dark:bg-slate-900")}
+              className={cn(
+                "relative border shadow-sm transition-all duration-200 dark:bg-slate-900",
+                isDesktop ? "rounded-t-2xl" : ""
+              )}
               style={{
                 borderColor: isDark ? "transparent" : undefined
               }}

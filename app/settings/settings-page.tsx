@@ -173,7 +173,7 @@ export default function SettingsPage({ session }: { session: Session }) {
           <p className="text-muted-foreground text-sm md:text-base">Manage your account settings and preferences.</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/">
+          <Link href="/?new=true">
             <Button
               variant="outline"
               size="sm"

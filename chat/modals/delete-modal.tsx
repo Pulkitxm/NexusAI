@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2, Loader2, AlertTriangle, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +12,7 @@ import { debugError } from "@/lib/utils";
 import { useSidebar } from "@/providers/use-sidebar";
 
 export function DeleteChatModal() {
+  const router = useRouter();
   const { deleteModelForChatID, openDeleteModal, chats, deleteChat } = useSidebar();
   const currentChat = chats.find((chat) => chat.id === deleteModelForChatID);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +24,7 @@ export function DeleteChatModal() {
       await deleteChat(deleteModelForChatID);
       openDeleteModal(null);
       toast("Chat deleted successfully");
+      router.push("/?new=true");
     } catch (error) {
       debugError("Failed to delete chat", error);
       toast("Failed to delete chat");

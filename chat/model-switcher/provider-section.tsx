@@ -19,7 +19,7 @@ export const ProviderSection = memo<ProviderSectionProps>(
     return (
       <AnimatedWrapper show={true} delay={index * 50}>
         <div className="space-y-5">
-          <div className="sticky top-0 z-10 flex items-center gap-4 rounded-xl bg-white/80 py-3 backdrop-blur-sm dark:bg-gray-900/80">
+          <div className="sticky top-0 z-10 flex items-center gap-4 rounded-xl bg-white/80 px-4 py-3 backdrop-blur-sm dark:bg-gray-900/80">
             <div className="rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 p-3 shadow-sm dark:from-gray-800 dark:to-gray-700">
               <ProviderIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </div>

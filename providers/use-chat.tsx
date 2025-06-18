@@ -8,13 +8,7 @@ import { toast } from "sonner";
 
 import { MESSAGE_LIMIT } from "@/data";
 import { getAvailableModels } from "@/data/models";
-import {
-  useChatMessages,
-  useCreateChat,
-  useSaveUserMessage,
-  useChats,
-  useSaveAssistantMessage
-} from "@/hooks/use-chat-cache";
+import { useChatMessages, useCreateChat, useSaveUserMessage, useChats } from "@/hooks/use-chat-cache";
 import { getStoredValue, setStoredValue } from "@/lib/utils";
 import { useKeys } from "@/providers/use-keys";
 import { useModel } from "@/providers/use-model";
@@ -46,6 +40,7 @@ interface ChatContextType {
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  isStreaming: boolean;
   error: Error | null;
   chatId: string | null;
   setChatId: (id: string | null) => void;
@@ -73,6 +68,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [messageCount, setMessageCount] = useState(() => getStoredValue(STORAGE_KEYS.MESSAGE_COUNT, 0));
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const [chatConfig, setChatConfig] = useState<ChatConfig>({
     error: null,
@@ -88,12 +84,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const availableModels = getAvailableModels(keys);
   const selectedModelConfig = availableModels.find((model) => model.id === selectedModel);
 
-  // Use cached hooks
   const { data: cachedMessages = [], isLoading: isLoadingMessages, error: messagesError } = useChatMessages(chatId);
   const { data: chats = [] } = useChats();
   const createChatMutation = useCreateChat();
   const saveUserMessageMutation = useSaveUserMessage();
-  const saveAssistantMessageMutation = useSaveAssistantMessage();
 
   const aiChatBody = {
     model: selectedModelConfig?.uuid,
@@ -112,14 +106,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setInput,
     handleInputChange,
     handleSubmit: handleAISubmit,
-    isLoading,
     error,
     setMessages: setAIMessages,
     append
   } = useAIChat({
     api: "/api/chat",
     body: aiChatBody,
-    onFinish: async (message) => {
+    onFinish: async () => {
       if (!session) {
         const newCount = messageCount + 1;
         setMessageCount(newCount);
@@ -130,34 +123,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Save assistant message to database if we have a chatId and the message is from the assistant
-      if (chatId && message.role === "assistant") {
-        try {
-          await saveAssistantMessageMutation.mutateAsync({
-            chatId,
-            content: message.content,
-            modelUsed: selectedModelConfig?.id || "unknown"
-          });
-        } catch (error) {
-          console.error("Failed to save assistant message:", error);
-        }
-      }
-
-      // Reset loading state when AI finishes responding
-      setIsInitializing(false);
+      setIsStreaming(false);
     },
     onError: (error) => {
       console.error("Chat error:", error);
-      // Reset loading state when there's an error
-      setIsInitializing(false);
+
+      setIsStreaming(false);
     }
   });
 
-  // Clear new=true query parameter when user starts typing
+  console.log({ aiMessages });
+
   const handleInputChangeWithCleanup = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     handleInputChange(e);
 
-    // Clear the new=true query parameter when user starts typing
     if (e.target.value.trim() && pathname === "/" && window.location.search.includes("new=true")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("new");
@@ -170,6 +149,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setAIMessages([]);
     setInput("");
     setAttachments([]);
+    setIsStreaming(false);
     setChatConfig({
       error: null,
       reasoning: null,
@@ -180,24 +160,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     });
   }, [setAIMessages, setInput, setAttachments, setChatConfig]);
 
-  // Handle chat ID changes and redirect to last chat
   useEffect(() => {
     const isRootPage = pathname === "/";
     const searchParams = new URLSearchParams(window.location.search);
     const forceNewChat = searchParams.get("new") === "true";
 
     if (isRootPage) {
-      // Clear chat ID when on root page (unless redirecting)
       if (chatId) {
         clearChat();
       }
 
-      // Only redirect if user has chats and not forcing new chat
       if (session?.user?.id && chats.length > 0 && !forceNewChat) {
         const lastChatId = getStoredValue(STORAGE_KEYS.LAST_CHAT_ID, null);
 
         if (lastChatId) {
-          // Verify the last chat still exists
           const lastChatExists = chats.some((chat) => chat.id === lastChatId);
 
           if (lastChatExists) {
@@ -207,8 +183,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // If no last chat or it doesn't exist, redirect to the most recent chat
-        const mostRecentChat = chats[0]; // chats are sorted by updatedAt desc
+        const mostRecentChat = chats[0];
         setIsRedirecting(true);
         router.push(`/${mostRecentChat.id}`);
         return;
@@ -218,14 +193,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setIsRedirecting(false);
   }, [pathname, session?.user?.id, chats, router, chatId, clearChat]);
 
-  // Reset isCreatingNewChat when chatId changes
   useEffect(() => {
     if (chatId) {
       setIsInitializing(false);
     }
   }, [chatId]);
 
-  // Update AI messages when cached messages change
   useEffect(() => {
     if (cachedMessages.length > 0) {
       const aiFormatMessages = cachedMessages.map((msg) => ({
@@ -235,12 +208,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       }));
       setAIMessages(aiFormatMessages);
     } else if (chatId && aiMessages.length === 0) {
-      // Only clear AI messages if both the cache and AI messages are empty
       setAIMessages([]);
     }
   }, [cachedMessages, chatId, setAIMessages, aiMessages.length]);
 
-  // Handle messages error
   useEffect(() => {
     if (messagesError) {
       setChatConfig((prev) => ({
@@ -251,7 +222,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [messagesError]);
 
-  // Set chat ID and store it as last chat
   const setChatId = useCallback((id: string | null) => {
     setChatIdState(id);
     if (id) {
@@ -329,9 +299,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
+        setIsStreaming(true);
         handleAISubmit(e);
       } catch (error) {
         console.error("Error in chat submission:", error);
+        setIsStreaming(false);
       } finally {
         setIsInitializing(false);
       }
@@ -361,7 +333,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setInput,
     handleInputChange: handleInputChangeWithCleanup,
     handleSubmit,
-    isLoading: isLoading || isInitializing || (chatId ? isLoadingMessages : false),
+    isLoading: isStreaming || isInitializing || (chatId ? isLoadingMessages : false),
+    isStreaming,
     error: error || messagesError || null,
     chatId,
     setChatId,

@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, memo } from "react";
 import { MemoizedMarkdown } from "@/components/markdown/markdown-rendered";
 import { Button } from "@/components/ui/button";
 import { cn, formatBytes } from "@/lib/utils";
+import { StreamingIndicator } from "../streaming-indicator";
 
 import { UserMessage } from "./user-message";
 
@@ -266,18 +267,9 @@ export const ChatMessage = memo(({ message, isStreaming }: ChatMessageProps) => 
             {isUser ? (
               <UserMessage content={message.content} className="font-medium" />
             ) : (
-              <MemoizedMarkdown content={message.content} />
-            )}
-
-            {isStreaming && !isUser && (
-              <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-2 dark:border-slate-700">
-                <div className="flex gap-1">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.3s]" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500 [animation-delay:-0.15s]" />
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500" />
-                </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Assistant is typing...</span>
-              </div>
+              <StreamingIndicator content={message.content} isStreaming={isStreaming} isUser={isUser}>
+                {(animatedContent) => <MemoizedMarkdown content={animatedContent} />}
+              </StreamingIndicator>
             )}
           </div>
         </div>

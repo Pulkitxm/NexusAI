@@ -7,12 +7,12 @@ import type { MessageWithAttachments } from "@/types/chat";
 
 interface MessageListProps {
   messages: MessageWithAttachments[];
-  isLoading: boolean;
+  isStreaming: boolean;
   isLoadingMessages: boolean;
   isRedirecting: boolean;
 }
 
-export function MessageList({ messages, isLoading, isLoadingMessages, isRedirecting }: MessageListProps) {
+export function MessageList({ messages, isStreaming, isLoadingMessages, isRedirecting }: MessageListProps) {
   if (isLoadingMessages && messages.length === 0) {
     return (
       <div className="space-y-1">
@@ -27,9 +27,9 @@ export function MessageList({ messages, isLoading, isLoadingMessages, isRedirect
     <div className="space-y-1">
       {messages.map((message, index) => {
         const isLastAssistantMessage = message.role === "ASSISTANT" && index === messages.length - 1;
-        const isStreaming = isLastAssistantMessage && isLoading;
+        const showStreaming = isLastAssistantMessage && isStreaming;
 
-        return <ChatMessage key={message.id} message={message} isStreaming={isStreaming} />;
+        return <ChatMessage key={message.id} message={message} isStreaming={showStreaming} />;
       })}
     </div>
   );

@@ -6,17 +6,18 @@ import Link from "next/link";
 import LOGO from "@/assets/logo.png";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { useKeys } from "@/providers/use-keys";
 import { useSettingsModal } from "@/providers/use-settings";
 import { useSidebar } from "@/providers/use-sidebar";
 
 interface SidebarHeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  hasAnyKeys: boolean;
 }
 
-export function SidebarHeader({ searchQuery, setSearchQuery, hasAnyKeys }: SidebarHeaderProps) {
+export function SidebarHeader({ searchQuery, setSearchQuery }: SidebarHeaderProps) {
   const { openModal } = useSettingsModal();
+  const { hasAnyKeys } = useKeys();
   const { setOpen } = useSidebar();
 
   return (
